@@ -1,0 +1,128 @@
+% ===========================================================================
+% SECTION 1 — INTRODUCTION
+% Target: 800-1000 words
+% ===========================================================================
+
+\section{Introduction}
+\label{sec:introduction}
+
+Wind energy is one of the fastest-growing renewable energy sources, and
+the continued growth of installed capacity places increasing demands on
+turbine control systems \citep{pao2009}. Above the rated wind speed
+(Region~III), a variable-speed, variable-pitch wind turbine must regulate
+rotor speed to its rated value by actuating blade pitch, while the
+generator torque is held at (or switched into) its rated value
+\citep{bianchi2006}. This regulation problem is nonlinear, subject to
+actuator rate and range constraints, and driven by a highly stochastic
+disturbance (turbulent wind); Model Predictive Control (MPC) is
+well-suited to it precisely because it handles input and state
+constraints explicitly and can anticipate disturbance effects over a
+prediction horizon \citep{rawlings2017}, in contrast to classical
+gain-scheduled PI pitch
+controllers \citep{bianchi2006,pao2009,laks2009}. The practical obstacle to
+nonlinear MPC (NMPC) for this problem is computational: at every control
+step, the solver must repeatedly evaluate the internal plant model — and,
+for gradient-based solvers, its Jacobian — which is expensive when that
+model is the full nonlinear aerodynamic and structural dynamics of the
+turbine \citep{schlipf2013,evans2022}.
+
+\subsection{ML-MPC: State of the Art}
+\label{subsec:soa}
+
+A natural response to this computational bottleneck is to replace the
+physical plant model inside the MPC prediction step with a learned
+surrogate that is cheaper to evaluate. \citet{klein2024,klein2025} recently
+demonstrated this approach for wind turbine load-relevant control using a
+Local Linear Neuro-Fuzzy Model (LLNFM) surrogate inside an adaptive MPC
+framework, validated on a full-scale turbine — the direct reference and
+starting point for the two-state modeling and LLNFM implementation adopted
+in this work (Section~\ref{sec:system_modeling}). Beyond neuro-fuzzy
+surrogates, Gaussian Process (GP) regression has an established track
+record as an MPC-internal model precisely because it returns a calibrated
+predictive uncertainty alongside its point prediction, enabling cautious
+or uncertainty-aware control formulations \citep{kocijan2004,hewing2020} —
+a property we exploit directly in the GP-based cost of
+Section~\ref{subsec:gp_uncertainty_cost}. Within wind energy specifically,
+\citet{liu_wind_2018} use a Mat\'ern-kernel GP to predict short-term wind
+speed for preview-based load mitigation, but --- unlike the present
+work --- as an external disturbance forecast feeding the controller
+rather than as the MPC's internal dynamics model. Data-driven
+reinforcement learning has separately been applied to wind turbine
+torque/pitch control \citep{xie_data-driven_2023}, offering a
+model-free alternative to the surrogate-based MPC approach studied
+here; we return to this comparison in
+Section~\ref{sec:discussion}. Physics-Informed Neural Networks
+(PINNs), which embed a governing differential equation as a soft
+constraint on the training loss, have become a general framework for
+combining data-driven flexibility with physical consistency
+\citep{raissi2019,karniadakis2021}, and Temporal Convolutional Networks
+(TCNs) have been shown to be a competitive, often superior alternative to
+recurrent architectures for generic sequence modeling tasks
+\citep{bai2018}. Each of these four paradigms — neuro-fuzzy, GP, PINN,
+and convolutional/recurrent sequence models — has therefore been
+independently validated as a plausible MPC surrogate architecture in some
+application domain. Beyond ML surrogates specifically, the broader
+engineering practice of MPC continues to evolve rapidly
+\citep{schwenzer2021}, and linear-quadratic-optimal alternatives to
+nonlinear MPC for wind turbine power tracking, without a learned
+internal model, have also recently been proposed and validated in
+OpenFAST \citep{grapentin2022,grapentin2024} --- a useful point of
+comparison for the computational-cost trade-offs discussed in
+Section~\ref{sec:mpc_framework}, though outside this paper's
+ML-surrogate scope.
+
+What is missing, to our knowledge, is a systematic comparison of these
+paradigms \emph{within a single closed-loop MPC framework, on the same
+plant, under the same solver}, paired with an explicit operational
+feasibility analysis of running each surrogate inside a real-time SQP
+solve rather than only an open-loop accuracy comparison. Prior work
+typically evaluates one surrogate family in isolation
+\citep{klein2024,kocijan2004,hewing2020}; the interaction between
+surrogate architecture and the specific numerical behavior of a
+gradient-based NMPC solver — which, as we show in
+Section~\ref{subsec:operational_feasibility}, can render an
+otherwise-accurate surrogate practically unusable — is, to our knowledge,
+not addressed in the existing wind turbine ML-MPC literature.
+
+\subsection{Contributions}
+\label{subsec:contributions}
+
+This paper makes four contributions:
+
+\begin{enumerate}
+\item A systematic comparison of six ML surrogate architectures (LLNFM,
+LSTM, GP, PINN, TCN, SW-MLP) as internal state predictors for nonlinear
+MPC of wind turbine rotor speed, evaluated both open-loop (one-step
+prediction accuracy) and closed-loop (tracking performance under
+turbulent wind), across two model generations (V1, V2).
+\item An operational feasibility analysis documenting a hard
+incompatibility between \texttt{dlarray}-based deep-learning surrogates
+and SQP-based \texttt{nlmpc} in MATLAB R2024a, driven by non-deterministic
+JIT recompilation rather than a soft accuracy-cost trade-off, with
+per-call and per-solve timing evidence.
+\item A Region~II/III generator torque switching correction for the
+two-state plant model, calibrated at the turbine's actual rated operating
+point rather than its theoretical aerodynamic optimum, without which
+long-horizon closed-loop simulation enters an irrecoverable operating
+trap — a modeling detail we show is not a minor implementation nicety but
+a precondition for valid training data and closed-loop evaluation.
+\item A Gaussian-Process-based uncertainty-penalized MPC cost, made
+statistically meaningful through Matérn~5/2 kernel selection and Bayesian
+hyperparameter optimization, extending the cautious-MPC literature
+\citep{hewing2020,kocijan2004} to Region~III wind turbine speed
+regulation.
+\end{enumerate}
+
+\subsection{Paper Organization}
+\label{subsec:organization}
+
+Section~\ref{sec:system_modeling} presents the plant, torque-switching,
+and wind models. Section~\ref{sec:dataset_generation} describes the
+training data generation protocol. Section~\ref{sec:ml_surrogates}
+details all six surrogate architectures and their open-loop accuracy.
+Section~\ref{sec:mpc_framework} presents the NMPC formulation, surrogate
+integration, and operational feasibility analysis. Section~\ref{sec:closed_loop_results}
+reports closed-loop V1 and V2 results, their comparison, and a Monte Carlo
+robustness analysis. Section~\ref{sec:discussion} discusses the main
+findings, limitations, and directions for future work, and
+Section~\ref{sec:conclusion} concludes.

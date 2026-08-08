@@ -1,0 +1,200 @@
+\begin{thebibliography}{28}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Pao and Johnson(2009)]{pao2009}
+L.~Y. Pao and K.~E. Johnson.
+\newblock A tutorial on the dynamics and control of wind turbines and wind
+  farms.
+\newblock In \emph{Proceedings of the 2009 American Control Conference}, pages
+  2076--2089. IEEE, 2009.
+
+\bibitem[Bianchi et~al.(2006)Bianchi, De~Battista, and Mantz]{bianchi2006}
+F.~D. Bianchi, H.~De~Battista, and R.~J. Mantz.
+\newblock \emph{Wind Turbine Control Systems: Principles, Modelling and Gain
+  Scheduling Design}.
+\newblock Advances in Industrial Control. Springer, London, 2006.
+\newblock \doi{10.1007/1-84628-493-7}.
+
+\bibitem[Rawlings et~al.(2017)Rawlings, Mayne, and Diehl]{rawlings2017}
+James~Blake Rawlings, David~Q. Mayne, and Moritz Diehl.
+\newblock \emph{Model Predictive Control: Theory, Computation, and Design}.
+\newblock Nob Hill Publishing, Madison, Wisconsin, 2nd edition, 2017.
+\newblock ISBN 978-0-9759377-3-0.
+
+\bibitem[Laks et~al.(2009)Laks, Pao, and Wright]{laks2009}
+Jason~H. Laks, Lucy~Y. Pao, and Alan~D. Wright.
+\newblock Control of wind turbines: Past, present, and future.
+\newblock In \emph{2009 American Control Conference}, 2009.
+\newblock \doi{10.1109/ACC.2009.5160590}.
+
+\bibitem[Schlipf et~al.(2013)Schlipf, Schlipf, and K{\"u}hn]{schlipf2013}
+D.~Schlipf, D.~J. Schlipf, and M.~K{\"u}hn.
+\newblock Nonlinear model predictive control of wind turbines using lidar.
+\newblock \emph{Wind Energy}, 16\penalty0 (7):\penalty0 1107--1129, 2013.
+\newblock \doi{10.1002/we.1533}.
+
+\bibitem[Evans and Lio(2022)]{evans2022}
+Martin~A. Evans and Wai~Hou Lio.
+\newblock Computationally efficient model predictive control of complex wind
+  turbine models.
+\newblock \emph{Wind Energy}, 25, 2022.
+\newblock \doi{10.1002/we.2695}.
+
+\bibitem[Klein et~al.(2024)Klein, Wintermeyer-Kallen, Stegink, K{\"o}sters,
+  Zierath, Nelles, Abel, Vallery, and Basler]{klein2024}
+A.~Klein, T.~Wintermeyer-Kallen, J.~Stegink, T.~K{\"o}sters, J.~Zierath,
+  O.~Nelles, D.~Abel, H.~Vallery, and M.~Basler.
+\newblock Control-oriented wind turbine load estimation based on local linear
+  neuro-fuzzy models.
+\newblock In \emph{Journal of Physics: Conference Series}, volume 2767, page
+  032016, 2024.
+\newblock \doi{10.1088/1742-6596/2767/3/032016}.
+
+\bibitem[Klein et~al.(2025)Klein, Wintermeyer-Kallen, Zierath, Kluge, Abel,
+  Vallery, and Basler]{klein2025}
+A.~Klein, T.~Wintermeyer-Kallen, J.~Zierath, K.~Kluge, D.~Abel, H.~Vallery, and
+  M.~Basler.
+\newblock Design and practical evaluation of robust model predictive wind
+  turbine control.
+\newblock \emph{Wind Energy}, 28:\penalty0 e70011, 2025.
+\newblock \doi{10.1002/we.70011}.
+
+\bibitem[Kocijan et~al.(2004)Kocijan, Murray-Smith, Rasmussen, and
+  Girard]{kocijan2004}
+J.~Kocijan, R.~Murray-Smith, C.~E. Rasmussen, and A.~Girard.
+\newblock Gaussian process model based predictive control.
+\newblock \emph{Proceedings of the American Control Conference}, 2004.
+
+\bibitem[Hewing et~al.(2020)Hewing, Kabzan, and Zeilinger]{hewing2020}
+L.~Hewing, J.~Kabzan, and M.~N. Zeilinger.
+\newblock Cautious model predictive control using gaussian process regression.
+\newblock \emph{IEEE Transactions on Control Systems Technology}, 2020.
+
+\bibitem[Liu et~al.(2018)Liu, Jones, and Zhang]{liu_wind_2018}
+Yanhua Liu, Bryn~L. Jones, and Xiaoxu Zhang.
+\newblock Wind turbine load mitigation using mpc with gaussian wind speed
+  prediction.
+\newblock In \emph{2018 UKACC 12th International Conference on Control
+  (CONTROL)}, pages 1--6, 2018.
+\newblock \doi{10.1109/CONTROL.2018.8516882}.
+
+\bibitem[Xie et~al.(2023)Xie, Dong, and Zhao]{xie_data-driven_2023}
+Jingjie Xie, Hongyang Dong, and Xiaowei Zhao.
+\newblock Data-driven torque and pitch control of wind turbines via
+  reinforcement learning.
+\newblock \emph{Renewable Energy}, 215:\penalty0 118893, 2023.
+\newblock \doi{10.1016/j.renene.2023.06.014}.
+
+\bibitem[Raissi et~al.(2019)Raissi, Perdikaris, and Karniadakis]{raissi2019}
+M.~Raissi, P.~Perdikaris, and G.~E. Karniadakis.
+\newblock Physics-informed neural networks: A deep learning framework for
+  solving forward and inverse problems involving nonlinear partial differential
+  equations.
+\newblock \emph{Journal of Computational Physics}, 2019.
+
+\bibitem[Karniadakis et~al.(2021)Karniadakis, Kevrekidis, Lu, Perdikaris, Wang,
+  and Yang]{karniadakis2021}
+G.~E. Karniadakis, I.~G. Kevrekidis, L.~Lu, P.~Perdikaris, S.~Wang, and
+  L.~Yang.
+\newblock Physics-informed machine learning.
+\newblock \emph{Nature Reviews Physics}, 2021.
+
+\bibitem[Bai et~al.(2018)Bai, Kolter, and Koltun]{bai2018}
+S.~Bai, J.~Z. Kolter, and V.~Koltun.
+\newblock An empirical evaluation of generic convolutional and recurrent
+  networks for sequence modeling.
+\newblock \emph{arXiv preprint arXiv:1803.01271}, 2018.
+
+\bibitem[Schwenzer et~al.(2021)Schwenzer, Ay, Bergs, and Abel]{schwenzer2021}
+Max Schwenzer, Muzaffer Ay, Thomas Bergs, and Dirk Abel.
+\newblock Review on model predictive control: an engineering perspective.
+\newblock \emph{The International Journal of Advanced Manufacturing
+  Technology}, 117, 2021.
+\newblock \doi{10.1007/s00170-021-07682-3}.
+
+\bibitem[Grapentin et~al.(2022)Grapentin, Sterle, Raisch, and
+  Hans]{grapentin2022}
+Aaron Grapentin, Arnold Sterle, J{\"o}rg Raisch, and Christian~A. Hans.
+\newblock Lq optimal control for power tracking operation of wind turbines.
+\newblock \url{http://arxiv.org/abs/2211.07690}, 2022.
+
+\bibitem[Grapentin et~al.(2024)Grapentin, Hans, and Raisch]{grapentin2024}
+Aaron Grapentin, Christian~A. Hans, and J{\"o}rg Raisch.
+\newblock Robust lq optimal control for wind turbine power tracking operation.
+\newblock \url{http://arxiv.org/abs/2407.20922}, 2024.
+
+\bibitem[Jonkman et~al.(2009)Jonkman, Butterfield, Musial, and
+  Scott]{jonkman2009}
+J.~Jonkman, S.~Butterfield, W.~Musial, and G.~Scott.
+\newblock Definition of a 5-mw reference wind turbine for offshore system
+  development.
+\newblock Technical Report NREL/TP-500-38060, National Renewable Energy
+  Laboratory (NREL), 2009.
+
+\bibitem[{International Electrotechnical Commission}(2005)]{iec61400}
+{International Electrotechnical Commission}.
+\newblock Wind turbines -- part 1: Design requirements.
+\newblock Technical Report IEC 61400-1 Ed.3, IEC, 2005.
+
+\bibitem[Rasmussen and Williams(2006)]{rasmussen2006}
+C.~E. Rasmussen and C.~K.~I. Williams.
+\newblock \emph{Gaussian Processes for Machine Learning}.
+\newblock MIT Press, 2006.
+
+\bibitem[Richter et~al.(2012)Richter, Jones, and Morari]{richter2012}
+Stefan Richter, Colin Jones, and Manfred Morari.
+\newblock Computational complexity certification for real-time mpc with input
+  constraints based on the fast gradient method.
+\newblock \emph{IEEE Transactions on Automatic Control}, 57:\penalty0
+  1391--1403, 2012.
+\newblock \doi{10.1109/TAC.2011.2176389}.
+
+\bibitem[Xi et~al.(2013)Xi, Li, and Lin]{xi2013}
+Yu-Geng Xi, Dewei Li, and Shu Lin.
+\newblock Model predictive control --- status and challenges.
+\newblock \emph{Acta Automatica Sinica}, 39:\penalty0 222--236, 2013.
+\newblock \doi{10.1016/S1874-1029(13)60024-5}.
+
+\bibitem[Aswani et~al.(2013)Aswani, Gonzalez, Sastry, and
+  Tomlin]{aswani_provably_2013}
+Anil Aswani, Humberto Gonzalez, S.~Shankar Sastry, and Claire Tomlin.
+\newblock Provably safe and robust learning-based model predictive control.
+\newblock \emph{Automatica}, 49\penalty0 (5):\penalty0 1216--1226, 2013.
+\newblock \doi{10.1016/j.automatica.2013.02.003}.
+
+\bibitem[Salzmann et~al.(2022)Salzmann, Kaufmann, Arrizabalaga, Pavone,
+  Scaramuzza, and Ryll]{salzmann_real-time_2022}
+Tim Salzmann, Elia Kaufmann, Jon Arrizabalaga, Marco Pavone, Davide Scaramuzza,
+  and Markus Ryll.
+\newblock Real-time neural-{MPC}: Deep learning model predictive control for
+  quadrotors and agile robotic platforms.
+\newblock \url{https://arxiv.org/abs/2203.07747}, 2022.
+
+\bibitem[Witter et~al.(2025)Witter, Roth, Schelenz, and
+  Jacobs]{witter_creating_2025}
+Stefan Witter, Jakob Roth, Ralf Schelenz, and Georg Jacobs.
+\newblock Creating a real-time capable surrogate model of a wind turbine using
+  machine learning.
+\newblock \emph{Wind Energy}, 28\penalty0 (11):\penalty0 e70070, 2025.
+\newblock \doi{10.1002/we.70070}.
+
+\bibitem[Soltani et~al.(2013)Soltani, Knudsen, Svenstrup, Wisniewski, Brath,
+  Ortega, and Johnson]{soltani2013}
+M.~N. Soltani, T.~Knudsen, M.~Svenstrup, R.~Wisniewski, P.~Brath, R.~Ortega,
+  and K.~Johnson.
+\newblock Estimation of rotor effective wind speed: A comparison.
+\newblock \emph{IEEE Transactions on Control Systems Technology}, 21\penalty0
+  (4):\penalty0 1155--1167, 2013.
+
+\bibitem[Williams et~al.(2015)Williams, Kevrekidis, and Rowley]{williams2015}
+Matthew Williams, Ioannis Kevrekidis, and Clarence Rowley.
+\newblock A data-driven approximation of the koopman operator: Extending
+  dynamic mode decomposition.
+\newblock \emph{Journal of Nonlinear Science}, 25, 2015.
+\newblock \doi{10.1007/s00332-015-9258-5}.
+
+\end{thebibliography}

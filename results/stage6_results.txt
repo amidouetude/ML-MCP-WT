@@ -1,0 +1,40 @@
+STAGE 6 RESULTS — Summary Figures / Consolidated Speedup Table
+Generated: 08-Aug-2026 12:18:29
+================================================
+
+[MLP-residual]
+  predict_ms = 2188.3
+  manual_ms  = 22.3
+  speedup    = 98.1x
+  overruns_manual = 2/600
+
+[GP (N_{sub}=50)]
+  predict_ms = 196.2
+  manual_ms  = 25.2
+  speedup    = 7.8x
+  overruns_manual = 0/600
+
+[SW-MLP]
+  predict_ms = 1383.9
+  manual_ms  = 30.4
+  speedup    = 45.5x
+  overruns_manual = 1/600
+
+[PINN-v2]
+  predict_ms = 1650.2
+  manual_ms  = 12.1
+  speedup    = 136.4x
+  overruns_manual = 0/600
+
+[TCN]
+  predict_ms = 834.1
+  manual_ms  = 23.9
+  speedup    = 34.9x
+  overruns_manual = 8/600
+
+[LSTM]
+  predict_ms = 148475.7
+  manual_ms  = 52.2
+  speedup    = 2844.4x
+  overruns_manual = 1/600
+

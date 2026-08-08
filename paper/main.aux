@@ -1,0 +1,243 @@
+\relax 
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
+\@nameuse{bbl@beforestart}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\bibstyle{unsrtnat}
+\providecommand \oddpage@label [2]{}
+\babel@aux{english}{}
+\citation{pao2009}
+\citation{bianchi2006}
+\citation{rawlings2017}
+\citation{bianchi2006,pao2009,laks2009}
+\citation{schlipf2013,evans2022}
+\citation{klein2024,klein2025}
+\citation{kocijan2004,hewing2020}
+\citation{liu_wind_2018}
+\citation{xie_data-driven_2023}
+\citation{raissi2019,karniadakis2021}
+\citation{bai2018}
+\citation{schwenzer2021}
+\citation{grapentin2022,grapentin2024}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{4}{section.1}\protected@file@percent }
+\newlabel{sec:introduction}{{1}{4}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}ML-MPC: State of the Art}{4}{subsection.1.1}\protected@file@percent }
+\newlabel{subsec:soa}{{1.1}{4}{ML-MPC: State of the Art}{subsection.1.1}{}}
+\citation{klein2024,kocijan2004,hewing2020}
+\citation{hewing2020,kocijan2004}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Contributions}{5}{subsection.1.2}\protected@file@percent }
+\newlabel{subsec:contributions}{{1.2}{5}{Contributions}{subsection.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Paper Organization}{6}{subsection.1.3}\protected@file@percent }
+\newlabel{subsec:organization}{{1.3}{6}{Paper Organization}{subsection.1.3}{}}
+\citation{jonkman2009}
+\citation{klein2024}
+\@writefile{toc}{\contentsline {section}{\numberline {2}System Modeling}{7}{section.2}\protected@file@percent }
+\newlabel{sec:system_modeling}{{2}{7}{System Modeling}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}NREL 5-MW Reference Turbine}{7}{subsection.2.1}\protected@file@percent }
+\newlabel{subsec:nrel5mw}{{2.1}{7}{NREL 5-MW Reference Turbine}{subsection.2.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces NREL 5-MW reference turbine parameters used in this study (source: \texttt  {stage0\_config.m}).}}{7}{table.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:turbine_params}{{1}{7}{NREL 5-MW reference turbine parameters used in this study (source: \texttt {stage0\_config.m})}{table.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Two-State Model}{7}{subsection.2.2}\protected@file@percent }
+\newlabel{subsec:two_state_model}{{2.2}{7}{Two-State Model}{subsection.2.2}{}}
+\citation{jonkman2009}
+\newlabel{eq:rotor_ode}{{1}{8}{Two-State Model}{equation.1}{}}
+\newlabel{eq:pitch_actuator}{{2}{8}{Two-State Model}{equation.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Region II/III Generator Torque Switching}{8}{subsection.2.3}\protected@file@percent }
+\newlabel{subsec:torque_switching}{{2.3}{8}{Region II/III Generator Torque Switching}{subsection.2.3}{}}
+\newlabel{eq:torque_switching}{{3}{8}{Region II/III Generator Torque Switching}{equation.3}{}}
+\citation{iec61400}
+\citation{klein2024}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Region II/III generator torque switching: aerodynamic torque $T_a$ and generator torque $T_g(\omega _r)$ before (constant torque) and after (Eq.~\eqref  {eq:torque_switching}) correction.}}{9}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:torque_switching}{{1}{9}{Region II/III generator torque switching: aerodynamic torque $\Ta $ and generator torque $\Tg (\omegar )$ before (constant torque) and after (Eq.~\eqref {eq:torque_switching}) correction}{figure.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Wind Model}{9}{subsection.2.4}\protected@file@percent }
+\newlabel{subsec:wind_model}{{2.4}{9}{Wind Model}{subsection.2.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Dataset Generation}{10}{section.3}\protected@file@percent }
+\newlabel{sec:dataset_generation}{{3}{10}{Dataset Generation}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Simulation Protocol}{10}{subsection.3.1}\protected@file@percent }
+\newlabel{subsec:simulation_protocol}{{3.1}{10}{Simulation Protocol}{subsection.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Dataset Structure}{10}{subsection.3.2}\protected@file@percent }
+\newlabel{subsec:dataset_structure}{{3.2}{10}{Dataset Structure}{subsection.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Feature Statistics}{10}{subsection.3.3}\protected@file@percent }
+\newlabel{subsec:feature_statistics}{{3.3}{10}{Feature Statistics}{subsection.3.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Dataset feature statistics (24{,}000 samples, 80 trajectories).}}{11}{table.caption.4}\protected@file@percent }
+\newlabel{tab:feature_stats}{{2}{11}{Dataset feature statistics (24{,}000 samples, 80 trajectories)}{table.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Operating-space coverage of the generated dataset: rotor speed $\omega _r$ versus wind speed $V$, training set (56 trajectories) versus test set (12 trajectories).}}{11}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:dataset_coverage}{{2}{11}{Operating-space coverage of the generated dataset: rotor speed $\omegar $ versus wind speed $V$, training set (56 trajectories) versus test set (12 trajectories)}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Machine Learning Surrogate Models}{12}{section.4}\protected@file@percent }
+\newlabel{sec:ml_surrogates}{{4}{12}{Machine Learning Surrogate Models}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}V1 Models}{12}{subsection.4.1}\protected@file@percent }
+\newlabel{subsec:v1_models}{{4.1}{12}{V1 Models}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Local Linear Neuro-Fuzzy Model (LLNFM / ANFIS)}{12}{subsubsection.4.1.1}\protected@file@percent }
+\newlabel{subsubsec:llnfm}{{4.1.1}{12}{Local Linear Neuro-Fuzzy Model (LLNFM / ANFIS)}{subsubsection.4.1.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Gaussian Process (V1)}{12}{subsubsection.4.1.2}\protected@file@percent }
+\newlabel{subsubsec:gp_v1}{{4.1.2}{12}{Gaussian Process (V1)}{subsubsection.4.1.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.3}Physics-Informed Neural Network (V1)}{12}{subsubsection.4.1.3}\protected@file@percent }
+\newlabel{subsubsec:pinn_v1}{{4.1.3}{12}{Physics-Informed Neural Network (V1)}{subsubsection.4.1.3}{}}
+\citation{rasmussen2006}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.4}Long Short-Term Memory (V1)}{13}{subsubsection.4.1.4}\protected@file@percent }
+\newlabel{subsubsec:lstm_v1}{{4.1.4}{13}{Long Short-Term Memory (V1)}{subsubsection.4.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}V2 Improvements}{13}{subsection.4.2}\protected@file@percent }
+\newlabel{subsec:v2_models}{{4.2}{13}{V2 Improvements}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}GP-v2 (Matérn 5/2 + Optimized Hyperparameters)}{13}{subsubsection.4.2.1}\protected@file@percent }
+\newlabel{subsubsec:gp_v2}{{4.2.1}{13}{GP-v2 (Matérn 5/2 + Optimized Hyperparameters)}{subsubsection.4.2.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}PINN-v2 (Differentiable Softplus)}{14}{subsubsection.4.2.2}\protected@file@percent }
+\newlabel{subsubsec:pinn_v2}{{4.2.2}{14}{PINN-v2 (Differentiable Softplus)}{subsubsection.4.2.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}TCN and SW-MLP (New Architectures)}{14}{subsubsection.4.2.3}\protected@file@percent }
+\newlabel{subsubsec:tcn_swmlp}{{4.2.3}{14}{TCN and SW-MLP (New Architectures)}{subsubsection.4.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Comparative Prediction Accuracy}{15}{subsection.4.3}\protected@file@percent }
+\newlabel{subsec:comparative_accuracy}{{4.3}{15}{Comparative Prediction Accuracy}{subsection.4.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparative one-step prediction accuracy of all surrogates, V1 and V2 snapshots (test set, $N=3{,}600$ samples). V2 figures use explicit, recorded random seeds (Appendix~\ref {sec:appendix}) and are confirmed reproducible.}}{16}{table.caption.6}\protected@file@percent }
+\newlabel{tab:stage2_accuracy}{{3}{16}{Comparative one-step prediction accuracy of all surrogates, V1 and V2 snapshots (test set, $N=3{,}600$ samples). V2 figures use explicit, recorded random seeds (Appendix~\ref {sec:appendix}) and are confirmed reproducible}{table.caption.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Comparative test-set RMSE across all surrogate models, V1 and V2.}}{16}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:stage2_rmse_bar}{{3}{16}{Comparative test-set RMSE across all surrogate models, V1 and V2}{figure.caption.7}{}}
+\citation{richter2012,xi2013}
+\@writefile{toc}{\contentsline {section}{\numberline {5}MPC Framework}{17}{section.5}\protected@file@percent }
+\newlabel{sec:mpc_framework}{{5}{17}{MPC Framework}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}nlmpc Formulation}{17}{subsection.5.1}\protected@file@percent }
+\newlabel{subsec:nlmpc_formulation}{{5.1}{17}{nlmpc Formulation}{subsection.5.1}{}}
+\newlabel{eq:mpc_cost_standard}{{4}{17}{nlmpc Formulation}{equation.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Surrogate Integration as State Function}{17}{subsection.5.2}\protected@file@percent }
+\newlabel{subsec:surrogate_integration}{{5.2}{17}{Surrogate Integration as State Function}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}GP-MPC Uncertainty Cost (Gap-1)}{18}{subsection.5.3}\protected@file@percent }
+\newlabel{subsec:gp_uncertainty_cost}{{5.3}{18}{GP-MPC Uncertainty Cost (Gap-1)}{subsection.5.3}{}}
+\newlabel{eq:gp_mpc_cost}{{5}{18}{GP-MPC Uncertainty Cost (Gap-1)}{equation.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Operational Feasibility Analysis}{19}{subsection.5.4}\protected@file@percent }
+\newlabel{subsec:operational_feasibility}{{5.4}{19}{Operational Feasibility Analysis}{subsection.5.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Stage 1 --- Isolated inference latency is not predictive of closed-loop cost.}{19}{section*.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Isolated state-function call latency (250 calls, randomized inputs), MATLAB R2026a.}}{19}{table.caption.9}\protected@file@percent }
+\newlabel{tab:isolated_benchmark}{{4}{19}{Isolated state-function call latency (250 calls, randomized inputs), MATLAB R2026a}{table.caption.9}{}}
+\@writefile{toc}{\contentsline {paragraph}{Stage 2 --- Real closed-loop simulation reveals a catastrophe the isolated benchmark did not predict.}{19}{section*.10}\protected@file@percent }
+\citation{aswani_provably_2013}
+\@writefile{toc}{\contentsline {paragraph}{Stage 3 --- Supplying an analytical Jacobian does not resolve the catastrophe.}{20}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Stage 4 --- Bypassing \texttt  {predict()} with a hand-written forward pass resolves the catastrophe.}{20}{section*.12}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Closed-loop per-step cost, \texttt  {predict()} versus manual forward pass, all six surrogates, identical trained weights (verified numerically equivalent to $10^{-13}$--$10^{-4}$ per Section~\ref {subsec:lstm_precision_note}).}}{21}{table.caption.13}\protected@file@percent }
+\newlabel{tab:predict_bypass}{{5}{21}{Closed-loop per-step cost, \texttt {predict()} versus manual forward pass, all six surrogates, identical trained weights (verified numerically equivalent to $10^{-13}$--$10^{-4}$ per Section~\ref {subsec:lstm_precision_note})}{table.caption.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Mean per-step CPU cost, \texttt  {predict()} versus manual forward pass, all six surrogates (log scale), with the Baseline reference and $T_s=\SI {100}{ms}$ real-time budget marked.}}{21}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:predictbypass_cpu}{{4}{21}{Mean per-step CPU cost, \texttt {predict()} versus manual forward pass, all six surrogates (log scale), with the Baseline reference and $T_s=\SI {100}{ms}$ real-time budget marked}{figure.caption.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Speedup factor from bypassing \texttt  {predict()}, all six surrogates (log scale); LSTM (largest speedup, $2844\times $) highlighted.}}{21}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:predictbypass_speedup}{{5}{21}{Speedup factor from bypassing \texttt {predict()}, all six surrogates (log scale); LSTM (largest speedup, $2844\times $) highlighted}{figure.caption.15}{}}
+\citation{aswani_provably_2013}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Real-time budget overrun rate ($T_s=\SI {100}{ms}$), \texttt  {predict()} versus manual forward pass, all six surrogates.}}{22}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:predictbypass_overruns}{{6}{22}{Real-time budget overrun rate ($T_s=\SI {100}{ms}$), \texttt {predict()} versus manual forward pass, all six surrogates}{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {paragraph}{Stage 5 --- LSTM: the largest speedup, and the one architecture that does not fully vanish.}{22}{section*.17}\protected@file@percent }
+\citation{salzmann_real-time_2022}
+\newlabel{subsec:lstm_precision_note}{{5.4}{23}{Stage 5 --- LSTM: the largest speedup, and the one architecture that does not fully vanish}{section*.17}{}}
+\@writefile{toc}{\contentsline {paragraph}{Synthesis.}{23}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Closed-Loop Results}{24}{section.6}\protected@file@percent }
+\newlabel{sec:closed_loop_results}{{6}{24}{Closed-Loop Results}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}V1 Results (Baseline, LLNFM, GP, PINN)}{24}{subsection.6.1}\protected@file@percent }
+\newlabel{subsec:v1_results}{{6.1}{24}{V1 Results (Baseline, LLNFM, GP, PINN)}{subsection.6.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Stage~3 V1 closed-loop performance ($V=\SI {14}{m/s}$, $T=\SI {120}{s}$, seed$=2025$, $N_p{=}10$, $N_c{=}4$). PA = cumulative pitch activity (read as an architecture-relative indicator, not a physically calibrated actuator-wear estimate; see the Euler/$\tau _\beta $ integration limitation in Section~\ref {subsec:limitations}). LSTM-MPC excluded a priori (see text).}}{24}{table.caption.19}\protected@file@percent }
+\newlabel{tab:v1_results}{{6}{24}{Stage~3 V1 closed-loop performance ($V=\SI {14}{m/s}$, $T=\SI {120}{s}$, seed$=2025$, $N_p{=}10$, $N_c{=}4$). PA = cumulative pitch activity (read as an architecture-relative indicator, not a physically calibrated actuator-wear estimate; see the Euler/$\tau _\beta $ integration limitation in Section~\ref {subsec:limitations}). LSTM-MPC excluded a priori (see text)}{table.caption.19}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Stage~3 V1 closed-loop rotor speed tracking, all four evaluated controllers, $V=\SI {14}{m/s}$.}}{25}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:v1_speed_tracking}{{7}{25}{Stage~3 V1 closed-loop rotor speed tracking, all four evaluated controllers, $V=\SI {14}{m/s}$}{figure.caption.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}V2 Results (Baseline, LLNFM, GP-v2)}{25}{subsection.6.2}\protected@file@percent }
+\newlabel{subsec:v2_results}{{6.2}{25}{V2 Results (Baseline, LLNFM, GP-v2)}{subsection.6.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Stage~3 V2 closed-loop performance ($V=\SI {14}{m/s}$, seed$=2025$, single run).}}{25}{table.caption.21}\protected@file@percent }
+\newlabel{tab:v2_results}{{7}{25}{Stage~3 V2 closed-loop performance ($V=\SI {14}{m/s}$, seed$=2025$, single run)}{table.caption.21}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Stage~3 V2 closed-loop rotor speed tracking (Baseline, LLNFM, GP-v2), $V=\SI {14}{m/s}$, $T=\SI {120}{s}$, seed$=2025$.}}{26}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:v2_speed_tracking}{{8}{26}{Stage~3 V2 closed-loop rotor speed tracking (Baseline, LLNFM, GP-v2), $V=\SI {14}{m/s}$, $T=\SI {120}{s}$, seed$=2025$}{figure.caption.22}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces GP-v2 predictive standard deviation $\sigma _\omega (k)$ (Eq.~\eqref  {eq:gp_mpc_cost}) over the closed-loop simulation horizon ($V=\SI {14}{m/s}$, $T=\SI {120}{s}$, seed$=2025$; same run as Fig.~\ref {fig:v2_speed_tracking}).}}{26}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:v2_gp_uncertainty}{{9}{26}{GP-v2 predictive standard deviation $\sigma _\omega (k)$ (Eq.~\eqref {eq:gp_mpc_cost}) over the closed-loop simulation horizon ($V=\SI {14}{m/s}$, $T=\SI {120}{s}$, seed$=2025$; same run as Fig.~\ref {fig:v2_speed_tracking})}{figure.caption.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}V1 vs V2 Comparison}{26}{subsection.6.3}\protected@file@percent }
+\newlabel{subsec:v1_v2_comparison}{{6.3}{26}{V1 vs V2 Comparison}{subsection.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Extended Closed-Loop Evaluation via the \texttt  {predict()} Bypass}{27}{subsection.6.4}\protected@file@percent }
+\newlabel{subsec:bypass_closed_loop}{{6.4}{27}{Extended Closed-Loop Evaluation via the \texttt {predict()} Bypass}{subsection.6.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Scope.}{27}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{A methodological note on initial conditions.}{27}{section*.25}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Closed-loop performance, six previously-excluded architectures plus Baseline, using manual-bypass state functions ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$, corrected initial condition).}}{28}{table.caption.26}\protected@file@percent }
+\newlabel{tab:bypass_closed_loop}{{8}{28}{Closed-loop performance, six previously-excluded architectures plus Baseline, using manual-bypass state functions ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$, corrected initial condition)}{table.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Closed-loop rotor speed tracking, all seven manual-bypass controllers overlaid, $V=\SI {14}{m/s}$, $T=\SI {60}{s}$.}}{28}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:v3_speed_tracking}{{10}{28}{Closed-loop rotor speed tracking, all seven manual-bypass controllers overlaid, $V=\SI {14}{m/s}$, $T=\SI {60}{s}$}{figure.caption.27}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Closed-loop pitch command $\beta (t)$, all seven manual-bypass controllers overlaid ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$). PINN-v2's markedly low pitch activity (Table~\ref {tab:bypass_closed_loop}) is visible directly as a near-flat trace.}}{29}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:v3_pitch_control}{{11}{29}{Closed-loop pitch command $\beta (t)$, all seven manual-bypass controllers overlaid ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$). PINN-v2's markedly low pitch activity (Table~\ref {tab:bypass_closed_loop}) is visible directly as a near-flat trace}{figure.caption.28}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Closed-loop aerodynamic power output, computed from $C_p(\lambda ,\beta )$ at each simulated state, all seven manual-bypass controllers overlaid ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$).}}{29}{figure.caption.29}\protected@file@percent }
+\newlabel{fig:v3_power_output}{{12}{29}{Closed-loop aerodynamic power output, computed from $\Cp (\lambda ,\beta )$ at each simulated state, all seven manual-bypass controllers overlaid ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$)}{figure.caption.29}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Metrics summary panel: tracking RMSE, mean per-step CPU cost (log scale, with the $T_s=\SI {100}{ms}$ budget marked), and cumulative pitch activity, all seven manual-bypass controllers ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$; same run as Table~\ref {tab:bypass_closed_loop}).}}{30}{figure.caption.30}\protected@file@percent }
+\newlabel{fig:v3_metrics_summary}{{13}{30}{Metrics summary panel: tracking RMSE, mean per-step CPU cost (log scale, with the $T_s=\SI {100}{ms}$ budget marked), and cumulative pitch activity, all seven manual-bypass controllers ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$; same run as Table~\ref {tab:bypass_closed_loop})}{figure.caption.30}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Full per-solve CPU timing distribution, all seven manual-bypass controllers (30 bins each, $T_s=\SI {100}{ms}$ budget marked), revealing distributional shape not visible from mean/max alone ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$; same run as Table~\ref {tab:bypass_closed_loop}).}}{30}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:timing_histograms}{{14}{30}{Full per-solve CPU timing distribution, all seven manual-bypass controllers (30 bins each, $T_s=\SI {100}{ms}$ budget marked), revealing distributional shape not visible from mean/max alone ($V=\SI {14}{m/s}$, $T=\SI {60}{s}$, seed$=2025$; same run as Table~\ref {tab:bypass_closed_loop})}{figure.caption.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Extended Monte Carlo Statistical Analysis}{31}{subsection.6.5}\protected@file@percent }
+\newlabel{subsec:monte_carlo}{{6.5}{31}{Extended Monte Carlo Statistical Analysis}{subsection.6.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Extended Monte Carlo closed-loop RMSE (rpm, mean $\pm $ std, $5$ seeds per condition), all seven controllers, three wind speeds.}}{32}{table.caption.32}\protected@file@percent }
+\newlabel{tab:monte_carlo_extended}{{9}{32}{Extended Monte Carlo closed-loop RMSE (rpm, mean $\pm $ std, $5$ seeds per condition), all seven controllers, three wind speeds}{table.caption.32}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Extended Monte Carlo RMSE across wind speeds, all seven controllers, mean $\pm $ std over $5$ seeds.}}{32}{figure.caption.33}\protected@file@percent }
+\newlabel{fig:monte_carlo_extended}{{15}{32}{Extended Monte Carlo RMSE across wind speeds, all seven controllers, mean $\pm $ std over $5$ seeds}{figure.caption.33}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Seed-to-seed repeatability (coefficient of variation) by controller and wind speed; LSTM's instability at $V=\SI {12}{m/s}$ is the visible outlier.}}{33}{figure.caption.34}\protected@file@percent }
+\newlabel{fig:monte_carlo_cv}{{16}{33}{Seed-to-seed repeatability (coefficient of variation) by controller and wind speed; LSTM's instability at $V=\SI {12}{m/s}$ is the visible outlier}{figure.caption.34}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Original (3-seed, single-speed, uncorrected initial condition) versus extended (5-seed, corrected initial condition) Monte Carlo evaluation, Baseline and the MLP-residual surrogate (structurally distinct from, but positioned analogously to, the original LLNFM comparison) at $V=\SI {14}{m/s}$.}}{33}{figure.caption.35}\protected@file@percent }
+\newlabel{fig:monte_carlo_old_vs_new}{{17}{33}{Original (3-seed, single-speed, uncorrected initial condition) versus extended (5-seed, corrected initial condition) Monte Carlo evaluation, Baseline and the MLP-residual surrogate (structurally distinct from, but positioned analogously to, the original LLNFM comparison) at $V=\SI {14}{m/s}$}{figure.caption.35}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Per-step CPU cost across wind speeds, all seven manual-bypass controllers (log scale, $T_s=\SI {100}{ms}$ budget marked). Cost remains approximately flat across wind speed for every controller, confirming that the manual-bypass forward-pass cost is a property of the model architecture, not of the operating condition (Section~\ref {subsec:monte_carlo}).}}{34}{figure.caption.36}\protected@file@percent }
+\newlabel{fig:monte_carlo_cpu}{{18}{34}{Per-step CPU cost across wind speeds, all seven manual-bypass controllers (log scale, $T_s=\SI {100}{ms}$ budget marked). Cost remains approximately flat across wind speed for every controller, confirming that the manual-bypass forward-pass cost is a property of the model architecture, not of the operating condition (Section~\ref {subsec:monte_carlo})}{figure.caption.36}{}}
+\citation{salzmann_real-time_2022}
+\citation{witter_creating_2025}
+\citation{bianchi2006,pao2009}
+\citation{rasmussen2006}
+\citation{hewing2020,kocijan2004}
+\citation{xie_data-driven_2023}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{35}{section.7}\protected@file@percent }
+\newlabel{sec:discussion}{{7}{35}{Discussion}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Main Findings}{35}{subsection.7.1}\protected@file@percent }
+\newlabel{subsec:main_findings}{{7.1}{35}{Main Findings}{subsection.7.1}{}}
+\citation{schlipf2013}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Limitations}{36}{subsection.7.2}\protected@file@percent }
+\newlabel{subsec:limitations}{{7.2}{36}{Limitations}{subsection.7.2}{}}
+\citation{schlipf2013}
+\citation{soltani2013}
+\citation{hewing2020}
+\citation{williams2015}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Perspectives (V3)}{38}{subsection.7.3}\protected@file@percent }
+\newlabel{subsec:perspectives_v3}{{7.3}{38}{Perspectives (V3)}{subsection.7.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{40}{section.8}\protected@file@percent }
+\newlabel{sec:conclusion}{{8}{40}{Conclusion}{section.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Manual Forward-Pass Formulas for the \texttt  {predict()} Bypass}{42}{appendix.A}\protected@file@percent }
+\newlabel{sec:appendix}{{A}{42}{Manual Forward-Pass Formulas for the \texttt {predict()} Bypass}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Feedforward Networks (Residual MLP, SW-MLP, PINN-v2)}{42}{subsection.A.1}\protected@file@percent }
+\newlabel{subsec:appendix_mlp}{{A.1}{42}{Feedforward Networks (Residual MLP, SW-MLP, PINN-v2)}{subsection.A.1}{}}
+\newlabel{eq:appendix_mlp}{{6}{42}{Feedforward Networks (Residual MLP, SW-MLP, PINN-v2)}{equation.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Gaussian Process (GP-v2)}{42}{subsection.A.2}\protected@file@percent }
+\newlabel{subsec:appendix_gp}{{A.2}{42}{Gaussian Process (GP-v2)}{subsection.A.2}{}}
+\newlabel{eq:appendix_gp}{{7}{42}{Gaussian Process (GP-v2)}{equation.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Temporal Convolutional Network (TCN)}{43}{subsection.A.3}\protected@file@percent }
+\newlabel{subsec:appendix_tcn}{{A.3}{43}{Temporal Convolutional Network (TCN)}{subsection.A.3}{}}
+\newlabel{eq:appendix_tcn}{{8}{43}{Temporal Convolutional Network (TCN)}{equation.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}LSTM}{43}{subsection.A.4}\protected@file@percent }
+\newlabel{subsec:appendix_lstm}{{A.4}{43}{LSTM}{subsection.A.4}{}}
+\newlabel{eq:appendix_lstm1}{{9}{43}{LSTM}{equation.9}{}}
+\newlabel{eq:appendix_lstm3}{{11}{43}{LSTM}{equation.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Reproducibility: Explicit Random Seeding}{44}{subsection.A.5}\protected@file@percent }
+\newlabel{subsec:appendix_seeding}{{A.5}{44}{Reproducibility: Explicit Random Seeding}{subsection.A.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Diagnostic Note on Solver \texttt  {ExitFlag}}{44}{subsection.A.6}\protected@file@percent }
+\newlabel{subsec:appendix_exitflag}{{A.6}{44}{Diagnostic Note on Solver \texttt {ExitFlag}}{subsection.A.6}{}}
+\bibdata{references}
+\bibcite{pao2009}{{1}{2009}{{Pao and Johnson}}{{}}}
+\bibcite{bianchi2006}{{2}{2006}{{Bianchi et~al.}}{{Bianchi, De~Battista, and Mantz}}}
+\bibcite{rawlings2017}{{3}{2017}{{Rawlings et~al.}}{{Rawlings, Mayne, and Diehl}}}
+\bibcite{laks2009}{{4}{2009}{{Laks et~al.}}{{Laks, Pao, and Wright}}}
+\bibcite{schlipf2013}{{5}{2013}{{Schlipf et~al.}}{{Schlipf, Schlipf, and K{\"u}hn}}}
+\bibcite{evans2022}{{6}{2022}{{Evans and Lio}}{{}}}
+\bibcite{klein2024}{{7}{2024}{{Klein et~al.}}{{Klein, Wintermeyer-Kallen, Stegink, K{\"o}sters, Zierath, Nelles, Abel, Vallery, and Basler}}}
+\bibcite{klein2025}{{8}{2025}{{Klein et~al.}}{{Klein, Wintermeyer-Kallen, Zierath, Kluge, Abel, Vallery, and Basler}}}
+\bibcite{kocijan2004}{{9}{2004}{{Kocijan et~al.}}{{Kocijan, Murray-Smith, Rasmussen, and Girard}}}
+\bibcite{hewing2020}{{10}{2020}{{Hewing et~al.}}{{Hewing, Kabzan, and Zeilinger}}}
+\bibcite{liu_wind_2018}{{11}{2018}{{Liu et~al.}}{{Liu, Jones, and Zhang}}}
+\bibcite{xie_data-driven_2023}{{12}{2023}{{Xie et~al.}}{{Xie, Dong, and Zhao}}}
+\bibcite{raissi2019}{{13}{2019}{{Raissi et~al.}}{{Raissi, Perdikaris, and Karniadakis}}}
+\bibcite{karniadakis2021}{{14}{2021}{{Karniadakis et~al.}}{{Karniadakis, Kevrekidis, Lu, Perdikaris, Wang, and Yang}}}
+\bibcite{bai2018}{{15}{2018}{{Bai et~al.}}{{Bai, Kolter, and Koltun}}}
+\bibcite{schwenzer2021}{{16}{2021}{{Schwenzer et~al.}}{{Schwenzer, Ay, Bergs, and Abel}}}
+\bibcite{grapentin2022}{{17}{2022}{{Grapentin et~al.}}{{Grapentin, Sterle, Raisch, and Hans}}}
+\bibcite{grapentin2024}{{18}{2024}{{Grapentin et~al.}}{{Grapentin, Hans, and Raisch}}}
+\bibcite{jonkman2009}{{19}{2009}{{Jonkman et~al.}}{{Jonkman, Butterfield, Musial, and Scott}}}
+\bibcite{iec61400}{{20}{2005}{{International Electrotechnical Commission}}{{}}}
+\bibcite{rasmussen2006}{{21}{2006}{{Rasmussen and Williams}}{{}}}
+\bibcite{richter2012}{{22}{2012}{{Richter et~al.}}{{Richter, Jones, and Morari}}}
+\bibcite{xi2013}{{23}{2013}{{Xi et~al.}}{{Xi, Li, and Lin}}}
+\bibcite{aswani_provably_2013}{{24}{2013}{{Aswani et~al.}}{{Aswani, Gonzalez, Sastry, and Tomlin}}}
+\bibcite{salzmann_real-time_2022}{{25}{2022}{{Salzmann et~al.}}{{Salzmann, Kaufmann, Arrizabalaga, Pavone, Scaramuzza, and Ryll}}}
+\bibcite{witter_creating_2025}{{26}{2025}{{Witter et~al.}}{{Witter, Roth, Schelenz, and Jacobs}}}
+\bibcite{soltani2013}{{27}{2013}{{Soltani et~al.}}{{Soltani, Knudsen, Svenstrup, Wisniewski, Brath, Ortega, and Johnson}}}
+\bibcite{williams2015}{{28}{2015}{{Williams et~al.}}{{Williams, Kevrekidis, and Rowley}}}
+\gdef \@abspage@last{47}

@@ -1,0 +1,56 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Introduction}{4}{section.1}%
+\contentsline {subsection}{\numberline {1.1}ML-MPC: State of the Art}{4}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Contributions}{5}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Paper Organization}{6}{subsection.1.3}%
+\contentsline {section}{\numberline {2}System Modeling}{7}{section.2}%
+\contentsline {subsection}{\numberline {2.1}NREL 5-MW Reference Turbine}{7}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Two-State Model}{7}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Region II/III Generator Torque Switching}{8}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Wind Model}{9}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Dataset Generation}{10}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Simulation Protocol}{10}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Dataset Structure}{10}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Feature Statistics}{10}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Machine Learning Surrogate Models}{12}{section.4}%
+\contentsline {subsection}{\numberline {4.1}V1 Models}{12}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Local Linear Neuro-Fuzzy Model (LLNFM / ANFIS)}{12}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Gaussian Process (V1)}{12}{subsubsection.4.1.2}%
+\contentsline {subsubsection}{\numberline {4.1.3}Physics-Informed Neural Network (V1)}{12}{subsubsection.4.1.3}%
+\contentsline {subsubsection}{\numberline {4.1.4}Long Short-Term Memory (V1)}{13}{subsubsection.4.1.4}%
+\contentsline {subsection}{\numberline {4.2}V2 Improvements}{13}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}GP-v2 (Matérn 5/2 + Optimized Hyperparameters)}{13}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}PINN-v2 (Differentiable Softplus)}{14}{subsubsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.3}TCN and SW-MLP (New Architectures)}{14}{subsubsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.3}Comparative Prediction Accuracy}{15}{subsection.4.3}%
+\contentsline {section}{\numberline {5}MPC Framework}{17}{section.5}%
+\contentsline {subsection}{\numberline {5.1}nlmpc Formulation}{17}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Surrogate Integration as State Function}{17}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}GP-MPC Uncertainty Cost (Gap-1)}{18}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Operational Feasibility Analysis}{19}{subsection.5.4}%
+\contentsline {paragraph}{Stage 1 --- Isolated inference latency is not predictive of closed-loop cost.}{19}{section*.8}%
+\contentsline {paragraph}{Stage 2 --- Real closed-loop simulation reveals a catastrophe the isolated benchmark did not predict.}{19}{section*.10}%
+\contentsline {paragraph}{Stage 3 --- Supplying an analytical Jacobian does not resolve the catastrophe.}{20}{section*.11}%
+\contentsline {paragraph}{Stage 4 --- Bypassing \texttt {predict()} with a hand-written forward pass resolves the catastrophe.}{20}{section*.12}%
+\contentsline {paragraph}{Stage 5 --- LSTM: the largest speedup, and the one architecture that does not fully vanish.}{22}{section*.17}%
+\contentsline {paragraph}{Synthesis.}{23}{section*.18}%
+\contentsline {section}{\numberline {6}Closed-Loop Results}{24}{section.6}%
+\contentsline {subsection}{\numberline {6.1}V1 Results (Baseline, LLNFM, GP, PINN)}{24}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}V2 Results (Baseline, LLNFM, GP-v2)}{25}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}V1 vs V2 Comparison}{26}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Extended Closed-Loop Evaluation via the \texttt {predict()} Bypass}{27}{subsection.6.4}%
+\contentsline {paragraph}{Scope.}{27}{section*.24}%
+\contentsline {paragraph}{A methodological note on initial conditions.}{27}{section*.25}%
+\contentsline {subsection}{\numberline {6.5}Extended Monte Carlo Statistical Analysis}{31}{subsection.6.5}%
+\contentsline {section}{\numberline {7}Discussion}{35}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Main Findings}{35}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Limitations}{36}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Perspectives (V3)}{38}{subsection.7.3}%
+\contentsline {section}{\numberline {8}Conclusion}{40}{section.8}%
+\contentsline {section}{\numberline {A}Manual Forward-Pass Formulas for the \texttt {predict()} Bypass}{42}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}Feedforward Networks (Residual MLP, SW-MLP, PINN-v2)}{42}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Gaussian Process (GP-v2)}{42}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}Temporal Convolutional Network (TCN)}{43}{subsection.A.3}%
+\contentsline {subsection}{\numberline {A.4}LSTM}{43}{subsection.A.4}%
+\contentsline {subsection}{\numberline {A.5}Reproducibility: Explicit Random Seeding}{44}{subsection.A.5}%
+\contentsline {subsection}{\numberline {A.6}Diagnostic Note on Solver \texttt {ExitFlag}}{44}{subsection.A.6}%

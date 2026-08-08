@@ -1,0 +1,165 @@
+% ===========================================================================
+% APPENDIX
+% ===========================================================================
+
+\section{Manual Forward-Pass Formulas for the \texttt{predict()} Bypass}
+\label{sec:appendix}
+
+This appendix reports the exact formulas used to compute each
+surrogate's forward pass manually (Section~\ref{subsec:operational_feasibility}),
+for reproducibility. In every case, weights are extracted once from
+the trained model object into plain double-precision arrays, and the
+forward pass is subsequently computed by direct matrix arithmetic with
+no call to \texttt{predict()}, \texttt{minibatchpredict()}, or
+construction of a \texttt{dlarray}/\texttt{RegressionGP} query object.
+
+\subsection{Feedforward Networks (Residual MLP, SW-MLP, PINN-v2)}
+\label{subsec:appendix_mlp}
+
+For a network with $L$ fully-connected layers, weight matrices
+$W_1,\ldots,W_L$, biases $b_1,\ldots,b_L$, and per-layer activations
+$\phi_1,\ldots,\phi_L$ (identified automatically from the trained
+\texttt{dlnetwork}'s layer graph: \texttt{tanhLayer},
+\texttt{reluLayer}, or linear for the final layer), the forward pass on
+normalized input $x_n$ is the standard recursion
+\begin{equation}
+h_0 = x_n, \qquad h_\ell = \phi_\ell\!\left(W_\ell h_{\ell-1} + b_\ell\right)
+\text{ for } \ell=1,\ldots,L, \qquad y = h_L.
+\label{eq:appendix_mlp}
+\end{equation}
+SW-MLP additionally flattens its $[\text{seq\_len}\times 4]$ sliding
+window into a single input vector via column-major reshaping before
+Eq.~\eqref{eq:appendix_mlp} is applied, matching the ordering used at
+training time. Agreement with \texttt{predict()} was verified to
+$1.4\times10^{-7}$ (SW-MLP), $2.2\times10^{-7}$ (PINN-v2), and
+$1.0\times10^{-7}$ (the residual MLP) across multiple random test
+points in the training domain.
+
+\subsection{Gaussian Process (GP-v2)}
+\label{subsec:appendix_gp}
+
+With a Mat\'ern~5/2 kernel, constant basis function, active set
+$\{\mathbf{x}_i\}_{i=1}^{N}$, dual coefficients $\{\alpha_i\}$, and
+constant basis coefficient $\beta_0$ (all extracted directly from the
+trained \texttt{RegressionGP} object's \texttt{ActiveSetVectors},
+\texttt{Alpha}, and \texttt{Beta} properties), the posterior mean at a
+normalized query point $\mathbf{x}$ is
+\begin{equation}
+m(\mathbf{x}) = \beta_0 + \sum_{i=1}^{N} \alpha_i\, k(\mathbf{x}, \mathbf{x}_i),
+\qquad
+k(\mathbf{x},\mathbf{x}') = \sigma_f^2\!\left(1+\frac{\sqrt{5}\,r}{l}+\frac{5r^2}{3l^2}\right)
+e^{-\sqrt{5}r/l},
+\label{eq:appendix_gp}
+\end{equation}
+with $r=\lVert\mathbf{x}-\mathbf{x}'\rVert_2$ and kernel hyperparameters
+$(\sigma_f, l)$ read from \texttt{KernelInformation.KernelParameters}.
+Reducing the active-set size from $N_{\text{sub}}=400$ (used for the
+open-loop accuracy results of Section~\ref{subsubsec:gp_v2}) to
+$N_{\text{sub}}=50$ for the closed-loop diagnostic
+(Section~\ref{subsec:operational_feasibility}) reduced manual per-step
+cost roughly in proportion to $N_{\text{sub}}$, with no measurable loss
+of test-set accuracy on this task. Agreement with \texttt{predict()}
+was verified to $4.2\times10^{-10}$.
+
+\subsection{Temporal Convolutional Network (TCN)}
+\label{subsec:appendix_tcn}
+
+For each of the three dilated causal convolution blocks (kernel size
+$K=3$, dilations $1,2,4$, input channels $C_{\text{in}}$, output
+channels/filters $C_{\text{out}}=16$), the layer's weight tensor
+$W\in\mathbb{R}^{K\times C_{\text{in}}\times C_{\text{out}}}$ is
+reshaped once, at extraction time, into
+$W_{\text{mat}}\in\mathbb{R}^{C_{\text{out}}\times KC_{\text{in}}}$ by
+horizontally concatenating $K$ blocks $W_{\text{mat}}^{(k)} =
+W(k,:,:)^\top$. At inference, the causally left-padded input
+$X_p\in\mathbb{R}^{C_{\text{in}}\times(L+d(K-1))}$ (zero-padded by
+$d(K-1)$ steps, $d$ the block's dilation) is unfolded into
+$U\in\mathbb{R}^{KC_{\text{in}}\times L}$ by stacking $K$ dilated
+slices, and the entire convolution is computed as the single matrix
+product
+\begin{equation}
+Y = W_{\text{mat}}\, U + b,
+\label{eq:appendix_tcn}
+\end{equation}
+followed by per-timestep, channel-wise layer normalization
+($Y_{:,t} \leftarrow \gamma\odot(Y_{:,t}-\mu_t)/\sqrt{\sigma_t^2+\epsilon}+\delta$,
+with $\mu_t,\sigma_t^2$ computed across channels at each timestep $t$)
+and ReLU. An initial implementation of Eq.~\eqref{eq:appendix_tcn} as
+explicit triple-nested loops over filters, timesteps, and kernel taps
+was numerically correct but yielded only a $2.2\times$ speedup over
+\texttt{predict()}; precomputing $W_{\text{mat}}$ once and using
+Eq.~\eqref{eq:appendix_tcn} as a single matrix multiplication per block
+was necessary to reach the $56\times$ speedup reported in
+Table~\ref{tab:predict_bypass}. Agreement with \texttt{predict()} was
+verified to $2.2\times10^{-7}$ across five random test points.
+
+\subsection{LSTM}
+\label{subsec:appendix_lstm}
+
+For a single LSTM layer with hidden size $H$, input $x_t$, and
+previous hidden/cell state $(h_{t-1}, c_{t-1})$, MATLAB's
+\texttt{lstmLayer} concatenates gate weights in the order input,
+forget, cell-candidate, output (each occupying $H$ consecutive rows of
+the $4H$-row \texttt{InputWeights} $W_i$, \texttt{RecurrentWeights}
+$W_r$, and \texttt{Bias} $b$). One recurrent step is
+\begin{align}
+z &= W_i x_t + W_r h_{t-1} + b, \qquad z\in\mathbb{R}^{4H}, \label{eq:appendix_lstm1}\\
+i_t &= \sigma(z_{1:H}), \quad f_t = \sigma(z_{H+1:2H}), \quad
+g_t = \tanh(z_{2H+1:3H}), \quad o_t = \sigma(z_{3H+1:4H}), \\
+c_t &= f_t \odot c_{t-1} + i_t \odot g_t, \qquad
+h_t = o_t \odot \tanh(c_t), \label{eq:appendix_lstm3}
+\end{align}
+with $\sigma(\cdot)$ the logistic sigmoid. The trained two-layer
+network (hidden sizes $64$ and $32$) applies
+Eqs.~\eqref{eq:appendix_lstm1}--\eqref{eq:appendix_lstm3} recurrently
+over the $L=10$-step input window for layer 1 (retaining every $h_t$ as
+input to layer 2), then again over the resulting sequence for layer 2
+(retaining only its final $h_L$), followed by a linear output
+projection. Both hidden and cell states are initialized to zero at the
+start of each window, matching \texttt{predict()}'s default (stateless)
+behavior. Unlike the other architectures, this recursion cannot be
+reduced to a single matrix multiplication, since $h_t$ depends on
+$h_{t-1}$; the ten sequential steps are an irreducible cost of the
+manual implementation, consistent with LSTM's manual per-step cost
+($\SI{52.2}{ms}$) remaining $2$--$4\times$ that of the five single-pass
+architectures even after the bypass. Agreement with \texttt{predict()}
+was verified to $1.3\times10^{-5}$--$2.0\times10^{-4}$ across five
+random test points --- an order of magnitude looser than the
+$10^{-7}$--$10^{-13}$ agreement obtained for the feedforward
+architectures and GP, attributed to accumulated single-precision
+(\texttt{dlnetwork}'s default) versus double-precision (manual
+implementation) rounding compounding over ten sequential nonlinear
+steps, rather than to an incorrect gate ordering, since the
+discrepancy is small and consistently sized across independent test
+points rather than an order-of-magnitude mismatch.
+
+\subsection{Reproducibility: Explicit Random Seeding}
+\label{subsec:appendix_seeding}
+
+All V2 surrogate training scripts (LSTM, TCN, PINN-v2, SW-MLP) fix
+MATLAB's global random state via \texttt{rng(cfg.data.split\_seed)}
+immediately before network construction and training, and record the
+seed used in the returned model struct (\texttt{mdl.rng\_seed}). This
+addresses an earlier version of this pipeline, in which weight
+initialization and mini-batch shuffling were left to MATLAB's
+unseeded global random state, so that repeated training runs produced
+qualitatively similar but numerically different results. The Table~\ref{tab:stage2_accuracy}
+V2 figures were regenerated under this explicit seeding and confirmed
+reproducible across repeated runs on the same MATLAB release and
+machine; exact reproducibility across different releases or hardware
+is not guaranteed, since \texttt{trainnet}'s underlying numerical
+kernels may differ across releases.
+
+\subsection{Diagnostic Note on Solver \texttt{ExitFlag}}
+\label{subsec:appendix_exitflag}
+
+Practitioners replicating this diagnostic should note that
+\texttt{nlmpcmove}'s \texttt{info.ExitFlag} being non-positive (solver
+iteration limit reached without formal convergence) is, under the
+bounded-iteration solver configuration used throughout this study
+(\texttt{MaxIterations}$=30$, Section~\ref{subsec:nlmpc_formulation}),
+expected for \emph{every} controller at \emph{every} step, including
+the fast and well-behaved Baseline. It is therefore not, by itself, a
+useful signal of surrogate-specific infeasibility, and should not be
+interpreted as such without also examining per-step CPU cost and the
+resulting closed-loop trajectory.

@@ -1,0 +1,108 @@
+MATLAB-REQUIREMENTS.txt
+========================================================================
+  ML-MPC Wind Turbine — Software Environment Manifest
+========================================================================
+
+This file lists the exact MATLAB release(s) and toolboxes required to
+reproduce every result in this project, per the reproducibility review
+(2026-07-30). Added in response to reviewer comment P0.1/P0.2.
+
+------------------------------------------------------------------------
+MATLAB RELEASES USED
+------------------------------------------------------------------------
+
+Two releases were used across this project's history. Results from
+each release are clearly attributed below; DO NOT assume all results
+were produced on the same release.
+
+  R2024a (24.1.0.2537033)
+    - Used for: original V1/V2 surrogate training and Stage 3 closed-
+      loop evaluation (stage2_models.mat, stage2_models_v2.mat and all
+      results derived from them, i.e. Sections 3-6 of the main text
+      EXCLUDING the manual-bypass diagnostic in Section 5.4/6.4).
+    - This is the release on which the predict()-overhead problem was
+      originally discovered and documented (JIT/dlarray spikes, up to
+      2572 ms/call for TCN).
+
+  R2026a (26.1.0.3251617, Update 2)
+    - Used for: the predict()-bypass diagnostic series (Section 5.4),
+      the extended closed-loop evaluation (Section 6.4), and the
+      extended Monte Carlo analysis (Section 6.5) — i.e. all
+      "*_manual_closed_loop.m" scripts and generate_*.m figure scripts.
+    - The predict()-overhead problem was independently re-confirmed on
+      this release (see docs/experiment_log.md, entries dated
+      2026-07-27 through 2026-07-30); the bottleneck is NOT specific to
+      R2024a and is not fixed by upgrading MATLAB version alone.
+
+To check your own MATLAB release, run: version
+
+------------------------------------------------------------------------
+REQUIRED TOOLBOXES
+------------------------------------------------------------------------
+
+  Deep Learning Toolbox
+    Required for: dlnetwork, trainnet, trainingOptions, predict()
+    (dlnetwork), all layer types used (featureInputLayer,
+    fullyConnectedLayer, tanhLayer, reluLayer, sequenceInputLayer,
+    lstmLayer, convolution1dLayer, layerNormalizationLayer,
+    globalAveragePooling1dLayer, dropoutLayer, minibatchpredict).
+    Used by: SW-MLP, PINN, PINN-v2, LSTM, TCN training and inference
+    (both predict()-based and as the ground-truth reference for
+    verifying manual forward-pass implementations).
+
+  Statistics and Machine Learning Toolbox
+    Required for: fitrgp, RegressionGP, predict() (GP).
+    Used by: GP (V1), GP-v2, and the GP-residual model
+    (stage2_train_gp_residual.m).
+
+  Model Predictive Control Toolbox
+    Required for: nlmpc, nlmpcmove, nlmpcmoveopt.
+    Used by: every closed-loop controller in the project.
+
+  Optimization Toolbox
+    Required for: fmincon (used internally by nlmpc's SQP solver).
+
+  Signal Processing Toolbox
+    Required for: butter, filtfilt (used in kaimal_wind.m's low-pass
+    filtering step and in stage1_generate_residual_data.m).
+
+  Fuzzy Logic Toolbox
+    Required for: genfis, anfis, evalfis (LLNFM/ANFIS training and
+    inference, sf_llnfm.m).
+
+Minimum toolbox versions were not independently verified across
+releases; all toolboxes were used at whatever version ships with the
+corresponding MATLAB release listed above (R2024a or R2026a).
+
+To check installed toolboxes, run: ver
+(cross-reference against the list above; a missing toolbox will cause
+an "Undefined function" error naming the missing function.)
+
+------------------------------------------------------------------------
+HARDWARE
+------------------------------------------------------------------------
+
+All results were produced on CPU only (no GPU-accelerated training or
+inference). No CUDA/GPU toolbox dependency exists in this project.
+Machine specification was not recorded systematically; per-step CPU
+timings (ms) reported throughout the paper are therefore relative
+(predict() vs. manual, same machine, same run) rather than absolute
+benchmarks portable across hardware. Absolute wall-clock figures
+(e.g. "LSTM predict(): ~318 s/step") should be read as
+order-of-magnitude, machine-specific figures, not universal constants.
+
+------------------------------------------------------------------------
+RANDOM SEEDING
+------------------------------------------------------------------------
+
+See docs/experiment_log.md and individual script headers for seeds used
+in each experiment. Known recorded seeds:
+  - Stage 1 dataset trajectory split: cfg.data.split_seed = 42
+  - Wind realization (single-run closed-loop tests): seed = 2025
+  - Extended Monte Carlo: seeds 2025:2029 (5 seeds per wind speed)
+  - Isolated latency benchmark: rng(7)
+
+NOT every training script currently sets an explicit rng() before
+calling trainnet()/fitrgp() — see the reproducibility action item in
+the accompanying review response for scripts that should be updated
+to record and set a seed explicitly (P0.4).

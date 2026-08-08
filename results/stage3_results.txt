@@ -1,0 +1,101 @@
+STAGE 3 RESULTS — predict() Bypass Diagnostic Series
+Generated: 08-Aug-2026 00:04:06
+MATLAB version: 24.1.0.2537033 (R2024a)
+================================================
+
+[MLP-residual]
+  Nominal-only:
+    mean_cpu_ms = 9.78
+    max_cpu_ms  = 998.32
+    overruns_gt100ms = 2
+    rmse_omega_rpm = 1.3753
+  Nominal+Correction (predict):
+    mean_cpu_ms = 3425.52
+    max_cpu_ms  = 18642.19
+    overruns_gt100ms = 600
+    rmse_omega_rpm = 1.3627
+  Nominal+Correction (manual):
+    mean_cpu_ms = 10.91
+    max_cpu_ms  = 44.41
+    overruns_gt100ms = 0
+    rmse_omega_rpm = 1.3730
+
+[GP]
+  Nominal-only:
+    mean_cpu_ms = 10.01
+    max_cpu_ms  = 50.63
+    overruns_gt100ms = 0
+    rmse_omega_rpm = 1.3753
+  Nominal+GP (predict):
+    mean_cpu_ms = 88.91
+    max_cpu_ms  = 387.55
+    overruns_gt100ms = 203
+    rmse_omega_rpm = 1.3718
+  Nominal+GP (manual):
+    mean_cpu_ms = 22.80
+    max_cpu_ms  = 126.43
+    overruns_gt100ms = 3
+    rmse_omega_rpm = 1.3726
+
+[SW-MLP + PINN-v2]
+  Baseline:
+    mean_cpu_ms = 23.66
+    max_cpu_ms  = 93.20
+    overruns_gt100ms = 0
+    rmse_omega_rpm = 1.0793
+  SW-MLP (predict):
+    mean_cpu_ms = 1149.79
+    max_cpu_ms  = 11412.70
+    overruns_gt100ms = 600
+    rmse_omega_rpm = 1.2210
+  SW-MLP (manual):
+    mean_cpu_ms = 15.20
+    max_cpu_ms  = 168.17
+    overruns_gt100ms = 4
+    rmse_omega_rpm = 1.0304
+  PINN-v2 (predict):
+    mean_cpu_ms = 1390.18
+    max_cpu_ms  = 7159.27
+    overruns_gt100ms = 600
+    rmse_omega_rpm = 1.0524
+  PINN-v2 (manual):
+    mean_cpu_ms = 14.71
+    max_cpu_ms  = 59.24
+    overruns_gt100ms = 0
+    rmse_omega_rpm = 1.1178
+
+[TCN]
+  Baseline:
+    mean_cpu_ms = 9.83
+    max_cpu_ms  = 33.13
+    overruns_gt100ms = 0
+    rmse_omega_rpm = 1.0793
+  TCN (predict):
+    mean_cpu_ms = 844.52
+    max_cpu_ms  = 7004.35
+    overruns_gt100ms = 600
+    rmse_omega_rpm = 0.9130
+  TCN (manual):
+    mean_cpu_ms = 25.79
+    max_cpu_ms  = 92.90
+    overruns_gt100ms = 0
+    rmse_omega_rpm = 1.1178
+
+[LSTM]
+  Baseline:
+    mean_cpu_ms = 9.36
+    max_cpu_ms  = 24.19
+    overruns_gt100ms = 0
+    rmse_omega_rpm = 1.2709
+  LSTM (predict):
+    mean_cpu_ms = 32079.53
+    max_cpu_ms  = 39775.35
+    overruns_gt100ms = 5
+    rmse_omega_rpm = 0.3277
+    NOTE: based on only 5 steps (see script header)
+  LSTM (manual):
+    mean_cpu_ms = 51.88
+    max_cpu_ms  = 183.99
+    overruns_gt100ms = 1
+    rmse_omega_rpm = 0.9488
+

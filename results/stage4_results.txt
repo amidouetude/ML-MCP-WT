@@ -1,0 +1,60 @@
+STAGE 4 RESULTS — Extended Closed-Loop Evaluation
+Generated: 08-Aug-2026 11:11:22
+(V=14 m/s, T=60s, seed=2025, corrected initial condition)
+================================================
+
+[Baseline]
+  rmse_omega_rpm = 1.2709
+  pitch_activity_deg = 372.5
+  mean_cpu_ms = 8.0
+  n_converged = 600
+  n_infeasible = 0
+
+[MLP-residual]
+  rmse_omega_rpm = 1.2638
+  pitch_activity_deg = 396.3
+  mean_cpu_ms = 9.4
+  n_converged = 597
+  n_infeasible = 3
+
+[GP-residual]
+  rmse_omega_rpm = 1.2630
+  pitch_activity_deg = 383.9
+  mean_cpu_ms = 10.0
+  n_converged = 600
+  n_infeasible = 0
+
+[SW-MLP]
+  rmse_omega_rpm = 1.0304
+  pitch_activity_deg = 431.0
+  mean_cpu_ms = 12.9
+  n_converged = 600
+  n_infeasible = 0
+
+[PINN-v2]
+  rmse_omega_rpm = 1.1178
+  pitch_activity_deg = 2.7
+  mean_cpu_ms = 13.0
+  n_converged = 600
+  n_infeasible = 0
+
+[TCN]
+  rmse_omega_rpm = 1.1178
+  pitch_activity_deg = 2.7
+  mean_cpu_ms = 23.3
+  n_converged = 600
+  n_infeasible = 0
+
+[LSTM]
+  rmse_omega_rpm = 1.0203
+  pitch_activity_deg = 14.1
+  mean_cpu_ms = 71.5
+  n_converged = 600
+  n_infeasible = 0
+
+[Interpretation note]
+If several controllers show mv range=[0,0] and identical RMSE
+to 4 decimal places, this is the signature of a shared
+open-loop failure mode (frozen pitch), NOT genuine control --
+see docs/experiment_log.md, initial-condition bug entry,
+before trusting these numbers.

@@ -1,0 +1,161 @@
+% ===========================================================================
+% MAIN FILE — ML-MPC Wind Turbine Paper
+% Amidou Maiga — Erciyes University
+% Compile on Overleaf: pdflatex → bibtex → pdflatex → pdflatex
+% ===========================================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% ── Encoding & language ─────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+% ── Mathematics ─────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb}
+
+% ── Graphics & tables ───────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[table]{xcolor}
+\usepackage{float}
+\usepackage{makecell}
+
+% ── Layout ──────────────────────────────────────────────────────────────────
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+\setlength{\parindent}{1cm}
+
+% ── Lists ───────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+
+% ── Units ───────────────────────────────────────────────────────────────────
+\usepackage{siunitx}
+\sisetup{separate-uncertainty=true}
+
+% ── Algorithm / pseudocode ───────────────────────────────────────────────────
+\usepackage[ruled, vlined, linesnumbered]{algorithm2e}
+
+% ── Hyperlinks ──────────────────────────────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks = true,
+    linkcolor  = blue,
+    citecolor  = blue,
+    urlcolor   = blue,
+    pdftitle   = {Comparative Study of Machine Learning Surrogates for Nonlinear Model Predictive Control of Wind Turbine Rotor Speed in Above-Rated Operation},
+    pdfauthor  = {Amidou Maiga},
+}
+
+% ── Bibliography ────────────────────────────────────────────────────────────
+\usepackage{natbib}
+\bibliographystyle{unsrtnat}
+
+% ── Table font size ─────────────────────────────────────────────────────────
+\usepackage{etoolbox}
+\AtBeginEnvironment{table}{\small}
+
+% ── Custom commands (shared across all sections) ─────────────────────────────
+\newcommand{\omegar}{\omega_r}
+\newcommand{\omegarated}{\omega_{\text{rated}}}
+\newcommand{\Tg}{T_g}
+\newcommand{\Ta}{T_a}
+\newcommand{\Kopt}{K_{\text{opt}}}
+\newcommand{\Cp}{C_p}
+\newcommand{\betacmd}{\beta_{\text{cmd}}}
+\newcommand{\RMSE}{\text{RMSE}}
+%\newcommand{\deg}{^{\circ}}
+
+% ===========================================================================
+% TITLE PAGE
+% ===========================================================================
+\title{
+    \Large\textbf{Comparative Study of Machine Learning Surrogates for
+    Nonlinear Model Predictive Control of Wind Turbine Rotor Speed
+    in Above-Rated Operation}
+}
+
+\author{
+	\textbf{Amidou Maiga},
+	\textbf{Mustafa Serdar GENÇ},
+	\textbf{Gamze GENÇ},\\
+	\textbf{Ahmet AKSÖZ},
+	\textbf{Dongran Song},   
+}
+
+%\author{
+%	\textbf{Amidou Maiga}\\[0.4em]
+%	\small Department of Energy Systems Engineering\\
+%	\textbf{Mustafa Serdar GENÇ}\\[0.4em]
+%	\small Department of Energy Systems Engineering\\
+%	\small Erciyes University, Kayseri, Turkey\\[0.5em]
+%	\textbf{Gamze GENÇ}\\[0.4em]
+%	\small Department of Energy Systems Engineering\\
+%	\small Erciyes University, Kayseri, Turkey\\   [0.5em]
+%	\textbf{Ahmet AKSÖZ}\\[0.4em]
+%	\small Department of Electrical-Electronic Engineering\\
+%	\small Kayseri University, Kayseri, Turkey\\ [0.5em]
+%	\textbf{Dongran Song}\\[0.4em]
+%	\small Department of Electrical-Electronic Engineering\\
+%	\small Central South University, Changsha, China\\   
+%}
+
+\date{}
+
+% ===========================================================================
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+% ── Abstract ────────────────────────────────────────────────────────────────
+\input{sections/00_abstract}
+\newpage
+
+% ── Table of contents ───────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ── Sections ────────────────────────────────────────────────────────────────
+\input{sections/01_introduction}
+\newpage
+
+\input{sections/02_system_modeling}
+\newpage
+
+\input{sections/03_dataset_generation}
+\newpage
+
+\input{sections/04_ml_surrogate_models}
+\newpage
+
+\input{sections/05_mpc_framework}
+\newpage
+
+\input{sections/06_closed_loop_results}
+\newpage
+
+\input{sections/07_discussion}
+\newpage
+
+\input{sections/08_conclusion}
+\newpage
+
+% ── Appendix ────────────────────────────────────────────────────────────────
+\appendix
+\input{sections/09_appendix}
+\newpage
+
+% ── Bibliography ────────────────────────────────────────────────────────────
+\bibliography{references}
+\newpage
+
+\end{document}

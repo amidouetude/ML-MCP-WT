@@ -1,0 +1,69 @@
+% ===========================================================================
+% SECTION 8 — CONCLUSION
+% Target: 300-400 words
+% ===========================================================================
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper presented a systematic comparison of six machine learning
+surrogate architectures — LLNFM, LSTM, GP, PINN, TCN, and SW-MLP, in both
+a V1 and an improved V2 configuration — integrated as internal state
+predictors within a nonlinear MPC framework for rotor speed regulation of
+the NREL 5-MW reference wind turbine in above-rated operation. Four
+contributions follow from the results reported in
+Sections~\ref{sec:ml_surrogates}--\ref{sec:closed_loop_results}:
+(1) a quantitative demonstration that one-step prediction accuracy and
+closed-loop MPC performance are only loosely coupled, with the most
+accurate open-loop surrogates (LLNFM, GP-v2) not translating that
+advantage directly into the best closed-loop tracking; (2) a five-stage
+diagnostic (Section~\ref{subsec:operational_feasibility}) tracing an
+apparent hard operational incompatibility between LSTM, TCN, SW-MLP,
+PINN-v2, and GP-v2 on one hand and SQP-based \texttt{nlmpc} on the
+other to a specific, resolvable cause — repeated \texttt{predict()}
+calls inside the solver's iteration loop, not surrogate architecture,
+model size, or MATLAB version — together with a verified manual
+forward-pass remedy restoring closed-loop viability for all six
+surrogates at speedups of $7.8\times$ to $2844\times$
+(Table~\ref{tab:predict_bypass}); (3) a Region~II/III generator torque
+switching correction, calibrated at the turbine's actual rated operating
+point rather than its theoretical aerodynamic optimum, without which
+long-horizon closed-loop simulation enters an irrecoverable trap; and
+(4) a Gaussian-Process-based uncertainty-penalized MPC cost, made
+statistically meaningful by Matérn~5/2 kernel selection and Bayesian
+hyperparameter optimization, which achieves zero pitch activity while
+matching the best closed-loop tracking accuracy among the controllers
+evaluated in the original (pre-bypass) protocol.
+
+For practitioners selecting an ML surrogate for wind turbine MPC, our
+revised results temper the earlier, narrower recommendation to restrict
+consideration to instantaneous-state surrogates (LLNFM, GP): once
+\texttt{predict()}'s call overhead is bypassed with a verified manual
+forward pass, all six architectures tested here — including TCN and
+LSTM, previously the most computationally prohibitive — become viable
+within the $T_s=\SI{0.1}{s}$ real-time budget. The practical decision
+rule is accordingly not architectural but methodological: before
+concluding that a given surrogate is operationally infeasible inside an
+SQP-based \texttt{nlmpc} solve, practitioners should profile whether
+the surrogate's own inference call, or MATLAB's \texttt{predict()}
+dispatch overhead specifically, is the dominant cost, since only the
+former is an intrinsic property of the architecture. Among the six
+surrogates evaluated with the manual bypass
+(Section~\ref{subsec:bypass_closed_loop}), LSTM achieved the lowest
+mean tracking RMSE at two of three tested wind speeds, at the highest
+--- though still real-time-compliant --- per-step cost, reflecting its
+irreducible sequential recurrence; the single-pass architectures
+(LLNFM, GP, the residual MLP, SW-MLP, PINN-v2) remain preferable where
+computational headroom is scarcer.
+
+The main limitations of this study — a two-state plant model, uniform
+wind input, an unresolved seed-to-seed instability in LSTM's tracking
+performance near the Region~II/III boundary, and the per-architecture
+verification burden inherent to any manual-bypass approach — are
+addressed in Section~\ref{subsec:limitations}, and motivate the
+extensions outlined in Section~\ref{subsec:perspectives_v3}: targeted
+investigation of the wind-speed-dependent crossover between surrogate
+families and of LSTM's low-wind-speed instability, a four-state plant
+model including drivetrain torsion and tower fore-aft dynamics, and an
+explicit wind-speed forecasting or estimation layer to complement the
+uncertainty-aware MPC cost introduced in this work.

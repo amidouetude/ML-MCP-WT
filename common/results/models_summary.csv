@@ -1,0 +1,14 @@
+snapshot,model_name,rng_seed,hyperparameters,rmse_omega_rpm,rmse_beta_deg,train_time_s
+V1,Persistence,not recorded,"n/a",0.002524,0.3220,0.01
+V1,Linear ARX,not recorded,"n/a",0.001931,0.1423,0.02
+V1,LLNFM,not recorded,"ANFIS: 2 MF/input, 16 rules",0.001114,0.0971,5.87
+V1,LSTM,not recorded,"hidden=[64,32], seq_len=10",0.002313,0.2069,608.07
+V1,GP,not recorded,"SE kernel, N_sub=400",0.000814,0.1438,1.92
+V1,PINN,not recorded,"MLP 64-64-32, lambda_phy=0.10",0.002021,0.1971,57.13
+V2,Persistence,not recorded,"n/a",0.002524,0.3220,0.04
+V2,Linear ARX,not recorded,"n/a",0.001931,0.1423,0.03
+V2,LLNFM,not recorded,"ANFIS (reused from V1)",0.001114,0.0971,5.87
+V2,TCN,not recorded,"kernel=3,dilations=[1,2,4],filt=16",0.004907,0.2934,2102.37
+V2,SW-MLP,not recorded,"relu MLP, seq flattened",0.001787,0.1572,332.41
+V2,GP-v2,not recorded,"Matern5/2, N_sub=400, Bayes-opt HP",0.001070,0.0692,77.91
+V2,PINN-v2,not recorded,"MLP 64-64-32, softplus Cp",0.002018,0.1636,66.86

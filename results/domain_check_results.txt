@@ -1,0 +1,20 @@
+SURROGATE DOMAIN CONSISTENCY CHECK
+Generated: 08-Aug-2026 16:00:59
+================================================
+
+stage1_observed_omega_min_rpm = 8.0241
+stage1_observed_omega_max_rpm = 13.3100
+configured_surrogate_bound_min_rpm = 8.5200
+configured_surrogate_bound_max_rpm = 12.8100
+configured_baseline_bound_min_rpm = 11.5000
+configured_baseline_bound_max_rpm = 13.3100
+
+[Check 1: surrogate MPC bound within training domain]
+  PASS
+  margin_low_rpm = 0.4959
+  margin_high_rpm = 0.5000
+
+[Note: Baseline vs surrogate bounds]
+  INFO ONLY -- no containment relationship expected or required
+
+[Overall] ALL CHECKS PASSED

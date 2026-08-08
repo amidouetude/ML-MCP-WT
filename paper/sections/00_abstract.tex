@@ -1,0 +1,29 @@
+% ===========================================================================
+% ABSTRACT
+% ===========================================================================
+
+\begin{abstract}
+Wind turbine speed regulation in above-rated operation requires fast,
+constraint-aware control; nonlinear Model Predictive Control (MPC) is
+well suited to this, but its internal plant model is expensive to
+evaluate at every step, motivating cheaper learned surrogates. We
+compare six surrogate architectures --- LLNFM, LSTM, GP, PINN, TCN, and
+SW-MLP --- as internal predictors in a nonlinear MPC for the NREL 5-MW
+turbine. One-step prediction accuracy and closed-loop tracking prove
+only loosely coupled. What initially appeared as a hard operational
+incompatibility between LSTM/TCN/SW-MLP/PINN-v2/GP-v2 and SQP-based
+\texttt{nlmpc} was traced, through a five-stage diagnostic, to
+repeated \texttt{predict()} calls inside the solver --- not
+architecture, model size, or MATLAB version. A verified manual forward
+pass restored closed-loop viability for all six surrogates, with
+speedups of $7.8\times$ to $2844\times$. We further identify a
+Region~II/III torque-switching correction as a precondition for stable
+closed-loop simulation, and a Mat\'ern-kernel GP uncertainty-penalized
+MPC cost achieving zero pitch activity at matching tracking accuracy.
+These results reframe an apparent architectural limitation as a
+diagnosable, remediable implementation cost, with practical guidance
+for deploying ML surrogates in real-time MPC.
+
+\textbf{Keywords:} Model Predictive Control, Wind Turbine Control,
+Machine Learning Surrogates, Gaussian Process, Real-Time Feasibility
+\end{abstract}
