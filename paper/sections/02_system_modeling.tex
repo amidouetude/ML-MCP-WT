@@ -133,12 +133,13 @@ accounts for drivetrain and electrical losses, so it sits slightly off the
 pure-aerodynamic $\Cp$ peak; calibrating $\Kopt$ there prioritizes torque
 continuity at the switching boundary over exact aerodynamic optimality
 (calibrating instead at $\lambda^{*}=8.11$ would produce a $30\%$
-discontinuity, versus $2.1\%$ at $\lambda_{\text{rated}}=7.00$). The
+discontinuity, versus $2.26\%$ at $\lambda_{\text{rated}}=7.00$). The
 resulting continuity ratio is
-$\Kopt \omegarated^{2} / (N_{\text{gear}} T_{g,\text{rated}}) = 1.0215$,
-i.e.\ a $2.1\%$ torque discontinuity at $\omegar = \omegarated$
-(equivalently a single-point deficit of \SI{4128}{N.m}, $0.105\%$ of
-$N_{\text{gear}}T_{g,\text{rated}}$), which is documented and accepted as
+$\Kopt \omegarated^{2} / (N_{\text{gear}} T_{g,\text{rated}}) = 1.0226$,
+i.e.\ a $2.26\%$ torque discontinuity at $\omegar = \omegarated$
+(a single-point deficit of \SI{89108}{N.m} on the low-speed shaft,
+$K_{\text{opt}}\omegarated^2 - N_{\text{gear}}T_{g,\text{rated}} =
+\SI{4035098}{N.m} - \SI{3945990}{N.m}$), which is documented and accepted as
 negligible: the explicit-Euler integration together with continuous
 turbulent-wind excursions means the simulated system never dwells exactly
 at $\omegar = \omegarated$ to machine precision. Feasibility of
@@ -158,7 +159,7 @@ Baseline controller.
 
 \begin{figure}[H]
 \centering
-% \includegraphics[width=0.8\textwidth]{figures/Fig3_S2_ModelSummary.png}
+\includegraphics[width=0.8\textwidth]{figures/Fig3_S2_ModelSummary.png}
 \caption{Region II/III generator torque switching: aerodynamic torque
 $\Ta$ and generator torque $\Tg(\omegar)$ before (constant torque) and
 after (Eq.~\eqref{eq:torque_switching}) correction.}
@@ -169,15 +170,25 @@ after (Eq.~\eqref{eq:torque_switching}) correction.}
 \label{subsec:wind_model}
 
 Turbulent wind input is generated from the Kaimal spectrum defined in
-IEC~61400-1 \citep{iec61400} for Turbulence Class~B ($I = 0.16$), with
-longitudinal turbulence length scale $L_1 = \SI{340.2}{m}$. Time series are
+IEC~61400-1 \citep{iec61400} with turbulence intensity $I = 0.16$,
+longitudinal turbulence length scale $L_1 = \SI{340.2}{m}$. We note that
+$I=0.16$ corresponds to IEC Turbulence Category~A (the more severe of
+the two standard categories at this hub height) rather than
+Category~B ($I=0.14$) as an earlier draft of this work mislabeled it;
+the simulated turbulence is therefore somewhat more severe than a
+Category-B label would imply, not less. Time series are
 synthesized via inverse FFT of the discretized Kaimal power spectral
-density. An initial IFFT normalization produced a turbulence intensity that
-deviated from the target; this was corrected using a deterministic
-reference-signal scaling approach, matching the achieved standard deviation
-$\sigma_{\text{actual}} = \SI{2.24}{m/s}$ to the target
-$\sigma_{\text{target}} = \SI{2.24}{m/s}$ (IEC Class~B at the operating mean
-wind speed), a $0.0\%$ residual error confirmed in Stage~0 validation. The
+density, with the amplitude spectrum deterministically rescaled before
+phase randomization so that the achieved standard deviation
+$\sigma_{\text{actual}}$ matches the target
+$\sigma_{\text{target}} = I \cdot V_{\text{mean}}$ \emph{by construction}
+--- this rescaling step is a normalization procedure, not an
+independent validation of the synthesized turbulence, and should not
+be read as evidence that the resulting time series matches the target
+Kaimal spectrum in any property other than its overall standard
+deviation; validating the achieved power spectral density shape
+against the analytical Kaimal spectrum independently is noted as
+future work. The
 synthesized wind signal is subsequently passed through a second-order
 Butterworth low-pass filter with cutoff frequency $f_c = \SI{0.3}{Hz}$,
 consistent with the rotor-effective wind filtering approach of

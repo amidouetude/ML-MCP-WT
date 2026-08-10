@@ -57,9 +57,11 @@ validation/test statistics into the training pipeline.
 \label{subsec:feature_statistics}
 
 Table~\ref{tab:feature_stats} summarizes the operating envelope covered by
-the generated dataset. The rotor speed ranges from $\SI{10.28}{rpm}$ to
+the generated dataset. The rotor speed ranges from $\SI{8.02}{rpm}$ to
 $\SI{13.31}{rpm}$ (the upper bound coinciding with the plant's maximum
-admissible speed, Section~\ref{subsec:nrel5mw}), the pitch angle spans its
+admissible speed, Section~\ref{subsec:nrel5mw}; the lower bound is the
+operative figure from which the surrogate MPC safety margin in
+Section~\ref{subsec:surrogate_integration} is derived), the pitch angle spans its
 full physical domain $[0,25]\deg$, and the wind speed ranges from
 $\SI{7.85}{m/s}$ to the cut-out limit of $\SI{25.0}{m/s}$. The maximum
 sampled power coefficient is $\Cp^{\max} = 0.480$, consistent with the
@@ -74,27 +76,27 @@ limit $\dot\beta_{\max}$), and correctly normalized training features
 (zero mean, unit variance).
 
 \begin{table}[H]
-	\centering
-	\caption{Dataset feature statistics (24{,}000 samples, 80 trajectories).}
-	\label{tab:feature_stats}
-	\begin{tabular}{lccc}
-		\toprule
-		Feature & Min & Max & Unit \\
-		\midrule
-		$\omegar$ & 10.28 & 13.31 & rpm \\
-		$\beta$   & 0.00  & 25.00 & deg \\
-		$V$       & 7.85  & 25.00 & m/s \\
-		$u_{\text{cmd}}$ & 0.00 & 25.00 & deg \\
-		$\Cp$ (sample max) & \multicolumn{2}{c}{0.480 (Betz = 0.5926)} & -- \\
-		\bottomrule
-	\end{tabular}
+\centering
+\caption{Dataset feature statistics (24{,}000 samples, 80 trajectories).}
+\label{tab:feature_stats}
+\begin{tabular}{lccc}
+\toprule
+Feature & Min & Max & Unit \\
+\midrule
+$\omegar$ & 8.02 & 13.31 & rpm \\
+$\beta$   & 0.00  & 25.00 & deg \\
+$V$       & 7.85  & 25.00 & m/s \\
+$u_{\text{cmd}}$ & 0.00 & 25.00 & deg \\
+$\Cp$ (sample max) & \multicolumn{2}{c}{0.480 (Betz = 0.5926)} & -- \\
+\bottomrule
+\end{tabular}
 \end{table}
 
 \begin{figure}[H]
-	\centering
-	 \includegraphics[width=1\textwidth]{figures/Fig1_S1_Coverage.png}
-	\caption{Operating-space coverage of the generated dataset: rotor speed
-		$\omegar$ versus wind speed $V$, training set (56 trajectories) versus
-		test set (12 trajectories).}
-	\label{fig:dataset_coverage}
+\centering
+\includegraphics[width=0.8\textwidth]{figures/Fig1_S1_Coverage.png}
+\caption{Operating-space coverage of the generated dataset: rotor speed
+$\omegar$ versus wind speed $V$, training set (56 trajectories) versus
+test set (12 trajectories).}
+\label{fig:dataset_coverage}
 \end{figure}

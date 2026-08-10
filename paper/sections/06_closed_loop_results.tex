@@ -138,17 +138,18 @@ Comparing Tables~\ref{tab:v1_results} and~\ref{tab:v2_results} for the
 three controllers common to both runs: the Baseline RMSE improves from
 $\SI{1.3579}{rpm}$ (V1) to $\SI{1.0069}{rpm}$ (V2), a $\approx 26\%$
 reduction, alongside a large drop in cumulative pitch activity (from
-$\SI{603.0}{deg}$ to $\SI{195.2}{deg}$); LLNFM improves markedly on pitch
-activity (from $\SI{26.7}{deg}$ to $\SI{29.0}{deg}$, effectively
-unchanged) while RMSE \emph{degrades} from $\SI{2.04}{rpm}$ to
+$\SI{603.0}{deg}$ to $\SI{195.2}{deg}$); LLNFM's pitch activity is
+essentially unchanged (from $\SI{26.7}{deg}$ to $\SI{29.0}{deg}$) while
+RMSE \emph{degrades} from $\SI{2.04}{rpm}$ to
 $\SI{2.47}{rpm}$; GP-v2's closed-loop RMSE and Mean~$C_p$ are numerically
 identical to V1 GP ($\SI{1.1097}{rpm}$, $C_p=0.2313$ in both runs), despite
-GP-v2's substantially improved open-loop prediction accuracy
-(Table~\ref{tab:stage2_accuracy}: $\RMSE_\omega$ improves from
-$\SI{0.0066}{rpm}$ to $\SI{0.0102}{rpm}$ open-loop — itself a
-counter-intuitive \emph{regression}, see Section~\ref{subsec:comparative_accuracy}
-caveat — while $\RMSE_\beta$ improves substantially, from $0.1427\deg$ to
-$0.0692\deg$). We read this pattern as evidence that, at least for the GP
+GP-v2's \emph{mixed} open-loop prediction accuracy change relative to
+V1 GP (Table~\ref{tab:stage2_accuracy}): $\RMSE_\omega$ \emph{degrades}
+from $\SI{0.0066}{rpm}$ to $\SI{0.0102}{rpm}$ — a counter-intuitive
+regression given the added Bayesian hyperparameter optimization, see the
+Section~\ref{subsec:comparative_accuracy} caveat on V1/V2 dataset
+non-comparability — while $\RMSE_\beta$ improves substantially, from
+$0.1427\deg$ to $0.0696\deg$. We read this pattern as evidence that, at least for the GP
 surrogate, the dominant driver of closed-loop tracking performance is the
 uncertainty-penalized cost structure of Eq.~\eqref{eq:gp_mpc_cost} rather
 than incremental gains in one-step prediction accuracy: the GP surrogate

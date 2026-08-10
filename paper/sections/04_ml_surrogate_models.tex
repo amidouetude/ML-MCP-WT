@@ -21,8 +21,9 @@ under the same protocol.
 \subsubsection{Local Linear Neuro-Fuzzy Model (LLNFM / ANFIS)}
 \label{subsubsec:llnfm}
 
-The LLNFM surrogate is implemented as two independent Sugeno-type ANFIS
-networks (one per output channel), each with a grid-partitioned rule base
+The LLNFM surrogate is implemented as two independent Sugeno-type
+ANFIS \citep{jang_anfis_1993} networks (one per output channel), each
+with a grid-partitioned rule base
 of $2$ generalized bell membership functions (\texttt{gbellmf}) per input,
 giving $2^4=16$ fuzzy rules, $55$ network nodes, and $104$ total parameters
 ($80$ linear consequent parameters, $24$ nonlinear premise parameters).
@@ -76,7 +77,7 @@ surrogate to underperform the linear reference.
 \subsubsection{Long Short-Term Memory (V1)}
 \label{subsubsec:lstm_v1}
 
-The LSTM surrogate uses a sequence length of $10$ steps and two stacked
+The LSTM \citep{hochreiter_lstm_1997} surrogate uses a sequence length of $10$ steps and two stacked
 LSTM layers ($64$ and $32$ units) with $10\%$ dropout, trained for $60$
 epochs (Adam, learning rate $10^{-3}$, batch size $64$) on trajectory-
 respecting sequences ($16{,}240$ train / $3{,}480$ validation / $3{,}480$
@@ -135,7 +136,7 @@ Section~\ref{subsec:gp_uncertainty_cost}.
 \label{subsubsec:pinn_v2}
 
 The V1 PINN clips the power coefficient with
-$C_{p,\text{clip}} = \max(0,\ \min(C_{p,\text{Betz}},\ C_p))$ to enforce
+$\Cp_{\text{clip}} = \max(0,\ \min(C_{p,\text{Betz}},\ \Cp))$ to enforce
 physical bounds in the residual term, which is non-differentiable at the
 clipping boundaries and produces a zero gradient exactly where the physics
 loss is most active. In PINN-v2, this is replaced with a smooth softplus
@@ -184,9 +185,13 @@ in Section~\ref{subsec:limitations}.
 \label{subsec:comparative_accuracy}
 
 Table~\ref{tab:stage2_accuracy} summarizes test-set accuracy for all
-V1 and V2 surrogates. GP-v2 achieves the best overall accuracy
-($\RMSE_{\omega}=\SI{0.0102}{rpm}$, $\RMSE_{\beta}=0.0692\deg$), narrowly
-ahead of V1 GP and LLNFM; LLNFM remains the best accuracy-per-training-second
+V1 and V2 surrogates. GP-v2 achieves the best accuracy on the pitch
+channel ($\RMSE_{\beta}=0.0696\deg$) among all surrogates in either
+snapshot, but not on the rotor-speed channel: its
+$\RMSE_{\omega}=\SI{0.0102}{rpm}$ is higher (worse) than both V1 GP
+($\SI{0.0066}{rpm}$) and V1 LLNFM ($\SI{0.0069}{rpm}$); within the V2
+snapshot alone, GP-v2 does edge out LLNFM$^{*}$ ($\SI{0.0106}{rpm}$) on
+$\omega$. LLNFM remains the best accuracy-per-training-second
 trade-off ($\SI{5.8}{s}$ vs.\ $\SI{77.9}{s}$ for GP-v2). Three surrogates
 (LSTM, TCN, PINN/PINN-v2) fail to clearly outperform the Linear ARX
 baseline, and TCN performs worse than even the naive Persistence baseline
@@ -261,7 +266,7 @@ itself.}
 
 \begin{figure}[H]
 \centering
-% \includegraphics[width=0.85\textwidth]{figures/Fig2_S2_PredictionAccuracy.png}
+\includegraphics[width=0.85\textwidth]{figures/Fig2_S2_PredictionAccuracy.png}
 \caption{Comparative test-set RMSE across all surrogate models, V1 and V2.}
 \label{fig:stage2_rmse_bar}
 \end{figure}
