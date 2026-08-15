@@ -1,0 +1,22 @@
+STAGE 1 DATASET VALIDATION RESULTS
+Generated: 12-Aug-2026 23:41:39
+================================================
+
+total_samples = 24000
+train_samples = 16800
+val_samples = 3600
+test_samples = 3600
+omega_range_rpm = [8.0241, 13.3100]
+beta_range_deg = [0.0000, 25.0000]
+V_range_ms = [5.4774, 25.0000]
+Cp_max_data = 0.480012
+pass_dimensions = 1
+pass_split_counts = 1
+pass_no_nan_inf = 1
+pass_omega_limits = 1
+pass_beta_domain = 1
+pass_cp_betz = 1
+pass_trajectory_structure = 1
+pass_increments_physical = 1
+pass_normalisation = 1
+ALL_PASS = 1

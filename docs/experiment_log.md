@@ -366,3 +366,240 @@ before the fix remain valid and unchanged. This is now the
 authoritative, final dataset for the ML-MPC paper's Discussion update.
 **Files**: all 5 test_*_manual_closed_loop.m scripts (corrected),
 generate_closedloop_detail_figures.m (corrected)
+### 2026-08-11 — R2024a Reconciliation — Stage 1/2 re-run + seed gap found
+**Hypothesis tested**: Do the residual dataset (Stage 1) and residual
+model training (Stage 2) reproduce consistent, expected results under
+a clean R2024a re-run (as part of the full R2024a/R2026a reconciliation
+effort), and are all training scripts now properly seeded?
+**Result**: Stage 1 dataset generation confirmed healthy
+(mean_abs_d_omega=1.637e-4 rad/s, same order of magnitude as prior runs;
+d_beta=0.0 exactly, expected by design since wt_step_true.m only adds
+the unmodeled term to the omega channel). Stage 2 residual MLP training
+also healthy (76.6% improvement over zero-correction baseline). HOWEVER:
+stage2_train_residual.m and stage2_train_gp_residual.m (the two Track B
+toy-model training scripts) were found to have NEVER received the
+rng_seed reproducibility fix applied earlier to the five V1/V2
+architecture training scripts (stage2_train_lstm/tcn/pinn/pinn_v2/
+swmlp.m). stage2_results.txt now explicitly flags this
+("rng_seed = NOT_RECORDED (pre-reproducibility-fix run)") rather than
+silently omitting it.
+**Decision**: Gap acknowledged as low-priority (these are small
+demonstration networks for the Track B diagnostic narrative, not the
+V1/V2 architectures reported in the paper's main accuracy/closed-loop
+tables) but real. Add rng() seeding to stage2_train_residual.m and
+stage2_train_gp_residual.m as a follow-up task, not blocking the
+current R2024a/R2026a reconciliation effort.
+Separately, confirmed and fixed a THIRD occurrence of the root-level
+file-shadowing bug during this reconciliation: stage2_main.m and
+stage2_main_v2.m saved fresh, seeded stage2_models(_v2).mat to the
+project ROOT instead of common/ (same root-cause as the earlier
+Track B results/ shadowing incidents -- pwd was the project root, not
+the target folder, when the script ran). Fresh root copies were moved
+into common/ (overwriting the stale pre-seed versions from
+June/July 2026) and the root duplicates deleted. A broader root-folder
+cleanup was also performed: 6 stray root-level PNGs, the redundant
+root figures/ folder (11 files, all already present in paper/figures/),
+and an empty, accidentally-created ML-MCP-WT/ git repo (likely a typo
+of ML-MPC-WT-V3 during a stray git init) were all removed.
+**Files**: common/stage2_models.mat, common/stage2_models_v2.mat
+(regenerated, R2024a, seed=42), results/stage1_results.txt,
+results/stage2_results.txt
+
+### 2026-08-11 — R2024a Reconciliation — TCN cross-version behavioral difference (investigated, NOT a bug)
+**Hypothesis tested**: Stage 4 (generate_closedloop_detail_figures.m,
+R2024a run) showed TCN and PINN-v2 with numerically IDENTICAL RMSE
+(1.1178 rpm) and pitch activity (2.70 deg) -- the same "shared aggregate
+metric" signature previously diagnosed as a frozen-actuator bug for GP.
+Is this a new instance of the same bug (e.g. a state-function/model
+mixup in the R2024a run), or a genuine coincidence?
+**Result**: NOT a bug. (1) test_tcn_manual_closed_loop.m confirmed the
+manual TCN forward pass matches predict() to 2.05e-07 under R2024a --
+extraction/vectorization is correct. (2) A dedicated re-run with
+explicit mv/ExitFlag logging showed mv genuinely varies (range=[0,2.7]
+deg, std=0.1424) with ExitFlag>0 (full convergence) at ALL 600 steps --
+not frozen, not infeasible. TCN under R2024a GENUINELY converges to a
+near-passive control strategy that happens to closely match PINN-v2's
+own genuinely-converged near-passive strategy under the same wind
+realization. Under R2026a, the SAME TCN model/code showed much higher
+activity (158.4 deg, RMSE=1.0719) -- a genuine cross-version BEHAVIORAL
+difference (not just a cost/timing difference as found for LSTM),
+consistent with SQP settling into different local optima under subtle
+numerical differences between MATLAB releases.
+**Decision**: Document as a genuine, reportable finding rather than a
+bug: the predict()-bypass CPU-cost generalization (Contribution 2) holds
+across both MATLAB versions, but the SPECIFIC closed-loop control
+behavior of surrogate-driven MPC (at least for TCN) is not guaranteed
+to be version-invariant, and should be reported as such rather than
+treating R2024a and R2026a closed-loop numbers as interchangeable.
+**Files**: results/stage4_results.txt (R2024a), ad-hoc verification
+script (not saved as a standalone .m; logic: build sf_tcn_manual
+controller directly, log mv_hist/exitflag_hist over 600 steps)
+
+### 2026-08-11 — R2024a Reconciliation — TCN/PINN-v2 identical across ALL 15 Monte Carlo realizations (investigated, likely genuine)
+**Hypothesis tested**: Stage 5 (run_extended_monte_carlo.m, R2024a) showed
+TCN and PINN-v2 with IDENTICAL rmse_mean/rmse_std/cv_pct across ALL 3
+wind speeds x 5 seeds (15/15 combinations) -- far too consistent to be
+the single-realization coincidence previously confirmed genuine. Is
+run_extended_monte_carlo.m's switch-case actually buggy (TCN silently
+reusing PINN-v2's model/state-function)?
+**Result**: Code inspection (controllers struct construction and the
+inner switch-case) shows NO copy-paste bug: nlobj_tcn correctly uses
+sf_tcn_manual/mdl_tcn_manual, distinct from nlobj_pinn/mdl_pinn_manual,
+built via entirely different extraction code paths
+(extract_tcn_weights.m vs extract_dlnetwork_generic.m). A fully
+independent, freshly-written verification script (no shared code with
+run_extended_monte_carlo.m) reproduced the exact same TCN result
+(mv range=[0,2.7], PA=2.70deg) for a single realization, confirming this
+is not specific to run_extended_monte_carlo.m's implementation.
+mv values of exactly 0 and 2.7 (round numbers) suggest a CORNER
+solution bounded by the pitch rate constraint (dbeta_max*Ts), not a
+smooth continuous optimum -- plausible given Nc=1 (single free control
+move per horizon) severely constrains the decision space, potentially
+creating a shared attractor independent of which surrogate predicts
+the cost gradient, for BOTH TCN and PINN-v2 under this specific
+controller configuration and R2024a solver build.
+**Decision**: Provisionally accepted as a genuine (if surprising)
+structural finding rather than a bug, pending further investigation
+(not blocking the current R2024a reconciliation). Follow-up test
+proposed: re-run with Nc>1 to check whether the TCN/PINN-v2 identity
+persists or was specific to the Nc=1 corner-solution degeneracy.
+This should be treated as tentative until that follow-up is done --
+do NOT yet report TCN and PINN-v2 as "coincidentally identical" as a
+confirmed paper finding without the Nc>1 check.
+**Files**: results/stage5_results.txt (R2024a, all 15 realizations
+identical between TCN/PINN-v2)
+
+### 2026-08-11 — R2024a Reconciliation — TCN/PINN-v2 coincidence RESOLVED via Nc=4 test
+**Hypothesis tested**: Does the TCN/PINN-v2 numerically-identical result
+under Nc=1 (confirmed across all 15 Monte Carlo realizations) persist
+under a less constrained control horizon (Nc=4), or was it an Nc=1-
+specific corner-solution degeneracy?
+**Result**: DECISIVELY resolved. Re-running both controllers at Nc=4
+(Np=15 unchanged), V=14m/s, seed=2025:
+  TCN:     RMSE=1.1173 rpm, PA=2.70 deg  (virtually UNCHANGED from Nc=1)
+  PINN-v2: RMSE=1.0180 rpm, PA=168.26 deg (COMPLETELY DIFFERENT from Nc=1:
+           RMSE=1.1065, PA=2.7 at Nc=1)
+The two controllers are no longer identical once Nc=4 -- confirming the
+Nc=1 identity was a genuine corner-solution coincidence, NOT a code bug
+(consistent with the earlier code-inspection finding). Critically, it was
+PINN-v2, not TCN, that was artificially constrained by Nc=1: given more
+control freedom, PINN-v2 uses substantially more pitch activity (168 vs
+2.7 deg) and achieves BETTER tracking (RMSE improves from 1.1065 to
+1.0180). TCN's low activity (2.70 deg) is essentially unchanged between
+Nc=1 and Nc=4, suggesting it IS a genuine, Nc-independent property of
+the TCN surrogate's learned behavior, unlike PINN-v2's apparent
+passivity which is an Nc=1 artifact.
+**Decision**: This RESOLVES the previously-unexplained "PINN-v2's
+markedly low pitch activity" finding noted in the paper text
+(Section 6.4): it is an Nc=1 control-horizon artifact, not an intrinsic
+PINN-v2 property. This should be incorporated into the paper as an
+update/resolution to that previously-flagged open question, and as a
+caution that Nc=1 (used throughout the V2 protocol for computational
+tractability) can materially change which local optimum a surrogate-
+driven MPC controller converges to, independent of surrogate quality.
+**Files**: ad-hoc verification (not saved as a standalone script;
+reuses sf_tcn_manual/sf_pinn_manual with Nc=4 instead of Nc=1, same
+V=14m/s/seed=2025/T=60s protocol as Stage 4/5)
+
+### 2026-08-11 — MAJOR: Adopted NREL reference physical parameters (items 3.1/3.2, Option A)
+**Decision**: Following supervisor decision, adopted Option A (NREL reference values) over Option B (document as deliberate variant) for the Tg_rated and K_opt parameters flagged as diverging from the official NREL/TP-500-38060 definition (items 3.1/3.2 of the reproducibility review).
+**Fix applied to common/stage0_config.m**:
+  (1) Tg_rated: p.P_rated_elec=5e6 W now explicitly labeled as ELECTRICAL nameplate power; p.P_rated (mechanical, used in the Tg_rated formula) is now derived as P_rated_elec/eta_gen with eta_gen=0.944 (NREL-documented generator efficiency). Result: Tg_rated = 43093.55 N.m (was 40680.3 N.m, +5.93
+### 2026-08-12 — Stage 0/1 re-validated under NREL reference physical parameters
+**Context**: First re-run since adopting Option A (NREL reference Tg_rated=43093.55 N.m, K_opt=2.128616e6) for items 3.1/3.2. Also first use of the newly-added .txt logging for stage0_validate.m, stage1_generate_data.m, and stage1_validate.m (previously console-only, no persistent record).
+**Result**: ALL_PASS=1 across all three validation stages.
+  Stage 0 (physical foundation): Cp_max=0.4800, lambda_opt=8.11, sigma_wind=2.24 m/s (matches target exactly) -- all 8 pass criteria green. Cp surface itself is UNCHANGED from before the Tg_rated/K_opt fix, as expected (Cp(lambda,beta) depends only on cp_lambda_beta.m's aerodynamic polynomial, independent of the torque-switching parameters that changed) -- a useful cross-check confirming no unintended cross-contamination between the two.
+  Stage 1 dataset generation: 24,000 samples (80 traj x 300 steps), split 16800/3600/3600, seed=42. Explicitly confirmed via the new Tg_rated_used/K_opt_used fields in stage1_generate_data_results.txt: 43093.5515 N.m / 2.128616e6 -- the corrected NREL reference values are genuinely active in this dataset, not stale pre-fix values. omega range [8.02,13.31] rpm and Cp_max=0.480012 unchanged from pre-fix datasets, as expected (these bounds come from initial- condition sampling range and the hard omega_max cap, not from the torque law itself -- the actual WITHIN-trajectory dynamics differ, but the sampled boundary values do not, which is correct behavior not a bug).
+  Stage 1 dataset validation: all 9 checks pass (dimensions, no NaN/Inf, physical bounds, trajectory structure integrity, increment distributions, normalisation statistics).
+**Also fixed during this pass**: stage0_validate.m's Kaimal wind plot title incorrectly labeled I=0.16 as "IEC Class B" (same mislabeling previously found and fixed in the paper itself, items 3.6/4.6) -- corrected to "IEC Class A" in the code, not just the paper text.
+**Next step**: stage2_main.m and stage2_main_v2.m (full retraining of all V1/V2 surrogates on this corrected dataset) -- not yet run.
+**Files**: results/stage0_validate_results.txt, results/stage1_generate_data_results.txt, results/stage1_validate_results.txt (all new, first-ever .txt output for these three scripts)
+
+### 2026-08-13 — Session pause: R2024a + NREL-reference physics re-run complete, multiple threads left open
+**Summary of this session**: Starting from the adopted Option A decision (NREL reference Tg_rated=43093.55 N.m, K_opt=2.128616e6, items 3.1/3.2), completed a FULL clean re-run of the pipeline: stage0_validate (ALL_PASS=1), stage1_generate_data (24000 samples, Tg_rated/K_opt confirmed active via new .txt logging), stage1_validate (ALL_PASS=1), stage2_main.m and stage2_main_v2.m (full retrain, results backfilled to .txt from existing .mat), and the full Piste B pipeline (run_stage1 through run_stage6, all cross-checked).
+**Key finding this session**: the TCN/PINN-v2 numerical-identity coincidence (previously attributed, via an Nc=1/Nc=4 test, to a genuine Nc=1 corner-solution property of TCN) does NOT reproduce under the NREL-corrected physics -- TCN now shows normal, distinct pitch activity (272.7 deg vs PINN-v2's persistent 2.7 deg) in both Stage 4 and Stage 5. This means the earlier "TCN's passivity is Nc-independent" conclusion was likely an artifact of the OLD (pre-NREL-fix) torque law, not a robust architectural property. PINN-v2's passivity, by contrast, persists under both old and new physics, reinforcing that ITS near-zero pitch activity is likely genuine. The paper's Nc=1/Nc=4 discussion will need to be revised to drop or heavily qualify the TCN claim once full paper reconciliation resumes.
+**Also found and fixed this session**: (1) three .m scripts (stage0_validate.m, stage1_generate_data.m, stage1_validate.m, stage2_main.m, stage2_main_v2.m) never wrote .txt output -- all five now do; (2) a second IEC turbulence-class mislabeling instance in stage0_validate.m's plot title (Class B -> Class A), a code-level twin of the paper-text fix from items 3.6/4.6; (3) a real bug I introduced myself while fixing item 6.8 (added omega_hist/etc. fields to the results struct in verify_gp_frozen_actuator.m without updating its preallocation), causing a silent "0x0 empty struct" save failure -- fixed, but the script has NOT yet been successfully re-run to completion since the fix; (4) 8 Piste-B-specific .m files found living in common/ instead of piste_B_nominal_correction/ (organizational inconsistency, not a functional bug since both dirs are on path) -- relocated; (5) 3 confirmed structural errors in references.bib (two PhD/Master theses mistyped as @article, one IEA report missing author/year/journal) -- fixed, saved separately as references_corrected.bib (not yet merged back into the paper's actual bib file).
+**Also produced this session**: a full English-language MSc thesis proposal draft (title, abstract, keywords, objective, literature review, methodology, 12-month research plan) scoped to the comparative-study paper only (AWLST excluded per instruction), Option A title chosen; delivered as a separate document, not part of this codebase.
+**OPEN THREADS, explicitly deferred by the user ("on reviendra apres") -- resume here next session**:
+  1. Re-run verify_gp_frozen_actuator.m (bug now fixed, never     successfully completed under NREL-corrected physics)
+  2. Investigate whether Nc=4 resolves cost_gp.m's frozen-actuator     infeasibility (the promising, cheap-to-test lead discussed but not     yet executed)
+  3. Build the classical gain-scheduled PI baseline controller (item     2.7)
+  4. Execute the unified experimental protocol (item 2.5) -- designed,     documented in Table tab:protocol_summary, never run
+  5. Full paper text reconciliation against ALL of this session's     fresh R2024a/NREL-physics numbers (Stage 3-6 tables, the     TCN/PINN-v2 Nc=1/Nc=4 discussion, item 3.4's torque-discontinuity     recalculation which is now STALE AGAIN under the new Tg_rated/     K_opt)
+  6. references.bib cross-check: only a direct-scan pass done (3 fixes     applied); deeper author-order/title verification deferred pending     a more reliable matching method (DOI-based suggested over     title-fuzzy-matching, which produced too many false positives)
+  7. Machine-noise question on Stage 3's SW-MLP/PINN-v2/TCN manual     timings (2-4x higher than the prior R2024a baseline) -- flagged,     never re-tested in isolation to confirm/rule out
+**Files**: results/stage0_validate_results.txt, results/stage1_generate_data_results.txt, results/stage1_validate_results.txt, results/stage2_main_results.txt, results/stage2_main_v2_results.txt, results/stage1-6_results.txt (Piste B, full re-run), results/sensitivity_rk4_results.txt, results/sensitivity_noise_delay_results.txt, results/sensitivity_maxiter_results.txt, results/lstm_v12_instability_results.txt, piste_B_nominal_correction/verify_gp_frozen_actuator.m (bug fixed, not yet re-validated)
+
+### 2026-08-13 — GP frozen-actuator re-confirmed + Nc=4 lead on cost_gp.m definitively closed
+**Context**: First successful completion of verify_gp_frozen_actuator.m since the save-bug fix (missing struct fields for the item 6.8 plot addition), and first execution of run_sensitivity_nc.m across all six V2 architectures under the NREL-corrected physics.
+**verify_gp_frozen_actuator.m result**: Confirmed, under the new physics, exactly the same verdict as before the physics correction -- both GP (V1) and GP-v2 (V2) show mv frozen at 3.500 deg (std=0.0000), RMSE=0.7235 rpm, PA=0.00 deg, and 1200/1200 steps infeasible (ExitFlag<0). The frozen-actuator finding is robust across both the old and new torque-law calibrations -- not an artifact of the now-corrected Tg_rated/K_opt values.
+**run_sensitivity_nc.m result -- KEY FINDING**: GP-v2 tested at Nc in {1,2,4} (Np=15 fixed, V=14m/s, seed=2025, T=60s) shows n_infeasible=600/600 at EVERY Nc value tested (mean_cpu_ms similarly extreme throughout: 4636/3813/3698 ms/step). This DEFINITIVELY RULES OUT the hypothesis that cost_gp.m's total infeasibility is an Nc=1 corner-solution artifact analogous to what was found for TCN/PINN-v2's Nc=1 coincidence -- the infeasibility is structural to the cost_gp.m formulation itself (most likely the kappa*sigma^2 uncertainty-penalty term interacting badly with the SQP solver's constraint handling), independent of control-horizon length. The "test Nc=4 on GP-v2" lead, open since early in this project, is now closed as a negative result.
+**Secondary confirmation**: the same sweep's PINN-v2 results (RMSE/PA at Nc=1,2,4: 1.069/2.70 -> 1.011/101.10 -> 0.965/156.98) reproduce the monotonic Nc-horizon-opens-up-passivity pattern established earlier under the OLD physics, now confirmed robust under the NEW NREL-corrected physics too -- strengthens confidence this is a genuine, reproducible property of PINN-v2's interaction with the Nc=1 constraint, not a coincidence of either physics parameterization. Also notable: TCN and PINN-v2 are now clearly DISTINCT at Nc=1 under the new physics (PA=268.09 vs 2.70), consistent with the already-documented finding (see the Stage 4/5 entries) that their earlier numerical identity was specific to the old, miscalibrated torque law.
+**Decision**: cost_gp.m's uncertainty-penalized formulation remains withdrawn (Contribution 4, Option B). No further easy fix is evident from horizon-length adjustment; repairing this formulation (if pursued at all) would need to address the cost structure itself (e.g. reformulating kappa*sigma^2 as a tightened constraint rather
+than a cost-additive term, per the Hewing et al. 2020 probabilistic-
+reachable-set approach already discussed as a literature-motivated
+alternative), not the control horizon.
+**Files**: piste_B_nominal_correction/results/gp_frozen_actuator_verification.mat,
+results/sensitivity_nc_results.txt (confirmed generated 13-Aug-2026
+17:54, under the corrected NREL physics, consistent with other
+post-correction results)
+
+
+### 2026-08-15 -- Second predict() failure mode discovered: single-precision gradient corruption
+**Context**: While executing the item 2.5 unified-protocol pass
+(T=60s, Nc=4 for both V1 and V2), building V2 controllers with the
+ORIGINAL predict()-based state functions (sf_tcn, sf_pinn, via
+stage3_design_controllers_v2.m) rather than the Piste B manual-bypass
+versions produced dramatically elevated solver infeasibility for TCN
+(323/600, 54%) and PINN-v2 (440/600, 73%) that was NOT present in the
+earlier Nc sweep (same Nc=4, same T=60s, 0/600 infeasible for both,
+using the manual-bypass sf_tcn_manual/sf_pinn_manual). Since Nc and T
+were identical between the two runs, Nc could be ruled out as the
+cause immediately.
+
+**Root cause, confirmed directly**: built diagnose_predict_precision.m
+to compare predict()-based vs manual (double-precision) forward passes
+on the same trained TCN/PINN-v2 weights. Confirmed predict() returns
+single-precision output (manual returns double). Estimated
+d(output)/d(u) via forward finite differences at 4 step sizes
+(1e-3, 1e-5, 1e-7, 1e-9): the manual/double path is stable to 4 sig
+figs across all 4 steps for both architectures; the predict()-based
+path collapses to EXACTLY ZERO for h<=1e-5 (below single precision's
+representable resolution), even though the true sensitivity
+(confirmed by the manual column) is ~1e-3. fmincon's default forward-
+difference Jacobian estimator uses step sizes in exactly this range.
+
+**Interpretation**: this is a SECOND, INDEPENDENT predict() failure
+mode beyond the already-documented per-call latency mechanism
+(Stage 1-3). A state function returning a spuriously zero partial
+derivative for a decision variable that genuinely affects the cost
+gives the solver NO exploitable gradient along that direction --
+corrupting solver feasibility independent of any real-time deadline.
+Arguably more serious than the latency finding, since it affects
+correctness/feasibility rather than just speed, and would persist
+even with unlimited compute time/relaxed real-time constraints.
+
+**Not previously documented** anywhere in the paper or, as far as we
+are aware, in the wind-MPC literature.
+
+**Decision**: added as a major finding to paper/sections/05_mpc_framework.tex
+(new paragraph + 2 tables: tab:precision_diagnostic,
+tab:predict_vs_manual_infeasibility), and elevated to
+00_abstract.tex, 01_introduction.tex (Contribution 1, extended), and
+08_conclusion.tex.
+
+**Consequence for the item 2.5 unified-protocol table**: the
+high infeasibility rates observed for TCN/PINN-v2/SW-MLP in
+results/unified_v1v2_protocol_results.txt are confirmed to be a
+predict()-vs-manual artifact, NOT a genuine Nc=4 effect. The
+V1/V2 original-protocol comparison table should ultimately be
+rebuilt using manual-bypass state functions throughout (not yet
+done) for the infeasibility numbers to be meaningful; the RMSE/PA
+numbers already collected may still need revisiting once that's
+done, since the corrupted gradient could also distort the converged
+trajectory on steps that did NOT register as fully infeasible.
+
+**Files**: piste_B_nominal_correction/diagnose_predict_precision.m
+(new), results/unified_v1v2_protocol_results.txt,
+piste_B_nominal_correction/run_unified_v1v2_protocol.m (source of the
+triggering comparison)

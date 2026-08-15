@@ -1,0 +1,18 @@
+STAGE 0 VALIDATION RESULTS
+Generated: 12-Aug-2026 23:41:31
+================================================
+
+Cp_max = 0.4800
+lambda_opt = 8.11
+beta_opt = 0.0
+sigma_wind_actual = 2.2400
+sigma_wind_target = 2.2400
+pass_cp_max_betz = 1
+pass_beta_domain = 1
+pass_lambda_range = 1
+pass_step_response = 1
+pass_wind_sigma = 1
+pass_prbs_bounds = 1
+pass_openloop_omega = 1
+pass_openloop_cp = 1
+ALL_PASS = 1

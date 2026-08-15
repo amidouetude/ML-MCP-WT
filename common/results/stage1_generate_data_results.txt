@@ -1,0 +1,17 @@
+STAGE 1 DATA GENERATION RESULTS
+Generated: 12-Aug-2026 23:41:32
+================================================
+
+total_samples = 24000
+n_traj = 80
+n_steps = 300
+train_samples = 16800
+val_samples = 3600
+test_samples = 3600
+split_seed = 42
+omega_range_rpm = [8.0241, 13.3100]
+beta_range_deg = [0.0000, 25.0000]
+V_range_ms = [5.4774, 25.0000]
+Cp_max_data = 0.480012
+Tg_rated_used = 43093.5515
+K_opt_used = 2.128616e+06

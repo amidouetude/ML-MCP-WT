@@ -33,10 +33,10 @@ fprintf('==========================================================\n\n');
 % ── Data table (transcribed from confirmed console outputs, POST initial-
 %    condition bug fix -- see docs/experiment_log.md, 2026-07-30 entry) ────
 names       = {'MLP-residual', 'GP (N_{sub}=50)', 'SW-MLP', 'PINN-v2', 'TCN', 'LSTM'};
-mean_predict = [2188.3,  196.2,  1383.9,  1650.2,   834.1,  148475.7];
-mean_manual  = [  22.3,   25.2,    30.4,    12.1,    23.9,      52.2];
-overruns_predict = [600, 600, 600, 600, 600,   5];
-overruns_manual  = [  2,   0,   1,   0,   8,     1];
+mean_predict = [ 919.59,  59.70, 2420.35, 3743.20, 2020.23,  30665.75];
+mean_manual  = [   8.71,   9.94,   51.56,   33.77,   30.54,     53.46];
+overruns_predict = [600, 18, 600, 600, 600,   5];
+overruns_manual  = [  0,   0,   47,   1,   4,     1];
 n_steps_predict  = [600, 600, 600, 600, 600,   5];   % LSTM predict tested on only 5 steps
 n_steps_manual   = [600, 600, 600, 600, 600, 600];
 baseline_ms = 9;   % representative Baseline/Nominal-only mean CPU (~8-21ms across corrected tests)

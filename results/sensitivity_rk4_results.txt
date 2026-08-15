@@ -1,25 +1,25 @@
 SENSITIVITY CHECK — Euler vs RK4 Plant Integration (P1.2)
-Generated: 08-Aug-2026 12:31:39
+Generated: 13-Aug-2026 11:54:59
 (Baseline controller, V=14 m/s, T=60s, seed=2025)
 ================================================
 
 [Euler (baseline)]
-  rmse_omega_rpm = 1.2709
-  pitch_activity_deg = 372.5
+  rmse_omega_rpm = 0.8142
+  pitch_activity_deg = 299.7
 
 [RK4 (substage-sat)]
-  rmse_omega_rpm = 1.2734
-  pitch_activity_deg = 172.0
+  rmse_omega_rpm = 0.8143
+  pitch_activity_deg = 139.5
 
 [RK4 (single post-hoc sat)]
-  rmse_omega_rpm = 1.2609
-  pitch_activity_deg = 171.6
+  rmse_omega_rpm = 0.8066
+  pitch_activity_deg = 146.9
 
 [Comparison]
-  relative_rmse_difference_pct (Euler vs RK4 substage-sat) = 0.19
-  max_pointwise_trajectory_diff_rpm = 0.0158
-  pitch_activity_diff_pct_substage_sat = 53.8
-  pitch_activity_diff_pct_nosat_variant = 53.9
+  relative_rmse_difference_pct (Euler vs RK4 substage-sat) = 0.01
+  max_pointwise_trajectory_diff_rpm = 0.0259
+  pitch_activity_diff_pct_substage_sat = 53.4
+  pitch_activity_diff_pct_nosat_variant = 51.0
 
 [Root-cause test]
   A third variant (wt_step_rk4_nosat.m) applies pitch-rate

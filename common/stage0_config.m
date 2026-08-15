@@ -77,7 +77,15 @@ p.omega_mpc_max_surrogate = (13.31 - 0.5) * pi/30; % [rad/s] = 12.81 rpm
 %   automatically derived from the .mat file to keep stage0_config.m
 %   self-contained without a data dependency. Verify match before use.
 
-p.P_rated    = 5e6;             % rated power [W]
+p.P_rated_elec = 5e6;           % nameplate ELECTRICAL power [W]
+p.eta_gen      = 0.944;         % generator efficiency [-] (NREL/TP-500-38060)
+p.P_rated      = p.P_rated_elec / p.eta_gen;
+%              = 5.2966e6 W mechanical
+% [FIX -- item 3.1, adopted NREL reference definition per supervisor
+%  decision]. Previously p.P_rated = 5e6 W was treated as MECHANICAL
+%  power directly (Tg_rated then 5.6%% low vs. the NREL reference's
+%  43,093.55 N.m). Now correctly derived from the 5 MW ELECTRICAL
+%  nameplate rating via the documented 94.4%% generator efficiency.
 p.V_rated    = 11.4;            % rated wind speed [m/s]
 p.V_cutin    = 3.0;             % cut-in wind speed [m/s]
 p.V_cutout   = 25.0;            % cut-out wind speed [m/s]
@@ -111,12 +119,21 @@ p.beta_cp_max = 25.0;           % maximum valid pitch for Cp [deg]
 % sides expressed in LSS torque).
 % Calibrating at lambda_rated=7.00 (this implementation) gives ratio =
 % 1.0215 (2.1% discontinuity) — consistent with standard practice
-% (Bianchi et al. 2006; Pao & Johnson 2009): K_opt is chosen to match
-% continuity at the region boundary, not to maximise theoretical Cp.
+% (Bianchi et al. 2006; Pao & Johnson 2009): K_opt is now derived directly from the NREL reference definition
+% [FIX -- item 3.2, adopted NREL reference definition per supervisor
+%  decision], not from an aerodynamic-Cp-based self-calibration as
+%  before. NREL/TP-500-38060's Region 2 generator-side control law is
+%  Tg_HSS = K_gen * omega_gen_rpm^2, K_gen = 0.0255764 N.m/rpm^2
+%  (standard, widely-cited NREL 5-MW constant). Converted to the
+%  low-speed shaft, rad/s convention used throughout this codebase:
+%  K_opt = N_gear^3 * K_gen * (30/pi)^2
 p.lambda_rated_op = 7.00;       % R*omega_r/V_rated, Jonkman operating point [-]
-p.Cp_at_rated_op  = 0.4514;     % Cp(lambda_rated_op, beta=0) — verified value
-p.K_opt = 0.5 * p.rho * p.A_rotor * p.Cp_at_rated_op * p.R^3 / p.lambda_rated_op^3;
-%        = 2.510623e+06 N.m.s^2  (verified)
+                                 % (kept for documentation/reference only;
+                                 %  no longer used to derive K_opt directly)
+p.K_gen_ref = 0.0255764;        % NREL reference constant, generator side [N.m/rpm^2]
+p.K_opt = (p.N_gear^3) * p.K_gen_ref * (30/pi)^2;
+%        = 2.128616e+06 N.m.s^2  (NREL reference, verified independently
+%          against the referee-stated ~2.13e6 figure)
 % Continuity check (both sides LSS): K_opt*omega_r^2 / (N_gear*Tg_rated) = 1.0215
 %
 % RESIDUAL BOUNDARY DEFICIT (documented, accepted as negligible):
@@ -286,7 +303,7 @@ cfg.mpc = mpc;
 mpc2.Np    = 15;                % prediction horizon [steps] = 2s
 %                                 V1 used Np=10 (1s) — too short for rotor
 %                                 inertia dynamics (observed drift over 10-30s)
-mpc2.Nc    = 1;                 % control horizon [steps]
+mpc2.Nc    = 4;                 % control horizon [steps] -- unified with V1 (item 2.5)
 mpc2.Ts    = 0.1;               % sample time [s] — unchanged
 mpc2.Q     = 100;               % speed tracking weight
 mpc2.R     = 0.5;               % control rate weight

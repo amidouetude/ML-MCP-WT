@@ -1,0 +1,40 @@
+STAGE 2 (V2) MODEL TRAINING RESULTS (backfilled from stage2_models_v2.mat)
+Generated: 13-Aug-2026 00:39:59
+MATLAB version: 24.1.0.2537033 (R2024a)
+================================================
+
+[Persistence]
+  rmse_omega_rpm = 0.0241
+  rmse_beta_deg = 0.3220
+  gain_vs_linear_pct = -38.1
+
+[Linear]
+  rmse_omega_rpm = 0.0175
+  rmse_beta_deg = 0.1420
+  gain_vs_linear_pct = 0.0
+
+[LLNFM]
+  rmse_omega_rpm = 0.0088
+  rmse_beta_deg = 0.0964
+  gain_vs_linear_pct = 49.5
+
+[TCN]
+  rmse_omega_rpm = 0.0396
+  rmse_beta_deg = 0.3511
+  gain_vs_linear_pct = -126.9
+
+[SW-MLP]
+  rmse_omega_rpm = 0.0154
+  rmse_beta_deg = 0.1612
+  gain_vs_linear_pct = 12.1
+
+[GP-v2]
+  rmse_omega_rpm = 0.0129
+  rmse_beta_deg = 0.1448
+  gain_vs_linear_pct = 26.3
+
+[PINN-v2]
+  rmse_omega_rpm = 0.0172
+  rmse_beta_deg = 0.1738
+  gain_vs_linear_pct = 1.6
+

@@ -1,0 +1,40 @@
+LSTM V=12m/s INSTABILITY INVESTIGATION (item 7.7)
+Generated: 13-Aug-2026 13:01:41
+Rated speed = 12.10 rpm
+================================================
+
+[seed=2025]
+  rmse_omega_rpm = 1.0801
+  min_omega_rpm = 9.9435
+  pct_time_below_rated = 81.2
+  pct_time_within_0.5rpm_of_boundary = 30.7
+  n_infeasible = 0/600
+
+[seed=2026]
+  rmse_omega_rpm = 0.9558
+  min_omega_rpm = 10.1713
+  pct_time_below_rated = 82.8
+  pct_time_within_0.5rpm_of_boundary = 30.8
+  n_infeasible = 0/600
+
+[seed=2027]
+  rmse_omega_rpm = 0.9495
+  min_omega_rpm = 10.5214
+  pct_time_below_rated = 78.8
+  pct_time_within_0.5rpm_of_boundary = 39.3
+  n_infeasible = 0/600
+
+[seed=2028]
+  rmse_omega_rpm = 1.1633
+  min_omega_rpm = 9.3770
+  pct_time_below_rated = 90.3
+  pct_time_within_0.5rpm_of_boundary = 45.0
+  n_infeasible = 0/600
+
+[seed=2029]
+  rmse_omega_rpm = 1.2432
+  min_omega_rpm = 9.3914
+  pct_time_below_rated = 90.0
+  pct_time_within_0.5rpm_of_boundary = 55.5
+  n_infeasible = 0/600
+

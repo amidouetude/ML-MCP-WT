@@ -1,17 +1,17 @@
 STAGE 2 RESULTS — Residual Model Training
-Generated: 08-Aug-2026 00:03:48
+Generated: 13-Aug-2026 00:48:26
 ================================================
 
 [MLP-residual]
 n_params = 130
-train_time_s = 25.10
+train_time_s = 25.73
 rng_seed = NOT_RECORDED (pre-reproducibility-fix run)
-rmse_test_d_omega_radps = 4.649789e-05
-rmse_test_d_beta_deg    = 9.896238e-12
-rmse_zero_correction_d_omega = 1.986530e-04
-improvement_pct_omega = 76.6
+rmse_test_d_omega_radps = 4.271338e-05
+rmse_test_d_beta_deg    = 1.014754e-11
+rmse_zero_correction_d_omega = 2.203765e-04
+improvement_pct_omega = 80.6
 
 [GP-residual, N_sub=50]
-train_time_s = 0.09
-rmse_test_d_omega_radps = 1.454636e-04
+train_time_s = 0.10
+rmse_test_d_omega_radps = 1.621927e-04
 rmse_test_d_beta_deg    = 0.000000e+00

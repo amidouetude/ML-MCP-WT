@@ -14,12 +14,28 @@ only loosely coupled. What initially appeared as a hard operational
 incompatibility between LSTM/TCN/SW-MLP/PINN-v2/GP-v2 and SQP-based
 \texttt{nlmpc} was traced, through a five-stage diagnostic, to
 repeated \texttt{predict()} calls inside the solver --- not
-architecture, model size, or MATLAB version. A verified manual forward
-pass restored closed-loop viability for all six surrogates, with
-speedups of $7.8\times$ to $2844\times$. We further identify a
+architecture, model size, or MATLAB version. Independently,
+\texttt{predict()}'s single-precision output was found to zero out
+\texttt{fmincon}'s default finite-difference gradient estimate for
+two of these architectures, corrupting solver feasibility regardless
+of any real-time deadline. A verified manual forward
+pass, computed in double precision, restored closed-loop viability for
+all six surrogates. All
+results hold under two explicit conditions: a bounded
+thirty-iteration SQP solver budget, and a single software toolchain
+(MATLAB Deep Learning Toolbox, tested on releases R2024a and R2026a) ---
+no cross-toolchain replication was performed. On an Intel Core
+i5-12450H (12th Gen, 16\,GB RAM) under R2024a, the headline result is a
+$491\times$ mean per-step speedup for LSTM, the largest of the six
+architectures tested (full range: $5.5\times$--$491\times$). We further identify a
 Region~II/III torque-switching correction as a precondition for stable
-closed-loop simulation, and a Mat\'ern-kernel GP uncertainty-penalized
-MPC cost achieving zero pitch activity at matching tracking accuracy.
+closed-loop simulation, and, applying the same diagnostic rigor to our
+own results, find that a previously reported "zero pitch activity"
+result for a Mat\'ern-kernel GP uncertainty-penalized MPC cost is in
+fact a solver-infeasibility artifact (a frozen actuator command, not
+genuine regulation) rather than a controller achievement --- a finding
+we report as a caution against under-instrumented closed-loop
+comparisons, consistent with the diagnostic ethos of this paper.
 These results reframe an apparent architectural limitation as a
 diagnosable, remediable implementation cost, with practical guidance
 for deploying ML surrogates in real-time MPC.

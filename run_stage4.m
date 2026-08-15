@@ -40,6 +40,14 @@ for i = 1:numel(names)
         fprintf(fid, '  n_converged = %d\n', sum(t.exitflag > 0));
         fprintf(fid, '  n_infeasible = %d\n', sum(t.exitflag < 0));
     end
+    if isfield(t, 'cpu')
+        fprintf(fid, '  overruns_gt100ms = %d\n', sum(t.cpu > 100));
+        % [ADDED -- R2024a reconciliation fix] n_infeasible (ExitFlag<0)
+        % was previously mistaken for the real-time overrun count in the
+        % paper's table; these are different metrics (solver exit status
+        % vs. wall-clock CPU threshold). This field is now the correct,
+        % directly comparable quantity to Stage 3's overruns_gt100ms.
+    end
     fprintf(fid, '\n');
 end
 

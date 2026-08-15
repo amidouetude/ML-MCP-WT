@@ -1,0 +1,110 @@
+SENSITIVITY SWEEP — Control Horizon Nc in {1,2,4}
+Generated: 13-Aug-2026 17:54:27
+(All V2 architectures, V=14 m/s, T=60s, seed=2025, Np=15)
+================================================
+
+[LLNFM, Nc=1]
+  rmse_omega_rpm = 0.5978
+  pitch_activity_deg = 472.19
+  mean_cpu_ms = 268.0
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[LLNFM, Nc=2]
+  rmse_omega_rpm = 0.6013
+  pitch_activity_deg = 478.27
+  mean_cpu_ms = 305.6
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[LLNFM, Nc=4]
+  rmse_omega_rpm = 0.6002
+  pitch_activity_deg = 463.75
+  mean_cpu_ms = 490.7
+  n_converged = 582/600
+  n_infeasible = 5/600
+
+[TCN, Nc=1]
+  rmse_omega_rpm = 0.8779
+  pitch_activity_deg = 268.09
+  mean_cpu_ms = 35.0
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[TCN, Nc=2]
+  rmse_omega_rpm = 0.8184
+  pitch_activity_deg = 254.64
+  mean_cpu_ms = 40.6
+  n_converged = 599/600
+  n_infeasible = 1/600
+
+[TCN, Nc=4]
+  rmse_omega_rpm = 0.7387
+  pitch_activity_deg = 343.86
+  mean_cpu_ms = 47.7
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[SW-MLP, Nc=1]
+  rmse_omega_rpm = 0.8169
+  pitch_activity_deg = 433.52
+  mean_cpu_ms = 21.9
+  n_converged = 599/600
+  n_infeasible = 0/600
+
+[SW-MLP, Nc=2]
+  rmse_omega_rpm = 0.8334
+  pitch_activity_deg = 401.62
+  mean_cpu_ms = 24.1
+  n_converged = 599/600
+  n_infeasible = 0/600
+
+[SW-MLP, Nc=4]
+  rmse_omega_rpm = 0.7815
+  pitch_activity_deg = 391.14
+  mean_cpu_ms = 22.9
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[PINN-v2, Nc=1]
+  rmse_omega_rpm = 1.0685
+  pitch_activity_deg = 2.70
+  mean_cpu_ms = 15.6
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[PINN-v2, Nc=2]
+  rmse_omega_rpm = 1.0108
+  pitch_activity_deg = 101.10
+  mean_cpu_ms = 14.9
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[PINN-v2, Nc=4]
+  rmse_omega_rpm = 0.9653
+  pitch_activity_deg = 156.98
+  mean_cpu_ms = 14.8
+  n_converged = 600/600
+  n_infeasible = 0/600
+
+[GP-v2, Nc=1]
+  rmse_omega_rpm = 0.6041
+  pitch_activity_deg = 0.00
+  mean_cpu_ms = 4636.2
+  n_converged = 0/600
+  n_infeasible = 600/600
+
+[GP-v2, Nc=2]
+  rmse_omega_rpm = 0.6041
+  pitch_activity_deg = 0.00
+  mean_cpu_ms = 3813.0
+  n_converged = 0/600
+  n_infeasible = 600/600
+
+[GP-v2, Nc=4]
+  rmse_omega_rpm = 0.6041
+  pitch_activity_deg = 0.00
+  mean_cpu_ms = 3698.3
+  n_converged = 0/600
+  n_infeasible = 600/600
+

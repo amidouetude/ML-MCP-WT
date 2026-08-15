@@ -1,5 +1,5 @@
 % ===========================================================================
-% SECTION 4 — MACHINE LEARNING SURROGATE MODELS
+% SECTION 4  MACHINE LEARNING SURROGATE MODELS
 % Target: 1500-2000 words
 % ===========================================================================
 
@@ -48,7 +48,7 @@ with default (non-optimized) hyperparameters, fitted independently for each
 output on a $N_{\text{sub}}=400$-point subsample (to keep the $O(N^3)$
 training cost tractable). Training completes in $\SI{4.0}{s}$, and the
 model achieves $\RMSE_{\omega} = \SI{0.0066}{rpm}$, $\RMSE_{\beta} =
-0.1427\deg$ on the test set — matching LLNFM as the best-performing V1
+0.1427\deg$ on the test set  matching LLNFM as the best-performing V1
 surrogate on rotor speed. The mean predictive standard deviation on the
 test set, $\sigma_{\text{te}} = [0.00108,\ 0.15139]$ (omega, beta, raw
 units), is retained for comparison against the calibrated V2 uncertainty
@@ -70,7 +70,7 @@ which conflicts with the pitch-rate saturation present in the real
 (simulated) data; including this residual was found to actively hurt
 training. Training converges to a total loss of $\approx 0.0008$ by
 iteration $3{,}000$ ($\SI{114.5}{s}$ total training time), yielding
-$\RMSE_{\omega} = \SI{0.0183}{rpm}$, $\RMSE_{\beta} = 0.1924\deg$ — a
+$\RMSE_{\omega} = \SI{0.0183}{rpm}$, $\RMSE_{\beta} = 0.1924\deg$  a
 $3.1\%$ \emph{degradation} relative to the Linear ARX baseline, the only V1
 surrogate to underperform the linear reference.
 
@@ -83,8 +83,8 @@ epochs (Adam, learning rate $10^{-3}$, batch size $64$) on trajectory-
 respecting sequences ($16{,}240$ train / $3{,}480$ validation / $3{,}480$
 test sequences, consistent with the trajectory-based split of
 Section~\ref{subsec:dataset_structure}). Training required $\SI{2136.1}{s}$
-($\approx\SI{36}{min}$) — three orders of magnitude slower than the other
-V1 surrogates — and achieved $\RMSE_{\omega}=\SI{0.0147}{rpm}$,
+($\approx\SI{36}{min}$)  three orders of magnitude slower than the other
+V1 surrogates  and achieved $\RMSE_{\omega}=\SI{0.0147}{rpm}$,
 $\RMSE_{\beta}=0.2083\deg$, a modest $+17.1\%$ gain over the linear
 baseline but markedly worse than LLNFM or GP. As shown in
 Section~\ref{subsec:operational_feasibility}, this accuracy is in any case
@@ -93,7 +93,7 @@ MPC. We attribute the limited benefit of the recurrent architecture to the
 system's own dynamics: because $\Delta t = \tau_\beta$, the informative
 history genuinely required for one-step prediction is short, so a
 $10$-step memory window offers little advantage over the instantaneous
-state — a hypothesis further supported by the V2 TCN/SW-MLP results
+state  a hypothesis further supported by the V2 TCN/SW-MLP results
 (Section~\ref{subsubsec:tcn_swmlp}).
 
 \subsection{V2 Improvements}
@@ -112,20 +112,32 @@ Two changes are introduced relative to the V1 GP. First, the kernel is
 changed from Squared-Exponential to Matérn~5/2,
 $k(r) = \left(1 + \tfrac{\sqrt{5}r}{l} + \tfrac{5r^2}{3l^2}\right)
 \exp\!\left(-\tfrac{\sqrt{5}r}{l}\right)$, which assumes only twice
-differentiable sample paths rather than infinite smoothness — a weaker and
+differentiable sample paths rather than infinite smoothness  a weaker and
 more physically appropriate regularity assumption for a system subject to
 turbulent forcing \citep{rasmussen2006}. Second, hyperparameters
 $(\sigma_f, l, \sigma_n)$ are tuned by Bayesian optimization (marginal
 likelihood objective, $20$ evaluations) rather than left at default values.
-The optimized hyperparameters differ substantially between the two output
-channels: for $\omegar^{+}$, $\sigma_f=0.0013$, $l=0.0811$,
-$\sigma_n=0.0023$; for $\beta^{+}$, $\sigma_f=0.4397$, $l=24508.4$,
-$\sigma_n=0.0729$ — the very large length scale on the beta channel
-reflecting the near-linear, low-curvature relationship between normalized
+An earlier training pass inadvertently let this same Bayesian search
+also select the kernel family itself, silently overriding the intended
+Mat\'ern~5/2 choice with an ARD-Exponential kernel; this has been
+fixed by restricting the optimized hyperparameter set to length scale
+and noise variance only. \textbf{Verification}: loading the trained
+model and inspecting its \texttt{KernelFunction} property directly
+confirms \texttt{Matern52} for both output channels of GP-v2, distinct
+from V1's confirmed \texttt{SquaredExponential}, with
+\texttt{isequal} false between the two model objects -- ruling out a
+stale-workspace or copy-paste explanation for any subsequent numerical
+similarity between V1 and V2 results. The optimized hyperparameters
+(length scale $l$, signal deviation $\sigma_f$, noise deviation
+$\sigma_n$) differ substantially between the two output channels: for
+$\omegar^{+}$, $l=109.35$, $\sigma_f=3.152$, $\sigma_n=0.0052$; for
+$\beta^{+}$, $l=996.68$, $\sigma_f=5281.3$, $\sigma_n=0.0729$ -- the
+large length scale on the beta channel reflecting the near-linear,
+low-curvature relationship between normalized
 inputs and $\beta^{+}$. Training takes $\SI{77.9}{s}$ (versus
 $\SI{4.0}{s}$ for V1, a one-time cost with no impact on inference), and
 test accuracy improves to $\RMSE_{\omega}=\SI{0.0102}{rpm}$,
-$\RMSE_{\beta}=0.0692\deg$ — a $44.6\%$ gain over the linear baseline and,
+$\RMSE_{\beta}=0.0692\deg$  a $44.6\%$ gain over the linear baseline and,
 notably, the best $\beta$ accuracy of any surrogate evaluated. Critically,
 the Bayesian-optimized hyperparameters directly calibrate the predictive
 uncertainty $\sigma_{\text{te}}$, which motivates the GP-based
@@ -136,15 +148,19 @@ Section~\ref{subsec:gp_uncertainty_cost}.
 \label{subsubsec:pinn_v2}
 
 The V1 PINN clips the power coefficient with
-$\Cp_{\text{clip}} = \max(0,\ \min(C_{p,\text{Betz}},\ \Cp))$ to enforce
+$C_{p}^{\text{clip}} = \max(0,\ \min(C_{p,\text{Betz}},\ C_{p}))$ to enforce
 physical bounds in the residual term, which is non-differentiable at the
 clipping boundaries and produces a zero gradient exactly where the physics
 loss is most active. In PINN-v2, this is replaced with a smooth softplus
 saturation, keeping the physics residual differentiable everywhere in the
 training domain. Training settings are otherwise unchanged ($3{,}000$
-iterations, $\lambda_{\text{phy}}=0.10$). Test accuracy is essentially
-unchanged relative to V1 ($\RMSE_{\omega}=\SI{0.0193}{rpm}$ vs.\
-$\SI{0.0183}{rpm}$, $\Delta \approx 0.0000$ once rounded;
+iterations, $\lambda_{\text{phy}}=0.10$). Test accuracy improves modestly relative to V1
+($\RMSE_{\omega}=\SI{0.0193}{rpm}$ vs.\ $\SI{0.0183}{rpm}$,
+$\Delta=\SI{0.0010}{rpm}$, $\approx5.2\%$ relative -- since PINN-v2's
+training seed is now explicitly recorded (Appendix~\ref{subsec:appendix_seeding})
+but V1's original run predates that fix, we cannot rule out
+run-to-run initialization variance as a contributor to this small
+difference, rather than the architectural change alone);
 $\RMSE_{\beta}=0.1636\deg$ vs.\ $0.1924\deg$), and PINN-v2 remains, along
 with TCN, one of the two surrogates that fail to outperform the linear
 baseline ($-4.5\%$). The differentiable formulation therefore did not
@@ -175,7 +191,7 @@ $\Delta t = \tau_\beta$, the $10$-step temporal window is largely redundant
 information for one-step prediction, and windowed/recurrent architectures
 pay a real optimization and capacity cost for modeling a temporal
 dependency the plant does not strongly exhibit at this sampling rate. TCN's
-particularly poor result — worse than naive persistence — suggests the
+particularly poor result  worse than naive persistence  suggests the
 causal-dilated convolutional inductive bias is actively mismatched to this
 near-memoryless dynamics, though we do not rule out that further
 hyperparameter tuning could narrow this gap; this is noted as a limitation
@@ -185,43 +201,41 @@ in Section~\ref{subsec:limitations}.
 \label{subsec:comparative_accuracy}
 
 Table~\ref{tab:stage2_accuracy} summarizes test-set accuracy for all
-V1 and V2 surrogates. GP-v2 achieves the best accuracy on the pitch
-channel ($\RMSE_{\beta}=0.0696\deg$) among all surrogates in either
-snapshot, but not on the rotor-speed channel: its
-$\RMSE_{\omega}=\SI{0.0102}{rpm}$ is higher (worse) than both V1 GP
-($\SI{0.0066}{rpm}$) and V1 LLNFM ($\SI{0.0069}{rpm}$); within the V2
-snapshot alone, GP-v2 does edge out LLNFM$^{*}$ ($\SI{0.0106}{rpm}$) on
-$\omega$. LLNFM remains the best accuracy-per-training-second
-trade-off ($\SI{5.8}{s}$ vs.\ $\SI{77.9}{s}$ for GP-v2). Three surrogates
-(LSTM, TCN, PINN/PINN-v2) fail to clearly outperform the Linear ARX
-baseline, and TCN performs worse than even the naive Persistence baseline
-on this dataset.
+V1 and V2 surrogates. LLNFM (V1, unchanged in V2) achieves the best
+pitch-channel accuracy overall ($\RMSE_{\beta}=0.0964\deg$); GP-v2 is
+close but not best on this channel ($\RMSE_{\beta}=0.1448\deg$,
+comparable to V1 GP's $0.1437\deg$). On the rotor-speed channel, GP-v2's
+$\RMSE_{\omega}=\SI{0.0129}{rpm}$ is higher (worse) than V1 GP
+($\SI{0.0083}{rpm}$) and both LLNFM figures ($\SI{0.0088}{rpm}$);
+within the V2 snapshot alone, GP-v2 no longer edges out
+LLNFM$^{*}$ on $\omega$ either. LLNFM remains the best
+accuracy-per-training-second trade-off ($\SI{8.2}{s}$ vs.\
+$\SI{50.4}{s}$ for GP-v2). Against the Linear ARX baseline, LSTM, TCN,
+and V1 PINN fail to clearly outperform it, while V2's PINN-v2 now
+edges narrowly ahead ($+1.6\%$); TCN performs worse than even the
+naive Persistence baseline on this dataset.
 
-We note one clarification for rigor: the V1-to-V2 comparison for
-\emph{unchanged} components shows a shift that could initially appear
-to be an unexplained evaluation artifact — e.g.\ the Persistence
-baseline moves from $\RMSE_{\omega}=\SI{0.0214}{rpm}$ (V1) to
-$\SI{0.0241}{rpm}$ (V2), and LLNFM, reused without retraining, is
-reported at $\RMSE_{\omega}=\SI{0.0069}{rpm}$ in the V1 run versus
-$\SI{0.0106}{rpm}$ in the V2 run. Tracing this to its source in
-\texttt{stage1\_generate\_data.m} confirms a deliberate, documented
-protocol change rather than an unresolved artifact: the V2 dataset
-generator widens the initial rotor-speed sampling to explicitly cover
-Region~II ($\approx 8$--$\SI{12.1}{rpm}$ for odd-indexed trajectories,
-alongside the V1-style near-rated initialization for even-indexed
-trajectories, both under fixed, trajectory-indexed random seeds), so
-that surrogates can learn the Region~II/III torque-switching behavior
-of Section~\ref{subsec:torque_switching}. Because Persistence involves
-no learned parameters and LLNFM is evaluated without retraining, both
-report a genuinely different test-set distribution between V1 and V2
---- a wider, harder operating envelope in V2 --- rather than a
-stochastic evaluation difference; the RMSE shift is the expected
-consequence of that widened envelope, not a discrepancy to be
-reconciled. V1 and V2 numbers are nonetheless still reported as two
-separate snapshots, since they were generated by different dataset
-configurations and are not directly comparable on an absolute basis.
-Gains relative to Linear ARX (Table~\ref{tab:stage2_accuracy}, last
-column) are computed within each snapshot for this reason. All V2
+We note one clarification for rigor, updated from an earlier draft of
+this paper. A previous version of the pipeline generated V2's dataset
+via a separate, deliberately widened generator (covering Region~II
+explicitly, alongside the V1-style near-rated initialization), so that
+V1 and V2 were evaluated on genuinely different test-set
+distributions and were reported as non-comparable snapshots for that
+reason. Following the physical-parameter correction of
+Section~\ref{subsec:torque_switching}, the pipeline was consolidated
+to a single, unified \texttt{stage1\_generate\_data.m} used by both V1
+and V2 training runs; the separate V2-specific generator no longer
+exists. Persistence and LLNFM (both unretrained-or-parameter-free
+components) accordingly now report numerically identical figures in
+both snapshots (Table~\ref{tab:stage2_accuracy}), which is the
+expected, correct behavior for models evaluated on the same test set
+-- not a discrepancy requiring explanation. V1 and V2 are still
+reported as two snapshots because they reflect two distinct sets of
+trained \emph{surrogate architectures} (V1: LLNFM, LSTM, GP, PINN; V2
+adds/replaces with TCN, SW-MLP, GP-v2, PINN-v2), not because of any
+remaining difference in the underlying data. Gains relative to Linear
+ARX (Table~\ref{tab:stage2_accuracy}, last column) are computed
+against a single shared Linear ARX baseline for this reason. All
 figures in Table~\ref{tab:stage2_accuracy} were regenerated with an
 explicit, recorded random seed (\texttt{cfg.data.split\_seed}) fixed
 before every stochastic training step, confirmed reproducible across
@@ -239,29 +253,35 @@ confirmed reproducible.}
 Snapshot & Model & RMSE-$\omega$ (rpm) & RMSE-$\beta$ (deg) & Train (s) & Gain vs.\ Linear \\
 \midrule
 \multirow{6}{*}{V1}
- & Persistence  & 0.0214 & 0.3220 & --    & $-20.6\%$ \\
- & Linear ARX   & 0.0178 & 0.1423 & $<1$  & reference \\
- & LLNFM        & 0.0069 & 0.0936 & 5.8   & $+61.2\%$ \\
- & LSTM         & 0.0147 & 0.2083 & 2136.1 & $+17.1\%$ \\
- & GP           & 0.0066 & 0.1427 & 4.0   & $+62.6\%$ \\
- & PINN         & 0.0183 & 0.1924 & 114.5 & $-3.1\%$ \\
+ & Persistence  & 0.0241 & 0.3220 & --    & $-38.1\%$ \\
+ & Linear ARX   & 0.0175 & 0.1420 & $<1$  & reference \\
+ & LLNFM        & 0.0088 & 0.0964 & 8.2   & $+49.5\%$ \\
+ & LSTM         & 0.0207 & 0.2056 & 685.8 & $-18.3\%$ \\
+ & GP           & 0.0083 & 0.1437 & 4.5   & $+52.6\%$ \\
+ & PINN         & 0.0178 & 0.1738 & 61.4  & $-2.0\%$ \\
 \midrule
 \multirow{7}{*}{V2}
- & Persistence  & 0.0241 & 0.3220 & --    & $-30.7\%$ \\
- & Linear ARX   & 0.0184 & 0.1423 & $<1$  & reference \\
- & LLNFM$^{*}$  & 0.0106 & 0.0971 & 5.2   & $+42.3\%$ \\
- & TCN          & 0.0412 & 0.2969 & 432.8 & $-123.3\%$ \\
- & SW-MLP       & 0.0159 & 0.1629 & 69.1  & $+14.0\%$ \\
- & GP-v2        & 0.0102 & 0.0696 & 44.3  & $+44.6\%$ \\
- & PINN-v2      & 0.0186 & 0.1846 & 21.7  & $-0.8\%$ \\
+ & Persistence  & 0.0241 & 0.3220 & --    & $-38.1\%$ \\
+ & Linear ARX   & 0.0175 & 0.1420 & $<1$  & reference \\
+ & LLNFM$^{*}$  & 0.0088 & 0.0964 & 8.2   & $+49.5\%$ \\
+ & TCN          & 0.0396 & 0.3511 & 1248.3 & $-126.9\%$ \\
+ & SW-MLP       & 0.0154 & 0.1612 & 193.6 & $+12.1\%$ \\
+ & GP-v2        & 0.0129 & 0.1448 & 50.4  & $+26.3\%$ \\
+ & PINN-v2      & 0.0172 & 0.1738 & 57.8  & $+1.6\%$ \\
 \bottomrule
 \end{tabular}
 
 \vspace{4pt}
-{\footnotesize $^{*}$LLNFM architecture and weights unchanged from V1;
-the RMSE difference vs.\ V1 reflects evaluation on the wider,
-Region-II-inclusive V2 test set (see text), not a change to the model
-itself.}
+{\footnotesize $^{*}$LLNFM architecture and weights unchanged from V1.
+V1 and V2 now share a single, unified Stage~1 dataset (regenerated
+after the physical-parameter correction of
+Section~\ref{subsec:torque_switching}); consequently LLNFM's V1 and V2
+figures are numerically identical, as expected for an unretrained
+model evaluated on the same test set. An earlier draft of this table
+reported a V1/V2 discrepancy for LLNFM, attributed at the time to a
+deliberately widened V2-specific test set; that separate V2 dataset
+generator no longer exists in the current, consolidated pipeline, and
+the discrepancy no longer arises.}
 \end{table}
 
 \begin{figure}[H]

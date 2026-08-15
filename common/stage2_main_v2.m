@@ -246,3 +246,26 @@ end
 fprintf('%s\n', repmat('=',1,76));
 fprintf('  Ready for Stage 3 V2: nlmpc() controller design\n');
 fprintf('%s\n', repmat('=',1,76));
+
+%% ── Write results/stage2_main_v2_results.txt [ADDED] ────────────────────────
+if ~exist('results', 'dir'), mkdir('results'); end
+fid = fopen(fullfile('results','stage2_main_v2_results.txt'), 'w');
+fprintf(fid, 'STAGE 2 (V2) MODEL TRAINING RESULTS\n');
+fprintf(fid, 'Generated: %s\n', datestr(now));
+fprintf(fid, 'MATLAB version: %s\n', version);
+fprintf(fid, '================================================\n\n');
+for mi = 1:numel(all_names)
+    fprintf(fid, '[%s]\n', all_names{mi});
+    fprintf(fid, '  rmse_omega_rpm = %.4f\n', rmse_o_v2(mi));
+    fprintf(fid, '  rmse_beta_deg = %.4f\n', rmse_b_v2(mi));
+    fprintf(fid, '  train_time_s = %.2f\n', t_tr_v2(mi));
+    fprintf(fid, '  gain_vs_linear_pct = %.1f\n', gain_v2(mi));
+    fprintf(fid, '\n');
+end
+if v1_available
+    fprintf(fid, '[V1 vs V2 delta]\n');
+    fprintf(fid, '  GP_delta_rpm = %+.4f\n', (mdl_gp_v2.rmse_te(1)-v1.mdl_gp.rmse_te(1))*30/pi);
+    fprintf(fid, '  PINN_delta_rpm = %+.4f\n', (mdl_pinn_v2.rmse_te(1)-v1.mdl_pinn.rmse_te(1))*30/pi);
+end
+fclose(fid);
+fprintf('Wrote results/stage2_main_v2_results.txt\n');

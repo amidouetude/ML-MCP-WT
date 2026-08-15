@@ -84,9 +84,11 @@ HARDWARE
 
 All results were produced on CPU only (no GPU-accelerated training or
 inference). No CUDA/GPU toolbox dependency exists in this project.
-Machine specification was not recorded systematically; per-step CPU
-timings (ms) reported throughout the paper are therefore relative
-(predict() vs. manual, same machine, same run) rather than absolute
+Machine specification (added retroactively, reproducibility review
+item 5.2): Intel Core i5-12450H (12th Gen, 8 cores/16 threads), 16 GB RAM,
+Windows. Per-step CPU timings (ms) reported throughout the paper are
+nonetheless best read as relative (predict() vs. manual, same machine,
+same run) rather than absolute
 benchmarks portable across hardware. Absolute wall-clock figures
 (e.g. "LSTM predict(): ~318 s/step") should be read as
 order-of-magnitude, machine-specific figures, not universal constants.

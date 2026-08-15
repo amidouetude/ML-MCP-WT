@@ -1,0 +1,15 @@
+ISOLATING THE predict() OVERHEAD MECHANISM (item 2.2)
+Generated: 14-Aug-2026 15:51:19
+Architecture: TCN, N_calls=250, MATLAB 24.1.0.2537033 (R2024a)
+================================================
+
+condition_1_identical_median_ms = 0.6303
+condition_2_randomized_median_ms = 0.7396
+condition_3_batch_percall_ms = 0.3620
+condition_4_prebuilt_median_ms = 0.6445
+condition_5_manual_median_ms = 0.0309
+
+ratio_2_over_1 = 1.173
+ratio_2_over_3 = 2.043
+ratio_2_over_4 = 1.148
+ratio_2_over_5 = 23.935

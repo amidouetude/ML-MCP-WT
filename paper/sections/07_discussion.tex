@@ -1,5 +1,5 @@
 % ===========================================================================
-% SECTION 7 — DISCUSSION
+% SECTION 7 DISCUSSION
 % Target: 600-800 words
 % ===========================================================================
 
@@ -12,7 +12,7 @@
 Four findings emerge from this study. First, a systematic six-architecture
 comparison (Section~\ref{sec:ml_surrogates}) shows that prediction accuracy
 alone is a poor predictor of closed-loop usefulness: LLNFM and the two GP
-variants dominate on one-step RMSE, yet PINN — a mid-table predictor —
+variants dominate on one-step RMSE, yet PINN a mid-table predictor
 achieves the best V1 closed-loop RMSE (Section~\ref{subsec:v1_results}),
 while GP-v2's substantially improved open-loop accuracy over GP V1 leaves
 closed-loop RMSE unchanged (Section~\ref{subsec:v1_v2_comparison}). Second,
@@ -22,9 +22,9 @@ SQP-based \texttt{nlmpc} on the other, was traced through a five-stage
 diagnostic (Section~\ref{subsec:operational_feasibility}) to a specific,
 resolvable cause: repeated calls to MATLAB's \texttt{predict()} function
 inside the SQP solve, not surrogate architecture, model size, or MATLAB
-version. A verified manual forward pass --- explicit matrix arithmetic
+version. A verified manual forward pass  explicit matrix arithmetic
 for feedforward and Mat\'ern-kernel architectures, and a vectorized
-causal convolution for TCN --- restored closed-loop viability for all
+causal convolution for TCN  restored closed-loop viability for all
 six surrogates, with speedups of $7.8\times$ to $2844\times$ and
 near-elimination of real-time budget overruns
 (Table~\ref{tab:predict_bypass}). This reframes what the ML-MPC-for-wind
@@ -33,38 +33,76 @@ deep-learning surrogates as, instead, an implementation-specific cost
 that is both diagnosable and remediable within the same toolchain,
 consistent with \citet{salzmann_real-time_2022}'s independent report
 that decoupling a neural network's evaluation from the surrounding
-solver's iteration loop is necessary --- though not previously
+solver's iteration loop is necessary  though not previously
 documented, to our knowledge, as arising specifically from
 \texttt{predict()}'s own per-call overhead in MATLAB's \texttt{nlmpc}.
-A structurally related, but functionally distinct, finding is reported by
-\citet{witter_creating_2025}: their LSTM/GRU surrogates diverge in closed
-loop for a \emph{predictive-accuracy} reason (the learned dynamics
-themselves behave differently once embedded in a feedback loop), whereas
+A structurally related, but architecturally distinct, finding is
+reported by \citet{witter_creating_2025}. Their setup contains no
+predictive controller at all: an LSTM/GRU/Transformer surrogate replaces
+a multibody-simulation (MBS) plant model, run in a loop with the
+turbine's own standard (non-MPC) controller, rather than serving as an
+MPC's internal predictive model as in this paper. Within that setup,
+their LSTM/GRU surrogates 'diverge from the expected results' (their
+wording) for a \emph{predictive-accuracy} reason (the learned dynamics
+themselves behave differently once embedded in the feedback loop), whereas
 our LSTM's closed-loop difficulty was, before the bypass,
 \emph{computational} (excessive per-step latency causing the solver to
 operate on a stale or default control action) rather than a divergence of
-the learned dynamics --- the extended Monte Carlo evaluation
+the learned dynamics  the extended Monte Carlo evaluation
 (Section~\ref{subsec:monte_carlo}) shows LSTM achieving competitive, and
 at some wind speeds the best, tracking accuracy once the computational
-bottleneck is removed. Distinguishing these two failure modes ---
-functional divergence versus computational infeasibility --- is
+bottleneck is removed. Distinguishing these two failure modes 
+functional divergence versus computational infeasibility  is
 important for practitioners, since only the latter admits the kind of
 implementation-level remedy demonstrated here. Third,
 the Region~II/III torque switching correction
-(Section~\ref{subsec:torque_switching}) — while standard practice in the
-classical wind turbine control literature \citep{bianchi2006,pao2009} — was
+(Section~\ref{subsec:torque_switching}) while standard practice in the
+classical wind turbine control literature \citep{bianchi2006,pao2009} was
 in our case discovered only through long-horizon closed-loop simulation
 with an incorrect constant-torque assumption; the fact that a textbook
 modeling choice reproduces a documented irrecoverable failure mode
 underscores that this detail cannot be treated as a minor implementation
 nicety when generating training data or evaluating closed-loop MPC.
-Fourth, calibrating GP hyperparameters by marginal-likelihood optimization
-under a Matérn~5/2 kernel \citep{rasmussen2006} yields a predictive
-uncertainty that is usable directly as an MPC cost penalty
-(Section~\ref{subsec:gp_uncertainty_cost}), in the spirit of cautious /
-uncertainty-aware MPC \citep{hewing2020,kocijan2004} but applied here, to
-our knowledge, for the first time to a Region~III wind turbine speed
-regulation problem with an ML surrogate as the internal predictor.
+\label{subsec:gp_frozen_actuator_finding}
+Fourth, applying the same diagnostic standard established by Finding 2
+ explicit per-step actuator command and solver exit-flag logging,
+rather than trusting an aggregate metric alone  to our own GP-based
+uncertainty-penalized MPC cost (Section~\ref{subsec:gp_uncertainty_cost})
+revealed that a previously reported "zero pitch activity" result, for
+both GP (V1) and GP-v2 (V2), is a frozen-actuator artifact rather than a
+genuine controller achievement: the pitch command never leaves its
+initial value ($\text{std}=0$ across every tested step), and the solver
+reports a non-positive exit flag (systematic infeasibility) at
+effectively every step, independent of the uncertainty penalty weight
+$\kappa$ (consistent with the inconclusive $\kappa$-sensitivity result
+of Section~\ref{subsec:limitations}). This mirrors, almost exactly, the
+initial-condition-driven frozen-actuator signature diagnosed in
+Section~\ref{subsec:bypass_closed_loop}  identical aggregate metrics
+across ostensibly different runs, here across two different GP model
+generations rather than across five different architectures  and we
+apply the same recognition criterion here that Section~\ref{subsec:bypass_closed_loop}
+established: a report of zero actuator activity for the sole actuator
+available in above-rated operation is not, on its own, evidence of good
+control, and should be verified against the actuator trace and solver
+status before being reported as a result. We withdraw the "zero pitch
+activity" achievement claim accordingly (see
+Section~\ref{subsec:limitations}) and report this finding itself, and
+the general diagnostic habit that exposed it, as this paper's fourth
+contribution in place of the original claim.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/FigF_GPFrozenActuator_PitchTrace.png}
+\caption{Pitch command trace, rotor speed trace, and per-step solver
+\texttt{ExitFlag} for GP (V1) and GP-v2 (V2) under the original
+$T=\SI{120}{s}$ protocol. The pitch command is frozen at its initial
+value for the full simulation in both cases ($\text{std}=0$), and
+\texttt{ExitFlag}$<0$ (solver infeasibility) at every one of the
+$1200$ steps tested, confirming the 'zero pitch activity' result is a
+frozen-actuator artifact rather than genuine regulation.}
+\label{fig:gp_frozen_actuator}
+\end{figure}
+
 Relative to the model-free reinforcement-learning alternative to
 surrogate-based MPC \citep{xie_data-driven_2023}, our approach retains
 MPC's explicit constraint handling and, via the manual bypass of
@@ -111,8 +149,8 @@ Because the same plant integrator underlies every controller and
 surrogate reported in this paper, this bias is common across all
 reported results rather than differentially favoring any one
 architecture, so the \emph{relative} comparisons between controllers
-that this paper's contributions rest on --- computational speedup,
-relative tracking accuracy, and closed-loop feasibility verdicts ---
+that this paper's contributions rest on  computational speedup,
+relative tracking accuracy, and closed-loop feasibility verdicts 
 are not expected to be affected. However, cumulative pitch activity
 figures reported throughout this paper (Table~\ref{tab:v1_results} and
 subsequent tables) should accordingly be read as a comparative,
@@ -148,34 +186,115 @@ The V1-to-V2 evaluation discrepancy noted for nominally unchanged
 components (Persistence, LLNFM) is, as established in
 Section~\ref{subsec:comparative_accuracy}, fully traced to a
 deliberate widening of the V2 dataset's initial-condition sampling to
-cover Region~II, not an unresolved artifact. A genuinely open
-methodological gap remains, however, around the GP-uncertainty cost
-weight $\kappa$ (Section~\ref{subsec:gp_uncertainty_cost}): an attempt
+cover Region~II, not an unresolved artifact. The GP-uncertainty cost
+weight $\kappa$ (Section~\ref{subsec:gp_uncertainty_cost}) is a further,
+now-\emph{confirmed} limitation rather than an open question: an initial
+attempt
 to sweep $\kappa \in \{0, 0.2, 0.5, 0.8, 1.0\}$ under the original
 \texttt{predict()}-based GP-v2 cost on a shortened $\SI{20}{s}$ window
 returned a numerically identical closed-loop RMSE and zero pitch
 activity for every $\kappa$ value tested, traced to
 \texttt{ExitFlag}$<0$ (solver infeasibility) at every one of $200$
-steps regardless of $\kappa$ — the pitch command never left its
-initial value, so the flat RMSE across $\kappa$ reflects a shared
-solver failure rather than genuine insensitivity to the uncertainty
-penalty. This echoes, in a different form, the systematic
+steps regardless of $\kappa$. A dedicated follow-up re-verification,
+using the full original $\SI{120}{s}$ protocol with explicit per-step
+actuator command and exit-flag logging (Section~\ref{subsec:gp_frozen_actuator_finding}),
+\emph{confirms} this is not an artifact of the shortened window: both
+GP (V1) and GP-v2 (V2) show the pitch command frozen at its initial
+value ($\text{std}=0$) with \texttt{ExitFlag}$<0$ at all $1200$ steps
+under the full protocol. This echoes, in a more severe form, the
+systematic
 non-convergence under \texttt{MaxIterations}$=30$ documented for
 GP-v2 in the Jacobian test of Section~\ref{subsec:operational_feasibility}
-(Stage 3), and suggests the uncertainty-penalized cost may be
-structurally harder for the SQP solver to satisfy than the standard
-quadratic cost, independent of $\kappa$'s specific value or the
-shortened horizon used for this attempt. Whether $\kappa=0.8$ is a
-robust operating point therefore remains an open question, not a
-settled one, and is carried forward as future work below rather than
-claimed as validated here. Finally, prediction and tracking accuracy
+(Stage 3): there, the solver failed to converge to optimality but still
+produced a moving, feasible control trajectory; here, under the
+uncertainty-penalized cost specifically, the solver cannot find a
+feasible solution at all. The uncertainty-penalized GP cost formulation
+of Section~\ref{subsec:gp_uncertainty_cost} is accordingly not usable
+in its current form, and the "zero pitch activity" result reported for
+it is withdrawn (Section~\ref{subsec:gp_frozen_actuator_finding}) rather
+than reported as a finding. A separate limitation, whose full picture changed materially over the
+course of this investigation, concerns the $N_c=1$ control horizon used
+throughout the V2 protocol. Under an earlier, since-corrected torque-law
+calibration (Section~\ref{subsec:torque_switching}), PINN-v2 and TCN were
+found to produce numerically identical closed-loop results across all
+$15$ wind-speed/seed combinations of the extended Monte Carlo evaluation
+(Section~\ref{subsec:monte_carlo}). Code inspection ruled out a software
+bug (the two controllers are built and dispatched via entirely
+independent code paths), and a follow-up test at $N_c=4$ under that same
+torque calibration indicated the identity was a genuine corner-solution
+coincidence: TCN's result was virtually unchanged between $N_c=1$ and
+$N_c=4$, while PINN-v2's activity increased substantially, suggesting
+PINN-v2's $N_c=1$ passivity was a control-horizon artifact and TCN's was
+a genuine, $N_c$-independent property. \textbf{This TCN conclusion did
+not survive adoption of the corrected, NREL-reference torque-switching
+parameters} (Section~\ref{subsec:torque_switching}): re-running the
+identical $N_c=1$ protocol under the corrected physics, TCN no longer
+matches PINN-v2 at all and instead shows substantial, unremarkable pitch
+activity ($\text{PA}=\SI{272.7}{deg}$, comparable to Baseline's
+$\SI{299.7}{deg}$), while PINN-v2's passivity persists unchanged
+($\text{PA}=\SI{2.7}{deg}$, identical to its pre-correction value). We
+therefore withdraw the specific claim that TCN's low activity is a
+genuine, $N_c$-independent architectural property  it now appears to
+have been a coincidence of the earlier, miscalibrated torque law, not a
+property of TCN itself. PINN-v2's passivity, by contrast, reproduces
+identically across both torque-law calibrations, which is more
+consistent with (though does not by itself prove) a genuine
+architecture-driven local optimum. The original $N_c=4$ comparison was
+run only under the pre-correction torque law and has not yet been
+repeated under the corrected physics; consequently, whether PINN-v2's
+passivity would likewise open up under $N_c=4$ with the corrected
+torque law is an open question, not a settled one, and is flagged for
+the next verification pass rather than assumed. More broadly, this
+episode is itself a useful illustration of the diagnostic standard this
+paper applies throughout: a finding that appeared solid under one set of
+physical parameters did not survive a subsequent, independently
+motivated correction to those parameters, and is reported as withdrawn
+rather than left uncorrected. $N_c=1$ closed-loop results for any single
+surrogate should not be assumed representative of that surrogate's
+behavior under a less constrained horizon without independent
+verification under the currently adopted plant parameters. Finally, prediction and tracking accuracy
 are reported throughout this paper as RMSE alone; MAE and $R^2$ were
 not computed retroactively for already-reported results, since doing
 so would require the original per-sample prediction arrays rather than
-the aggregate RMSE values actually logged during each run --- a
+the aggregate RMSE values actually logged during each run  a
 utility function (\texttt{compute\_extended\_metrics.m}) is provided
 for future evaluation runs to report all three metrics jointly,
 avoiding a repeat of this retroactive gap.
+
+\subsection{Threats to Validity}
+\label{subsec:threats_to_validity}
+
+\textbf{Non-convergence.} Every controller in this paper operates under
+a bounded $30$-iteration SQP budget, and \texttt{ExitFlag} is
+non-positive at effectively every step for every controller, including
+the well-behaved Baseline (Appendix~\ref{subsec:appendix_exitflag}). A
+sensitivity sweep over the iteration cap (Baseline, TCN, MLP-residual;
+$10$--$100$ iterations) tests directly whether this materially affects
+reported results.
+
+\textbf{Single toolchain.} Every result in this paper comes from a
+single software ecosystem (MATLAB, Deep Learning Toolbox), tested
+across two releases (R2024a, R2026a) but with no cross-toolchain
+replication (e.g.\ Python/PyTorch + CasADi/acados). The
+\texttt{predict()}-overhead finding is not claimed to generalize beyond
+this specific toolchain.
+
+\textbf{Two-state plant.} The reduced rotor-speed/pitch model omits
+drivetrain torsion and tower fore-aft dynamics; load-relevant
+conclusions should not be drawn from this study without validation on
+a higher-order model.
+
+\textbf{Five-seed sample.} The extended Monte Carlo evaluation uses
+five wind seeds per condition -- sufficient to characterize gross
+trends (e.g.\ LSTM's instability at $V=\SI{12}{m/s}$) but too few for
+tight confidence intervals on any single controller's mean performance.
+
+\textbf{No significance testing.} Comparisons between controllers
+throughout this paper (e.g.\ Table~\ref{tab:monte_carlo_extended})
+report mean $\pm$ standard deviation without formal hypothesis
+testing (e.g.\ paired $t$-tests or a non-parametric equivalent across
+matched wind seeds). Apparent differences between controllers should be
+read as descriptive, not as statistically established.
 
 \subsection{Perspectives (V3)}
 \label{subsec:perspectives_v3}
@@ -185,7 +304,7 @@ instability at $V=\SI{12}{m/s}$ (Section~\ref{subsec:monte_carlo}) and
 the crossover in wind-speed sensitivity between
 Baseline/GP/residual-MLP/SW-MLP and PINN-v2/TCN
 (Section~\ref{subsec:monte_carlo}) both warrant targeted investigation
---- extending the wind-speed sweep beyond three points and pairing it
+ extending the wind-speed sweep beyond three points and pairing it
 with the multi-objective load metrics noted above would clarify whether
 these are genuine architectural properties or artifacts of the specific
 training data distribution. Second, extending the plant to four states
@@ -201,25 +320,27 @@ Euler/$\tau_\beta$ degeneracy identified above and allow the cumulative
 pitch-activity figures reported throughout this paper to be
 re-evaluated as physically calibrated actuator-wear estimates, rather
 than only architecture-relative comparisons. Fourth, an explicit
-wind-speed forecasting or estimation layer — an
+wind-speed forecasting or estimation layer an
 autoregressive predictor over the MPC horizon, or an Extended Kalman
 Filter estimating rotor-effective wind speed from standard turbine
-measurements \citep{soltani2013} — would let the controller anticipate
+measurements \citep{soltani2013} would let the controller anticipate
 disturbances rather than react to the current measured $V$ alone, and
-is a natural complement to the GP uncertainty-penalized cost of
-Section~\ref{subsec:gp_uncertainty_cost}. Fifth, and directly motivated
-by the inconclusive $\kappa$-sensitivity attempt above, diagnosing
+is a natural complement to a repaired GP uncertainty-penalized cost
+formulation, should one be developed (see below).
+Fifth, and directly motivated
+by the confirmed frozen-actuator finding above
+(Section~\ref{subsec:gp_frozen_actuator_finding}), diagnosing
 \emph{why} the GP-uncertainty-penalized cost drives the SQP solver to
-infeasibility independent of $\kappa$'s value — whether through
+infeasibility independent of $\kappa$'s value whether through
 supplying an analytical (rather than finite-difference) Jacobian for
 \texttt{cost\_gp.m} specifically, relaxing the control horizon
 $N_c=1$ constraint identified as a contributing factor in the Stage~3
 Jacobian test, or reformulating the uncertainty term as a tightened
 constraint rather than a cost penalty (in the spirit of
-\citet{hewing2020}'s probabilistic reachable sets) — would need to
-precede any claim that $\kappa=0.8$ is a validated, robust operating
-point rather than simply the value used throughout this paper's main
-results. A structurally different route to the same real-time
+\citet{hewing2020}'s probabilistic reachable sets) is a prerequisite
+for any future uncertainty-penalized GP-MPC cost on this plant, since
+the present formulation is withdrawn rather than merely unvalidated.
+A structurally different route to the same real-time
 feasibility goal, not explored in this paper, would replace the
 nonlinear surrogate entirely with a Koopman-operator-based linear
 approximation \citep{williams2015}, trading the accuracy of a

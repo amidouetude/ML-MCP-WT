@@ -232,6 +232,29 @@ fprintf('%s\n', repmat('=',1,72));
 fprintf('  Ready for Stage 3: nlmpc() controller design\n');
 fprintf('%s\n', repmat('=',1,72));
 
+%% ── Write results/stage2_main_results.txt [ADDED] ───────────────────────────
+if ~exist('results', 'dir'), mkdir('results'); end
+fid = fopen(fullfile('results','stage2_main_results.txt'), 'w');
+fprintf(fid, 'STAGE 2 (V1) MODEL TRAINING RESULTS\n');
+fprintf(fid, 'Generated: %s\n', datestr(now));
+fprintf(fid, 'MATLAB version: %s\n', version);
+fprintf(fid, '================================================\n\n');
+for mi = 1:6
+    fprintf(fid, '[%s]\n', all_names{mi});
+    fprintf(fid, '  rmse_omega_rpm = %.4f\n', rmse_o_all(mi));
+    fprintf(fid, '  rmse_beta_deg = %.4f\n', rmse_b_all(mi));
+    fprintf(fid, '  train_time_s = %.2f\n', t_tr_all(mi));
+    fprintf(fid, '  gain_vs_linear_pct = %.1f\n', gain_pct(mi));
+    if isfield(all_mdls{mi}, 'rng_seed')
+        fprintf(fid, '  rng_seed = %d\n', all_mdls{mi}.rng_seed);
+    else
+        fprintf(fid, '  rng_seed = N/A (deterministic or not recorded)\n');
+    end
+    fprintf(fid, '\n');
+end
+fclose(fid);
+fprintf('Wrote results/stage2_main_results.txt\n');
+
 %% ── Local helpers ─────────────────────────────────────────────────────────────
 function Xc = clamp_to_fis_local(fis, X)
     Xc = X;

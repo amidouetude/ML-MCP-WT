@@ -1,0 +1,22 @@
+ITEM 2.5 UNIFIED PROTOCOL RESULTS
+Generated: 15-Aug-2026 20:52:48
+T=60s, Np=15, Nc=4, Ts=0.10, V=14 m/s, seed=2025
+All state functions: manual bypass (no predict()).
+GP-v2 uncertainty term: explicit kappa=0/kappa=0.8 ablation.
+LSTM excluded (predict() cost already quantified elsewhere).
+================================================
+
+[Baseline]
+  rmse_omega_rpm = 2.7169
+  pitch_activity_deg = 30.36
+  mean_cp = 0.0930
+  mean_cpu_ms = 38.86
+  n_infeasible = 5/600
+
+[LLNFM]
+  rmse_omega_rpm = 0.6887
+  pitch_activity_deg = 479.20
+  mean_cp = 0.2344
+  mean_cpu_ms = 1130.11
+  n_infeasible = 8/600
+

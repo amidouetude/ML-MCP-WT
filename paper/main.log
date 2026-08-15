@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.30)  8 AUG 2026 22:31
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.3.30)  14 AUG 2026 17:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -365,26 +365,80 @@ Package: makecell 2009/08/03 V0.1e Managing of Tab Column Heads and Cells
 \c@nlinenum=\count320
 \TeXr@lab=\toks30
 )
+(C:\Program Files\MiKTeX\tex/latex/siunitx\siunitx.sty
+Package: siunitx 2026-04-15 v3.5.4 A comprehensive (SI) units package
+\l__siunitx_number_uncert_offset_int=\count321
+\l__siunitx_number_exponent_fixed_int=\count322
+\l__siunitx_number_min_decimal_int=\count323
+\l__siunitx_number_min_integer_int=\count324
+\l__siunitx_number_round_precision_int=\count325
+\l__siunitx_number_lower_threshold_int=\count326
+\l__siunitx_number_upper_threshold_int=\count327
+\l__siunitx_number_group_first_int=\count328
+\l__siunitx_number_group_size_int=\count329
+\l__siunitx_number_group_min_int=\count330
+\l__siunitx_number_group_minimum_int=\count331
+\l__siunitx_compound_count_int=\count332
+
+(C:\Program Files\MiKTeX\tex/latex/translations\translations.sty
+Package: translations 2022/02/05 v1.12 internationalization of LaTeX2e packages
+ (CN)
+
+(C:\Program Files\MiKTeX\tex/latex/etoolbox\etoolbox.sty
+Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count333
+)
+(C:\Program Files\MiKTeX\tex/generic/pdftexcmds\pdftexcmds.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(C:\Program Files\MiKTeX\tex/generic/infwarerr\infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+)
+(C:\Program Files\MiKTeX\tex/generic/iftex\iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+)
+(C:\Program Files\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+))
+\l__siunitx_table_tmp_box=\box105
+\l__siunitx_table_tmp_dim=\dimen256
+\l__siunitx_table_column_width_dim=\dimen257
+\l__siunitx_table_integer_box=\box106
+\l__siunitx_table_decimal_box=\box107
+\l__siunitx_table_uncert_box=\box108
+\l__siunitx_table_before_box=\box109
+\l__siunitx_table_after_box=\box110
+\l__siunitx_table_before_dim=\dimen258
+\l__siunitx_table_carry_dim=\dimen259
+\l__siunitx_unit_tmp_int=\count334
+\l__siunitx_unit_position_int=\count335
+\l__siunitx_unit_total_int=\count336
+\l__siunitx_sexagesimal_tmp_dim=\dimen260
+\l__siunitx_sexagesimal_marker_box=\box111
+\l__siunitx_sexagesimal_unit_box=\box112
+)
 (C:\Program Files\MiKTeX\tex/latex/geometry\geometry.sty
 Package: geometry 2026/03/07 v6.0 Page Geometry
 
 (C:\Program Files\MiKTeX\tex/generic/iftex\ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
-
-(C:\Program Files\MiKTeX\tex/generic/iftex\iftex.sty
-Package: iftex 2024/12/12 v1.0g TeX engine tests
-))
-\Gm@cnth=\count321
-\Gm@cntv=\count322
-\c@Gm@tempcnt=\count323
-\Gm@bindingoffset=\dimen256
-\Gm@wd@mp=\dimen257
-\Gm@odd@mp=\dimen258
-\Gm@even@mp=\dimen259
-\Gm@layoutwidth=\dimen260
-\Gm@layoutheight=\dimen261
-\Gm@layouthoffset=\dimen262
-\Gm@layoutvoffset=\dimen263
+)
+\Gm@cnth=\count337
+\Gm@cntv=\count338
+\c@Gm@tempcnt=\count339
+\Gm@bindingoffset=\dimen261
+\Gm@wd@mp=\dimen262
+\Gm@odd@mp=\dimen263
+\Gm@even@mp=\dimen264
+\Gm@layoutwidth=\dimen265
+\Gm@layoutheight=\dimen266
+\Gm@layouthoffset=\dimen267
+\Gm@layoutvoffset=\dimen268
 \Gm@dimlist=\toks31
 
 (C:\Program Files\MiKTeX\tex/latex/geometry\geometry.cfg))
@@ -397,71 +451,17 @@ Package: parskip 2021-03-14 v2.0h non-zero parskip adjustments
 (C:\Program Files\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 
-(C:\Program Files\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
-Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
-)
 (C:\Program Files\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
-))
-(C:\Program Files\MiKTeX\tex/latex/etoolbox\etoolbox.sty
-Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count324
-))
+)))
 (C:\Program Files\MiKTeX\tex/latex/enumitem\enumitem.sty
 Package: enumitem 2025/02/06 v3.11 Customized lists
 \labelindent=\skip61
-\enit@outerparindent=\dimen264
+\enit@outerparindent=\dimen269
 \enit@toks=\toks32
-\enit@inbox=\box105
-\enit@count@id=\count325
-\enitdp@description=\count326
-)
-(C:\Program Files\MiKTeX\tex/latex/siunitx\siunitx.sty
-Package: siunitx 2026-04-15 v3.5.4 A comprehensive (SI) units package
-\l__siunitx_number_uncert_offset_int=\count327
-\l__siunitx_number_exponent_fixed_int=\count328
-\l__siunitx_number_min_decimal_int=\count329
-\l__siunitx_number_min_integer_int=\count330
-\l__siunitx_number_round_precision_int=\count331
-\l__siunitx_number_lower_threshold_int=\count332
-\l__siunitx_number_upper_threshold_int=\count333
-\l__siunitx_number_group_first_int=\count334
-\l__siunitx_number_group_size_int=\count335
-\l__siunitx_number_group_min_int=\count336
-\l__siunitx_number_group_minimum_int=\count337
-\l__siunitx_compound_count_int=\count338
-
-(C:\Program Files\MiKTeX\tex/latex/translations\translations.sty
-Package: translations 2022/02/05 v1.12 internationalization of LaTeX2e packages
- (CN)
-
-(C:\Program Files\MiKTeX\tex/generic/pdftexcmds\pdftexcmds.sty
-Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
-)
-
-(C:\Program Files\MiKTeX\tex/generic/infwarerr\infwarerr.sty
-Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
-)
-Package pdftexcmds Info: \pdf@primitive is available.
-Package pdftexcmds Info: \pdf@ifprimitive is available.
-Package pdftexcmds Info: \pdfdraftmode found.
-))
-\l__siunitx_table_tmp_box=\box106
-\l__siunitx_table_tmp_dim=\dimen265
-\l__siunitx_table_column_width_dim=\dimen266
-\l__siunitx_table_integer_box=\box107
-\l__siunitx_table_decimal_box=\box108
-\l__siunitx_table_uncert_box=\box109
-\l__siunitx_table_before_box=\box110
-\l__siunitx_table_after_box=\box111
-\l__siunitx_table_before_dim=\dimen267
-\l__siunitx_table_carry_dim=\dimen268
-\l__siunitx_unit_tmp_int=\count339
-\l__siunitx_unit_position_int=\count340
-\l__siunitx_unit_total_int=\count341
-\l__siunitx_sexagesimal_tmp_dim=\dimen269
-\l__siunitx_sexagesimal_marker_box=\box112
-\l__siunitx_sexagesimal_unit_box=\box113
+\enit@inbox=\box113
+\enit@count@id=\count340
+\enitdp@description=\count341
 )
 
 Package siunitx Info: Option "separate-uncertainty" has been deprecated in
@@ -626,7 +626,7 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 )
 \Hy@SectionHShift=\skip81
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 56.
+Package hyperref Info: Option `colorlinks' set `true' on input line 62.
 
 (C:\Program Files\MiKTeX\tex/latex/natbib\natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
@@ -638,29 +638,32 @@ LaTeX Info: Redefining \cite on input line 694.
 (C:\Program Files\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count359
-) (main.aux)
+) (main.aux
+
+LaTeX Warning: Label `tab:protocol_summary' multiply defined.
+
+)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 114.
-LaTeX Font Info:    ... okay on input line 114.
-
-(C:\Program Files\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 120.
+LaTeX Font Info:    ... okay on input line 120.
+ (C:\Program Files\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count360
 \scratchdimen=\dimen280
@@ -685,6 +688,14 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: float package is loaded.
 Package caption Info: hyperref package is loaded.
 Package caption Info: End \AtBeginDocument code.
+
+(C:\Program Files\MiKTeX\tex/latex/translations/dicts\translations-basic-dictio
+nary-english.trsl
+File: translations-basic-dictionary-english.trsl (english translation file `tra
+nslations-basic-dictionary')
+)
+Package translations Info: loading dictionary `translations-basic-dictionary' f
+or `english'. on input line 120.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -720,66 +731,73 @@ Package caption Info: End \AtBeginDocument code.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-
-(C:\Program Files\MiKTeX\tex/latex/translations/dicts\translations-basic-dictio
-nary-english.trsl
-File: translations-basic-dictionary-english.trsl (english translation file `tra
-nslations-basic-dictionary')
-)
-Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 114.
-Package hyperref Info: Link coloring ON on input line 114.
- (main.out) (main.out)
+Package hyperref Info: Link coloring ON on input line 120.
+(main.out) (main.out)
 \@outlinefile=\write3
 \openout3 = `main.out'.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 117
+LaTeX Font Info:    Trying to load font information for U+msa on input line 123
 .
-
-(C:\Program Files\MiKTeX\tex/latex/amsfonts\umsa.fd
+ (C:\Program Files\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 117
+LaTeX Font Info:    Trying to load font information for U+msb on input line 123
 .
 
 (C:\Program Files\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-) (sections/00_abstract.tex) [1
+) (sections/00_abstract.tex
+[1
 
-{C:/Users/AMIDOU MAIGA/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
-(main.toc [2]
+{C:/Users/AMIDOU MAIGA/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}])
+[2] (main.toc [3]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 50.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 54.
 )
 \tf@toc=\write4
 \openout4 = `main.toc'.
 
- [3] (sections/01_introduction.tex [4]
-Overfull \hbox (0.53911pt too wide) in paragraph at lines 98--103
-\T1/cmtt/m/n/12 dlarray\T1/cmr/m/n/12 -based deep-learning sur-ro-gates and SQP
--based \T1/cmtt/m/n/12 nlmpc \T1/cmr/m/n/12 in MAT-LAB R2024a,
+ [4] (sections/01_introduction.tex [5] [6]
+Overfull \hbox (7.21509pt too wide) in paragraph at lines 121--128
+[]\T1/cmr/m/n/12 Applying the same di-ag-nos-tic stan-dard as Find-ing 2 to our
+ own GP-based uncertainty-
  []
 
 
-Overfull \hbox (2.11774pt too wide) in paragraph at lines 109--114
-[]\T1/cmr/m/n/12 A Gaussian-Process-based uncertainty-penalized MPC cost, made 
-sta-tis-ti-cally mean-
+Overfull \hbox (6.69295pt too wide) in paragraph at lines 209--209
+ []|\T1/cmr/m/n/10.95 Closed- 
  []
 
-[5]) [6] (sections/02_system_modeling.tex [7] [8]) [9]
-(sections/03_dataset_generation.tex [10]
-<figures/Fig1_S1_Coverage.png, id=427, 828.2142pt x 361.35pt>
+[7]) [8] [9] (sections/02_system_modeling.tex [10] [11]
+<figures/Fig3_S2_ModelSummary.png, id=488, 903.375pt x 346.4142pt>
+File: figures/Fig3_S2_ModelSummary.png Graphic file (type png)
+<use figures/Fig3_S2_ModelSummary.png>
+Package pdftex.def Info: figures/Fig3_S2_ModelSummary.png  used on input line 1
+63.
+(pdftex.def)             Requested size: 364.19667pt x 139.65738pt.
+) [12 <./figures/Fig3_S2_ModelSummary.png (PNG copy)>] [13] (sections/03_datase
+t_generation.tex
+[14]
+<figures/Fig1_S1_Coverage.png, id=521, 828.2142pt x 361.35pt>
 File: figures/Fig1_S1_Coverage.png Graphic file (type png)
 <use figures/Fig1_S1_Coverage.png>
-Package pdftex.def Info: figures/Fig1_S1_Coverage.png  used on input line 95.
-(pdftex.def)             Requested size: 455.24411pt x 198.62732pt.
-) [11 <./figures/Fig1_S1_Coverage.png (PNG copy)>] (sections/04_ml_surrogate_mo
-dels.tex [12] [13] [14]
-Overfull \hbox (7.13893pt too wide) in paragraph at lines 232--254
+Package pdftex.def Info: figures/Fig1_S1_Coverage.png  used on input line 97.
+(pdftex.def)             Requested size: 364.19667pt x 158.90076pt.
+) [15 <./figures/Fig1_S1_Coverage.png (PNG copy)>]
+(sections/04_ml_surrogate_models.tex [16] [17] [18]
+Overfull \hbox (7.13893pt too wide) in paragraph at lines 241--263
  [][] 
  []
 
-[15]) [16] (sections/05_mpc_framework.tex
+[19]
+<figures/Fig2_S2_PredictionAccuracy.png, id=574, 978.5358pt x 361.35pt>
+File: figures/Fig2_S2_PredictionAccuracy.png Graphic file (type png)
+<use figures/Fig2_S2_PredictionAccuracy.png>
+Package pdftex.def Info: figures/Fig2_S2_PredictionAccuracy.png  used on input 
+line 273.
+(pdftex.def)             Requested size: 386.96027pt x 142.89433pt.
+) [20 <./figures/Fig2_S2_PredictionAccuracy.png (PNG copy)>]
+(sections/05_mpc_framework.tex
 Overfull \hbox (22.3638pt too wide) in paragraph at lines 54--68
 \T1/cmr/m/n/12 volved); LL-NFM and PINN \T1/cmtt/m/n/12 sf_*(x,u,V,mdl) \T1/cmr
 /m/n/12 ($\OML/cmm/m/it/12 n \OT1/cmr/m/n/12 = 2$\T1/cmr/m/n/12 ); LSTM \T1/cmt
@@ -793,131 +811,161 @@ Overfull \hbox (10.86179pt too wide) in paragraph at lines 54--68
 ga_ref,kappa)
  []
 
-[17]
+[21]
 Overfull \hbox (97.53766pt too wide) in paragraph at lines 94--98
 \T1/cmr/m/n/12 For the GP con-troller, the stan-dard quadratic cost is re-place
 d en-tirely (\T1/cmtt/m/n/12 Optimization.ReplaceStandardCost
  []
 
-[18] [19] [20]
-<figures/Fig1_PredictBypass_CPUComparison.png, id=528, 753.0534pt x 361.35pt>
+[22]
+Overfull \hbox (6.80975pt too wide) in paragraph at lines 132--141
+\T1/cmr/m/n/12 Table [][]6[][] sum-ma-rizes the solver bud-get, hard-ware, and 
+per-comparison set-tings used through-
+ []
+
+[23] [24] [25] [26]
+Overfull \hbox (8.65714pt too wide) in paragraph at lines 339--355
+\T1/cmr/m/n/12 metic \T1/cmtt/m/n/12 tanh\T1/cmr/m/n/12 /\T1/cmtt/m/n/12 ReLU \
+T1/cmr/m/n/12 dense lay-ers for the resid-ual MLP, SW-MLP, and PINN-v2; the Mat
+érn 5/2
+ []
+
+<figures/Fig1_PredictBypass_CPUComparison.png, id=670, 753.0534pt x 361.35pt>
 File: figures/Fig1_PredictBypass_CPUComparison.png Graphic file (type png)
 <use figures/Fig1_PredictBypass_CPUComparison.png>
 Package pdftex.def Info: figures/Fig1_PredictBypass_CPUComparison.png  used on 
-input line 257.
+input line 386.
 (pdftex.def)             Requested size: 386.96027pt x 185.68105pt.
-<figures/Fig2_PredictBypass_Speedup.png, id=529, 677.4108pt x 331.4784pt>
+[27]
+<figures/Fig2_PredictBypass_Speedup.png, id=679, 677.4108pt x 331.4784pt>
 File: figures/Fig2_PredictBypass_Speedup.png Graphic file (type png)
 <use figures/Fig2_PredictBypass_Speedup.png>
 Package pdftex.def Info: figures/Fig2_PredictBypass_Speedup.png  used on input 
-line 266.
+line 395.
 (pdftex.def)             Requested size: 364.19667pt x 178.21167pt.
-<figures/Fig3_PredictBypass_Overruns.png, id=530, 753.0534pt x 346.4142pt>
+<figures/Fig3_PredictBypass_Overruns.png, id=680, 753.0534pt x 346.4142pt>
 File: figures/Fig3_PredictBypass_Overruns.png Graphic file (type png)
 <use figures/Fig3_PredictBypass_Overruns.png>
 Package pdftex.def Info: figures/Fig3_PredictBypass_Overruns.png  used on input
- line 274.
+ line 403.
 (pdftex.def)             Requested size: 386.96027pt x 178.00621pt.
- [21 <./figures/Fig1_PredictBypass_CPUComparison.png (PNG copy)> <./figures/Fig
-2_PredictBypass_Speedup.png (PNG copy)>] [22 <./figures/Fig3_PredictBypass_Over
-runs.png (PNG copy)>]) [23] (sections/06_closed_loop_results.tex
-<figures/Fig1_S3_SpeedTracking.png, id=561, 903.375pt x 376.2858pt>
+ [28 <./figures/Fig1_PredictBypass_CPUComparison.png (PNG copy)> <./figures/Fig
+2_PredictBypass_Speedup.png (PNG copy)> <./figures/Fig3_PredictBypass_Overruns.
+png (PNG copy)>] [29] [30]) [31] (sections/06_closed_loop_results.tex
+[32]
+<figures/Fig1_S3_SpeedTracking.png, id=729, 903.375pt x 376.2858pt>
 File: figures/Fig1_S3_SpeedTracking.png Graphic file (type png)
 <use figures/Fig1_S3_SpeedTracking.png>
 Package pdftex.def Info: figures/Fig1_S3_SpeedTracking.png  used on input line 
-68.
+79.
 (pdftex.def)             Requested size: 386.96027pt x 161.18538pt.
-
-[24]
-<figures/Fig1_V2_SpeedTracking.png, id=572, 753.0534pt x 361.35pt>
+ [33 <./figures/Fig1_S3_SpeedTracking.png (PNG copy)>]
+<figures/Fig1_V2_SpeedTracking.png, id=740, 753.0534pt x 361.35pt>
 File: figures/Fig1_V2_SpeedTracking.png Graphic file (type png)
 <use figures/Fig1_V2_SpeedTracking.png>
 Package pdftex.def Info: figures/Fig1_V2_SpeedTracking.png  used on input line 
-118.
+128.
 (pdftex.def)             Requested size: 386.96027pt x 185.68105pt.
- [25 <./figures/Fig1_S3_SpeedTracking.png (PNG copy)>]
-<figures/Fig4_V2_GPUncertainty.png, id=580, 753.0534pt x 361.35pt>
+<figures/Fig4_V2_GPUncertainty.png, id=741, 753.0534pt x 361.35pt>
 File: figures/Fig4_V2_GPUncertainty.png Graphic file (type png)
 <use figures/Fig4_V2_GPUncertainty.png>
 Package pdftex.def Info: figures/Fig4_V2_GPUncertainty.png  used on input line 
-126.
+136.
 (pdftex.def)             Requested size: 386.96027pt x 185.68105pt.
- [26 <./figures/Fig1_V2_SpeedTracking.png (PNG copy)> <./figures/Fig4_V2_GPUnce
+ [34 <./figures/Fig1_V2_SpeedTracking.png (PNG copy)> <./figures/Fig4_V2_GPUnce
 rtainty.png (PNG copy)>]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 163.
- [27]
-<figures/Fig1_V3_SpeedTracking.png, id=612, 828.2142pt x 376.2858pt>
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 179.
+ [35]
+<figures/Fig1_V3_SpeedTracking.png, id=772, 828.2142pt x 376.2858pt>
 File: figures/Fig1_V3_SpeedTracking.png Graphic file (type png)
 <use figures/Fig1_V3_SpeedTracking.png>
 Package pdftex.def Info: figures/Fig1_V3_SpeedTracking.png  used on input line 
-243.
+259.
 (pdftex.def)             Requested size: 409.71692pt x 186.15007pt.
-<figures/Fig2_V3_PitchControl.png, id=613, 828.2142pt x 376.2858pt>
+ [36]
+<figures/Fig2_V3_PitchControl.png, id=779, 828.2142pt x 376.2858pt>
 File: figures/Fig2_V3_PitchControl.png Graphic file (type png)
 <use figures/Fig2_V3_PitchControl.png>
 Package pdftex.def Info: figures/Fig2_V3_PitchControl.png  used on input line 2
-51.
+67.
 (pdftex.def)             Requested size: 409.71692pt x 186.15007pt.
- [28 <./figures/Fig1_V3_SpeedTracking.png (PNG copy)>]
-<figures/Fig3_V3_PowerOutput.png, id=622, 828.2142pt x 376.2858pt>
+<figures/Fig3_V3_PowerOutput.png, id=782, 828.2142pt x 376.2858pt>
 File: figures/Fig3_V3_PowerOutput.png Graphic file (type png)
 <use figures/Fig3_V3_PowerOutput.png>
-Package pdftex.def Info: figures/Fig3_V3_PowerOutput.png  used on input line 26
-2.
+Package pdftex.def Info: figures/Fig3_V3_PowerOutput.png  used on input line 27
+8.
 (pdftex.def)             Requested size: 409.71692pt x 186.15007pt.
-<figures/Fig5_V3_MetricsSummary.png, id=623, 978.5358pt x 346.4142pt>
+ [37 <./figures/Fig1_V3_SpeedTracking.png (PNG copy)> <./figures/Fig2_V3_PitchC
+ontrol.png (PNG copy)>]
+<figures/Fig5_V3_MetricsSummary.png, id=790, 978.5358pt x 346.4142pt>
 File: figures/Fig5_V3_MetricsSummary.png Graphic file (type png)
 <use figures/Fig5_V3_MetricsSummary.png>
 Package pdftex.def Info: figures/Fig5_V3_MetricsSummary.png  used on input line
- 271.
+ 289.
 (pdftex.def)             Requested size: 432.48051pt x 153.0993pt.
- [29 <./figures/Fig2_V3_PitchControl.png (PNG copy)> <./figures/Fig3_V3_PowerOu
-tput.png (PNG copy)>]
-<figures/FigE_TimingHistograms.png, id=632, 978.5358pt x 564.6696pt>
+<figures/FigE_TimingHistograms.png, id=793, 978.5358pt x 564.6696pt>
 File: figures/FigE_TimingHistograms.png Graphic file (type png)
 <use figures/FigE_TimingHistograms.png>
 Package pdftex.def Info: figures/FigE_TimingHistograms.png  used on input line 
-282.
+300.
 (pdftex.def)             Requested size: 432.48051pt x 249.55826pt.
- [30 <./figures/Fig5_V3_MetricsSummary.png (PNG copy)> <./figures/FigE_TimingHi
-stograms.png (PNG copy)>] [31]
-<figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png, id=657, 903.375pt x 391.2216pt>
+ [38 <./figures/Fig3_V3_PowerOutput.png (PNG copy)> <./figures/Fig5_V3_MetricsS
+ummary.png (PNG copy)>]
+<figures/FigG_CostVsAccuracy.png, id=802, 602.25pt x 451.9284pt>
+File: figures/FigG_CostVsAccuracy.png Graphic file (type png)
+<use figures/FigG_CostVsAccuracy.png>
+Package pdftex.def Info: figures/FigG_CostVsAccuracy.png  used on input line 31
+1.
+(pdftex.def)             Requested size: 318.66948pt x 239.13474pt.
+ [39 <./figures/FigE_TimingHistograms.png (PNG copy)> <./figures/FigG_CostVsAcc
+uracy.png (PNG copy)>] [40]
+<figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png, id=829, 903.375pt x 391.2216pt>
 
 File: figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png Graphic file (type png)
 <use figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png>
 Package pdftex.def Info: figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png  used on
- input line 396.
+ input line 438.
 (pdftex.def)             Requested size: 386.96027pt x 167.58327pt.
-<figures/FigB_MonteCarlo_Repeatability.png, id=658, 828.2142pt x 361.35pt>
+ [41]
+<figures/FigB_MonteCarlo_Repeatability.png, id=835, 828.2142pt x 361.35pt>
 File: figures/FigB_MonteCarlo_Repeatability.png Graphic file (type png)
 <use figures/FigB_MonteCarlo_Repeatability.png>
 Package pdftex.def Info: figures/FigB_MonteCarlo_Repeatability.png  used on inp
-ut line 404.
+ut line 446.
 (pdftex.def)             Requested size: 318.66948pt x 139.03471pt.
- [32 <./figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png (PNG copy)>]
-<figures/FigD_MonteCarlo_OldVsNew.png, id=667, 602.25pt x 361.35pt>
+<figures/FigD_MonteCarlo_OldVsNew.png, id=839, 602.25pt x 361.35pt>
 File: figures/FigD_MonteCarlo_OldVsNew.png Graphic file (type png)
 <use figures/FigD_MonteCarlo_OldVsNew.png>
 Package pdftex.def Info: figures/FigD_MonteCarlo_OldVsNew.png  used on input li
-ne 430.
+ne 472.
 (pdftex.def)             Requested size: 273.14923pt x 163.89621pt.
-<figures/FigC_MonteCarlo_CPU_by_WindSpeed.png, id=668, 828.2142pt x 361.35pt>
+ [42 <./figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png (PNG copy)> <./figures/Fi
+gB_MonteCarlo_Repeatability.png (PNG copy)>]
+<figures/FigC_MonteCarlo_CPU_by_WindSpeed.png, id=847, 828.2142pt x 361.35pt>
 File: figures/FigC_MonteCarlo_CPU_by_WindSpeed.png Graphic file (type png)
 <use figures/FigC_MonteCarlo_CPU_by_WindSpeed.png>
 Package pdftex.def Info: figures/FigC_MonteCarlo_CPU_by_WindSpeed.png  used on 
-input line 441.
+input line 483.
 (pdftex.def)             Requested size: 386.96027pt x 168.83102pt.
- [33 <./figures/FigB_MonteCarlo_Repeatability.png (PNG copy)> <./figures/FigD_M
-onteCarlo_OldVsNew.png (PNG copy)>]) [34 <./figures/FigC_MonteCarlo_CPU_by_Wind
-Speed.png (PNG copy)>] (sections/07_discussion.tex
-[35] [36] [37]) [38] [39] (sections/08_conclusion.tex
-Overfull \hbox (12.0307pt too wide) in paragraph at lines 38--58
+) [43 <./figures/FigD_MonteCarlo_OldVsNew.png (PNG copy)> <./figures/FigC_Monte
+Carlo_CPU_by_WindSpeed.png (PNG copy)>] (sections/07_discussion.tex [44]
+<figures/FigF_GPFrozenActuator_PitchTrace.png, id=882, 1129.3392pt x 527.0892pt
+>
+File: figures/FigF_GPFrozenActuator_PitchTrace.png Graphic file (type png)
+<use figures/FigF_GPFrozenActuator_PitchTrace.png>
+Package pdftex.def Info: figures/FigF_GPFrozenActuator_PitchTrace.png  used on 
+input line 95.
+(pdftex.def)             Requested size: 455.24411pt x 212.47266pt.
+ [45 <./figures/FigF_GPFrozenActuator_PitchTrace.png (PNG copy)>] [46] [47] [48
+]) [49] [50]
+(sections/08_conclusion.tex
+Overfull \hbox (12.0307pt too wide) in paragraph at lines 44--64
 \T1/cmr/m/n/12 sults tem-per the ear-lier, nar-rower rec-om-men-da-tion to re-s
 trict con-sid-er-a-tion to instantaneous-
  []
 
-) [40] [41] (sections/09_appendix.tex
+[51]) [52] (sections/09_appendix.tex
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <17.28> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 5.
 
@@ -943,61 +991,74 @@ Overfull \hbox (78.0125pt too wide) in paragraph at lines 53--63
 nformation.KernelParameters\T1/cmr/m/n/12 .
  []
 
-[42] [43]
+[53] [54]
 Overfull \hbox (16.4783pt too wide) in paragraph at lines 139--152
 \T1/cmr/m/n/12 struc-tion and train-ing, and record the seed used in the re-tur
 ned model struct (\T1/cmtt/m/n/12 mdl.rng_seed\T1/cmr/m/n/12 ).
  []
 
-) [44] (main.bbl [45] [46]) [47] (main.aux)
+
+Overfull \hbox (3.0443pt too wide) in paragraph at lines 172--185
+ [][] 
+ []
+
+) [55] [56] (main.bbl [57] [58]) [59] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
  ***********
+
+
+LaTeX Warning: There were multiply-defined labels.
+
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: C866A9C62F6FF48EC5486C72DC9FC08E;9202.
+(rerunfilecheck)             Checksum: ED1927CE34E75B214E8103FB20A04C81;10028.
  ) 
 Here is how much of TeX's memory you used:
- 20455 strings out of 467871
- 390933 string characters out of 5428420
- 801855 words of memory out of 5000000
- 48878 multiletter control sequences out of 15000+600000
- 651276 words of font info for 103 fonts, out of 8000000 for 9000
+ 20542 strings out of 467871
+ 393184 string characters out of 5428420
+ 808671 words of memory out of 5000000
+ 48935 multiletter control sequences out of 15000+600000
+ 652966 words of font info for 106 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 73i,14n,83p,526b,1196s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,16n,83p,631b,1196s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi6
 00\ecrm0600.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jkn
 appen/ec/dpi600\ectt1728.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/
 pk/ljfour/jknappen/ec/dpi600\ectt1440.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\
-MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\AMIDOU MAIGA\A
-ppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\A
-MIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1200.pk
+MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecit1200.pk> <C:\Users\AMIDOU MAIGA\A
+ppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\A
+MIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk
 > <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi60
-0\ectt1200.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jkna
-ppen/ec/dpi600\ecrm1200.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/p
-k/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\M
-iKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\AMIDOU MAIGA\Ap
-pData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\AM
-IDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk>
+0\ecrm0800.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jkna
+ppen/ec/dpi600\ecti1000.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/p
+k/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\M
+iKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1200.pk> <C:\Users\AMIDOU MAIGA\Ap
+pData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\AM
+IDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk>
  <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600
-\ecrm1440.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknap
-pen/ec/dpi600\ecbx1440.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk
-/ljfour/jknappen/ec/dpi600\ecbx1728.pk><C:/Program Files/MiKTeX/fonts/type1/pub
-lic/amsfonts/cm/cmbx12.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts
-/cm/cmex10.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.p
-fb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Progr
-am Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Program Files/MiKT
-eX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Program Files/MiKTeX/fonts/type
-1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsf
-onts/cm/cmr12.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.
-pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Progra
-m Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKT
-eX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Program Files/MiKTeX/fonts/type
-1/public/amsfonts/cm/cmsy8.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsf
-onts/symbols/msbm10.pfb>
-Output written on main.pdf (47 pages, 1972360 bytes).
+\ectt1095.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknap
+pen/ec/dpi600\ecrm1095.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\MiKTeX\fonts/pk
+/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\AMIDOU MAIGA\AppData\Local\Mi
+KTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\AMIDOU MAIGA\App
+Data\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\AMI
+DOU MAIGA\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1728.pk><
+C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Program F
+iles/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Program Files/MiKTeX/
+fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Program Files/MiKTeX/fonts/type1/
+public/amsfonts/cm/cmmi12.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfo
+nts/cm/cmmi6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.
+pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Progr
+am Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/MiKT
+eX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Program Files/MiKTeX/fonts/type
+1/public/amsfonts/cm/cmr6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfo
+nts/cm/cmr8.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.
+pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Progr
+am Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Program Files/MiKT
+eX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on main.pdf (59 pages, 2359908 bytes).
 PDF statistics:
- 1520 PDF objects out of 1728 (max. 8388607)
- 175 named destinations out of 1000 (max. 500000)
- 457 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1839 PDF objects out of 2073 (max. 8388607)
+ 203 named destinations out of 1000 (max. 500000)
+ 509 words of extra memory for PDF output out of 10000 (max. 10000000)
 

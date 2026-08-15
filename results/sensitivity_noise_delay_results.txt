@@ -1,28 +1,28 @@
 SENSITIVITY CHECK — Measurement Noise + Communication Delay (P1.3)
-Generated: 08-Aug-2026 12:46:38
+Generated: 13-Aug-2026 11:55:58
 (Baseline controller, V=14 m/s, T=60s, seed=2025)
 sigma_omega = 0.0100 rad/s, sigma_beta = 0.10 deg, delay = 1 step (0.1s)
 ================================================
 
 [Nominal]
-  rmse_omega_rpm = 1.2709
-  pitch_activity_deg = 372.5
+  rmse_omega_rpm = 0.8142
+  pitch_activity_deg = 299.7
   rmse_degradation_pct_vs_nominal = 0.0
 
 [Noise only]
-  rmse_omega_rpm = 1.2741
-  pitch_activity_deg = 389.3
-  rmse_degradation_pct_vs_nominal = 0.3
-
-[Delay only]
-  rmse_omega_rpm = 1.2686
-  pitch_activity_deg = 314.9
+  rmse_omega_rpm = 0.8128
+  pitch_activity_deg = 322.0
   rmse_degradation_pct_vs_nominal = -0.2
 
+[Delay only]
+  rmse_omega_rpm = 0.8157
+  pitch_activity_deg = 261.3
+  rmse_degradation_pct_vs_nominal = 0.2
+
 [Noise + Delay]
-  rmse_omega_rpm = 1.2715
-  pitch_activity_deg = 315.9
-  rmse_degradation_pct_vs_nominal = 0.0
+  rmse_omega_rpm = 0.8168
+  pitch_activity_deg = 281.3
+  rmse_degradation_pct_vs_nominal = 0.3
 
 [Note]
   Noise is applied only to the MEASUREMENT fed to nlmpcmove, not

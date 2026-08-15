@@ -1,4 +1,4 @@
-\begin{thebibliography}{28}
+\begin{thebibliography}{31}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -127,6 +127,29 @@ Aaron Grapentin, Christian~A. Hans, and J{\"o}rg Raisch.
 \newblock Robust lq optimal control for wind turbine power tracking operation.
 \newblock \url{http://arxiv.org/abs/2407.20922}, 2024.
 
+\bibitem[Witter et~al.(2025)Witter, Roth, Schelenz, and
+  Jacobs]{witter_creating_2025}
+Stefan Witter, Jakob Roth, Ralf Schelenz, and Georg Jacobs.
+\newblock Creating a real-time capable surrogate model of a wind turbine using
+  machine learning.
+\newblock \emph{Wind Energy}, 28\penalty0 (11):\penalty0 e70070, 2025.
+\newblock \doi{10.1002/we.70070}.
+
+\bibitem[Salzmann et~al.(2022)Salzmann, Kaufmann, Arrizabalaga, Pavone,
+  Scaramuzza, and Ryll]{salzmann_real-time_2022}
+Tim Salzmann, Elia Kaufmann, Jon Arrizabalaga, Marco Pavone, Davide Scaramuzza,
+  and Markus Ryll.
+\newblock Real-time neural-{MPC}: Deep learning model predictive control for
+  quadrotors and agile robotic platforms.
+\newblock \url{https://arxiv.org/abs/2203.07747}, 2022.
+
+\bibitem[Fu et~al.(2025)]{fu_gaussian_2025}
+A.~Fu et~al.
+\newblock Gaussian process-enhanced predictive control for individual pitch
+  regulation in floating offshore wind turbines.
+\newblock \emph{Ocean Engineering}, 332:\penalty0 121467, 2025.
+\newblock \doi{10.1016/j.oceaneng.2025.121467}.
+
 \bibitem[Jonkman et~al.(2009)Jonkman, Butterfield, Musial, and
   Scott]{jonkman2009}
 J.~Jonkman, S.~Butterfield, W.~Musial, and G.~Scott.
@@ -139,6 +162,19 @@ J.~Jonkman, S.~Butterfield, W.~Musial, and G.~Scott.
 {International Electrotechnical Commission}.
 \newblock Wind turbines -- part 1: Design requirements.
 \newblock Technical Report IEC 61400-1 Ed.3, IEC, 2005.
+
+\bibitem[Jang(1993)]{jang_anfis_1993}
+J.-S.~R. Jang.
+\newblock Anfis: adaptive-network-based fuzzy inference system.
+\newblock \emph{IEEE Transactions on Systems, Man, and Cybernetics},
+  23\penalty0 (3):\penalty0 665--685, 1993.
+\newblock \doi{10.1109/21.256541}.
+
+\bibitem[Hochreiter and Schmidhuber(1997)]{hochreiter_lstm_1997}
+Sepp Hochreiter and J{\"u}rgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock \emph{Neural Computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+\newblock \doi{10.1162/neco.1997.9.8.1735}.
 
 \bibitem[Rasmussen and Williams(2006)]{rasmussen2006}
 C.~E. Rasmussen and C.~K.~I. Williams.
@@ -165,22 +201,6 @@ Anil Aswani, Humberto Gonzalez, S.~Shankar Sastry, and Claire Tomlin.
 \newblock Provably safe and robust learning-based model predictive control.
 \newblock \emph{Automatica}, 49\penalty0 (5):\penalty0 1216--1226, 2013.
 \newblock \doi{10.1016/j.automatica.2013.02.003}.
-
-\bibitem[Salzmann et~al.(2022)Salzmann, Kaufmann, Arrizabalaga, Pavone,
-  Scaramuzza, and Ryll]{salzmann_real-time_2022}
-Tim Salzmann, Elia Kaufmann, Jon Arrizabalaga, Marco Pavone, Davide Scaramuzza,
-  and Markus Ryll.
-\newblock Real-time neural-{MPC}: Deep learning model predictive control for
-  quadrotors and agile robotic platforms.
-\newblock \url{https://arxiv.org/abs/2203.07747}, 2022.
-
-\bibitem[Witter et~al.(2025)Witter, Roth, Schelenz, and
-  Jacobs]{witter_creating_2025}
-Stefan Witter, Jakob Roth, Ralf Schelenz, and Georg Jacobs.
-\newblock Creating a real-time capable surrogate model of a wind turbine using
-  machine learning.
-\newblock \emph{Wind Energy}, 28\penalty0 (11):\penalty0 e70070, 2025.
-\newblock \doi{10.1002/we.70070}.
 
 \bibitem[Soltani et~al.(2013)Soltani, Knudsen, Svenstrup, Wisniewski, Brath,
   Ortega, and Johnson]{soltani2013}

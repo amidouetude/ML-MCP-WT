@@ -25,7 +25,8 @@ Table~\ref{tab:turbine_params}.
 \begin{table}[H]
 \centering
 \caption{NREL 5-MW reference turbine parameters used in this study
-(source: \texttt{stage0\_config.m}).}
+(source: \citet{jonkman2009}, with the drivetrain damping and torque
+switching calibration choices documented in Section~\ref{subsec:torque_switching}).}
 \label{tab:turbine_params}
 \begin{tabular}{lcc}
 \toprule
@@ -182,7 +183,7 @@ density, with the amplitude spectrum deterministically rescaled before
 phase randomization so that the achieved standard deviation
 $\sigma_{\text{actual}}$ matches the target
 $\sigma_{\text{target}} = I \cdot V_{\text{mean}}$ \emph{by construction}
---- this rescaling step is a normalization procedure, not an
+ this rescaling step is a normalization procedure, not an
 independent validation of the synthesized turbulence, and should not
 be read as evidence that the resulting time series matches the target
 Kaimal spectrum in any property other than its overall standard

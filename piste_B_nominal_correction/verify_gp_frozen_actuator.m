@@ -32,7 +32,7 @@ cfg = stage0_config();
 p   = get_wt_params();
 p.dt = cfg.mpc.Ts;
 
-T_SIM = 120;   % ORIGINAL paper protocol window, not the 60s Track B one
+T_SIM = 60;    % unified protocol window (item 2.5, was 120s)
 Ts    = cfg.mpc.Ts;
 N_steps = round(T_SIM / Ts);
 V_MEAN = 14;
@@ -44,7 +44,8 @@ kappa_default   = cfg.mpc.kappa;
 
 results = struct('name', {}, 'rmse_omega_rpm', {}, 'pitch_activity_deg', {}, ...
     'mv_min', {}, 'mv_max', {}, 'mv_std', {}, 'n_converged', {}, ...
-    'n_maxiter', {}, 'n_infeasible', {}, 'mean_cpu_ms', {});
+    'n_maxiter', {}, 'n_infeasible', {}, 'mean_cpu_ms', {}, ...
+    'mv_hist', {}, 'exitflag_hist', {}, 'beta_hist', {}, 'omega_hist', {});
 
 % ── GP (V1) ────────────────────────────────────────────────────────────────
 fprintf('--- Test 1: GP (V1), T=120s (original protocol) ---\n');
@@ -106,6 +107,52 @@ for i = 1:numel(results)
     end
 end
 
+% ── Plot pitch trace + solver ExitFlag per step (referee item 2.3) ─────────
+fig_dir = fullfile(pwd, 'figures');
+if ~isfolder(fig_dir), mkdir(fig_dir); end
+
+f = figure('Color','w','Position',[40 40 1500 700]);
+n_res = numel(results);
+t_vec_ref = (0:N_steps-1) * Ts;
+
+for i = 1:n_res
+    r = results(i);
+
+    subplot(n_res, 3, (i-1)*3+1);
+    plot(t_vec_ref, r.beta_hist, 'b-', 'LineWidth', 1.2);
+    xlabel('Time (s)'); ylabel('\beta (deg)');
+    title(sprintf('%s — Pitch Command Trace', r.name), 'FontSize', 10);
+    grid on;
+    ylim_pad = 0.5;
+    if range(r.beta_hist) < 1e-6
+        ylim([r.beta_hist(1)-ylim_pad, r.beta_hist(1)+ylim_pad]);
+        text(t_vec_ref(round(N_steps/2)), r.beta_hist(1)+0.2, ...
+            sprintf('FROZEN at %.3f%s', r.beta_hist(1), char(176)), ...
+            'Color','r','FontWeight','bold','HorizontalAlignment','center');
+    end
+
+    subplot(n_res, 3, (i-1)*3+2);   % [ADDED item 6.8] rotor speed alongside pitch
+    plot(t_vec_ref, r.omega_hist, 'g-', 'LineWidth', 1.2);
+    xlabel('Time (s)'); ylabel('\omega (rpm)');
+    title(sprintf('%s — Rotor Speed Trace', r.name), 'FontSize', 10);
+    yline(12.1, 'k:', 'Rated'); grid on;
+
+    subplot(n_res, 3, (i-1)*3+3);
+    stairs(t_vec_ref, r.exitflag_hist, 'r-', 'LineWidth', 1.2);
+    xlabel('Time (s)'); ylabel('Solver ExitFlag');
+    title(sprintf('%s — Per-Step Solver ExitFlag', r.name), 'FontSize', 10);
+    yline(0, 'k:', 'MaxIter (0)');
+    grid on;
+    pct_infeasible = 100*r.n_infeasible/N_steps;
+    text(t_vec_ref(round(N_steps*0.6)), min(r.exitflag_hist)-0.3, ...
+        sprintf('%.0f%% infeasible (ExitFlag<0)', pct_infeasible), ...
+        'Color','r','FontWeight','bold');
+end
+sgtitle('Referee Item 2.3 — Pitch Trace and Solver ExitFlag (T=120s, V=14m/s)', ...
+    'FontWeight','bold');
+print(f, fullfile(fig_dir, 'FigF_GPFrozenActuator_PitchTrace'), '-dpng', '-r150');
+fprintf('\nSaved figures/FigF_GPFrozenActuator_PitchTrace.png\n');
+
 if ~exist('results_dir', 'var'), mkdir_safe('results'); end
 save(fullfile('results', 'gp_frozen_actuator_verification.mat'), 'results');
 fprintf('Saved results/gp_frozen_actuator_verification.mat\n');
@@ -151,6 +198,10 @@ r.n_converged  = sum(exitflag_hist > 0);
 r.n_maxiter    = sum(exitflag_hist == 0);
 r.n_infeasible = sum(exitflag_hist < 0);
 r.mean_cpu_ms  = mean(cpu_hist);
+r.mv_hist = mv_hist;              % [ADDED] full trace, for plotting (item 2.3)
+r.exitflag_hist = exitflag_hist;  % [ADDED] full trace, for plotting (item 2.3)
+r.beta_hist = beta_hist;          % [ADDED] full trace, for plotting (item 2.3)
+r.omega_hist = omega_hist;        % [ADDED] full trace, for plotting (item 6.8)
 
 fprintf('  DONE: RMSE=%.4f rpm  PA=%.2f deg  mv=[%.3f,%.3f] std=%.4f\n', ...
     r.rmse_omega_rpm, r.pitch_activity_deg, r.mv_min, r.mv_max, r.mv_std);

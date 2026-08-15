@@ -28,9 +28,22 @@ function mdl = stage2_train_gp_v2(data, cfg)
 %     estimates, which directly improves the GP-MPC cost term kappa*sigma^2.
 %
 %   COMPUTATIONAL COST
-%     fitrgp with 'OptimizeHyperparameters','all' and MaxObjectiveEvaluations=20:
-%     ~15s on 100 pts (measured), estimated ~90s on N_sub=400 pts.
-%     This is a one-time training cost — inference cost unchanged.
+%     fitrgp with 'OptimizeHyperparameters',{'KernelScale','Sigma'} and
+%     MaxObjectiveEvaluations=20: ~15s on 100 pts (measured), estimated
+%     ~90s on N_sub=400 pts. This is a one-time training cost --
+%     inference cost unchanged.
+%
+%   FIX HISTORY [reproducibility review, item 2.4]
+%     An earlier version of this script used
+%     'OptimizeHyperparameters','all', which MATLAB's fitrgp documents
+%     as including KernelFunction ITSELF in its search space -- silently
+%     overriding the explicit 'KernelFunction',kernel argument above.
+%     This caused the actually-trained model to use an ARDExponential
+%     kernel, not the Matern52 kernel documented throughout this
+%     project and its accompanying paper. Restricting
+%     OptimizeHyperparameters to {'KernelScale','Sigma'} respects the
+%     explicitly chosen kernel while still tuning its length scale and
+%     noise variance via Bayesian optimization.
 %
 %   INPUTS
 %     data   struct from stage1_generate_data
@@ -94,8 +107,16 @@ fprintf('    GP 1/2: omega (Matern52 + Bayesian HP optim) ...\n');
 gp_o = fitrgp(Xs_n, Ys(:,1), ...
     'KernelFunction',                     kernel, ...
     'Standardize',                        true, ...
-    'OptimizeHyperparameters',            'all', ...
+    'OptimizeHyperparameters',            {'KernelScale', 'Sigma'}, ...
     'HyperparameterOptimizationOptions',  hp_opts);
+    % [FIX -- reproducibility review, item 2.4] 'all' silently overrides
+    % any explicit KernelFunction (MATLAB fitrgp's 'all' preset includes
+    % KernelFunction itself in its search space), which had caused the
+    % actually-trained kernel to be ARDExponential instead of the
+    % Matern52 documented throughout this project. Restricting the
+    % optimized hyperparameter set to {KernelScale, Sigma} respects the
+    % explicitly chosen Matern52 kernel while still tuning its length
+    % scale and noise variance.
 
 % Extract optimised hyperparameters for reporting
 hp_o.KernelParameters = gp_o.KernelInformation.KernelParameters;
@@ -108,8 +129,9 @@ fprintf('    GP 2/2: beta  (Matern52 + Bayesian HP optim) ...\n');
 gp_b = fitrgp(Xs_n, Ys(:,2), ...
     'KernelFunction',                     kernel, ...
     'Standardize',                        true, ...
-    'OptimizeHyperparameters',            'all', ...
+    'OptimizeHyperparameters',            {'KernelScale', 'Sigma'}, ...
     'HyperparameterOptimizationOptions',  hp_opts);
+    % [FIX -- reproducibility review, item 2.4] see gp_o fix above.
 
 hp_b.KernelParameters = gp_b.KernelInformation.KernelParameters;
 hp_b.Sigma            = gp_b.Sigma;

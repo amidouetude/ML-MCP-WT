@@ -1,0 +1,84 @@
+UNIFIED V1/V2 PROTOCOL RESULTS (item 2.5)
+Generated: 15-Aug-2026 17:48:36
+T=60s (unified, was 120s for this protocol), V=14 m/s, seed=2025
+Nc=4 (unified, V2 was 1) -- see stage0_config.m
+NOTE: LSTM excluded from this run -- predict()-based cost
+already quantified precisely in Table tab:predict_bypass
+(Stage 3, ~24.7s/step under R2024a); a 600-step run would
+take ~4+ hours for no new information.
+================================================
+
+=== V1 ===
+
+[Baseline]
+  rmse_omega_rpm = 0.8142
+  pitch_activity_deg = 299.68
+  mean_cp = 0.2137
+  mean_cpu_ms = 11.91
+  n_infeasible = 0/600
+
+[LLNFM]
+  rmse_omega_rpm = 0.6219
+  pitch_activity_deg = 477.09
+  mean_cp = 0.2469
+  mean_cpu_ms = 345.85
+  n_infeasible = 0/600
+
+[GP]
+  rmse_omega_rpm = 0.6041
+  pitch_activity_deg = 0.00
+  mean_cp = 0.2498
+  mean_cpu_ms = 449.23
+  n_infeasible = 600/600
+
+[PINN]
+  rmse_omega_rpm = 0.8880
+  pitch_activity_deg = 74.94
+  mean_cp = 0.3175
+  mean_cpu_ms = 2335.02
+  n_infeasible = 473/600
+
+=== V2 ===
+
+[Baseline]
+  rmse_omega_rpm = 0.6840
+  pitch_activity_deg = 289.58
+  mean_cp = 0.2356
+  mean_cpu_ms = 15.06
+  n_infeasible = 1/600
+
+[LLNFM]
+  rmse_omega_rpm = 0.6002
+  pitch_activity_deg = 463.75
+  mean_cp = 0.2507
+  mean_cpu_ms = 361.52
+  n_infeasible = 5/600
+
+[TCN]
+  rmse_omega_rpm = 0.6353
+  pitch_activity_deg = 193.35
+  mean_cp = 0.2543
+  mean_cpu_ms = 1941.35
+  n_infeasible = 323/600
+
+[SW-MLP]
+  rmse_omega_rpm = 1.3083
+  pitch_activity_deg = 360.62
+  mean_cp = 0.1729
+  mean_cpu_ms = 1727.32
+  n_infeasible = 105/600
+
+[GP-v2]
+  rmse_omega_rpm = 0.6041
+  pitch_activity_deg = 0.00
+  mean_cp = 0.2498
+  mean_cpu_ms = 3490.57
+  n_infeasible = 600/600
+
+[PINN-v2]
+  rmse_omega_rpm = 0.8968
+  pitch_activity_deg = 94.54
+  mean_cp = 0.3087
+  mean_cpu_ms = 2983.77
+  n_infeasible = 440/600
+

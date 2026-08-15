@@ -38,8 +38,8 @@ function controllers = stage3_design_controllers_v2(p, models, cfg)
 %       Surrogates: omega_mpc_min_surrogate (training domain + 0.5rpm margin)
 
 nx = 2;  ny = 2;  nu = 1;
-Np = cfg.mpc2.Np;   % 20
-Nc = cfg.mpc2.Nc;   % 6
+Np = cfg.mpc2.Np;   % 15
+Nc = cfg.mpc2.Nc;   % 4 (unified with V1, item 2.5)
 Ts = cfg.mpc2.Ts;   % 0.1
 Q  = cfg.mpc2.Q;    % 100
 R  = cfg.mpc2.R;    % 0.5

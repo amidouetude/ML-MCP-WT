@@ -124,7 +124,7 @@ manual implementation, consistent with LSTM's manual per-step cost
 ($\SI{52.2}{ms}$) remaining $2$--$4\times$ that of the five single-pass
 architectures even after the bypass. Agreement with \texttt{predict()}
 was verified to $1.3\times10^{-5}$--$2.0\times10^{-4}$ across five
-random test points --- an order of magnitude looser than the
+random test points  an order of magnitude looser than the
 $10^{-7}$--$10^{-13}$ agreement obtained for the feedforward
 architectures and GP, attributed to accumulated single-precision
 (\texttt{dlnetwork}'s default) versus double-precision (manual
@@ -149,6 +149,46 @@ reproducible across repeated runs on the same MATLAB release and
 machine; exact reproducibility across different releases or hardware
 is not guaranteed, since \texttt{trainnet}'s underlying numerical
 kernels may differ across releases.
+
+\subsection{Consolidated Verification Tolerances}
+\label{subsec:appendix_verification_table}
+
+The manual-bypass forward pass for each architecture was verified
+against \texttt{predict()} independently, at different points in this
+diagnostic (Sections~\ref{subsec:appendix_mlp}--\ref{subsec:appendix_lstm}
+above, and the mechanism-isolation test of
+Section~\ref{subsec:operational_feasibility}). Where an architecture
+was verified more than once (TCN: $2.05\times10^{-7}$ and
+$2.18\times10^{-7}$ in two independent runs), Table~\ref{tab:verification_tolerances}
+reports the single largest (worst-case) deviation observed, adopting
+\emph{maximum absolute deviation} as the sole reporting convention
+throughout this paper.
+
+\begin{table}[H]
+\centering
+\caption{Consolidated manual-vs-\texttt{predict()} verification
+tolerances, maximum absolute deviation, one entry per architecture.}
+\label{tab:verification_tolerances}
+\begin{tabular}{lccc}
+\toprule
+Architecture & Max.\ abs.\ deviation & Test points & Precision \\
+\midrule
+MLP-residual & $1.0\times10^{-7}$ & 1 & double \\
+SW-MLP       & $1.4\times10^{-7}$ & 1 & double \\
+PINN-v2      & $2.2\times10^{-7}$ & 1 & double \\
+GP-v2        & $4.2\times10^{-10}$ & 1 & double \\
+TCN          & $2.2\times10^{-7}$ & 5 & double \\
+LSTM         & $2.0\times10^{-4}$ & 5 & double (vs.\ network's
+  native single) \\
+\bottomrule
+\end{tabular}
+
+\vspace{4pt}
+{\footnotesize LSTM's tolerance is an order of magnitude looser than
+the other five architectures, attributed to single- versus
+double-precision accumulation over ten sequential recurrent steps
+(Section~\ref{subsec:appendix_lstm}), not a logical error.}
+\end{table}
 
 \subsection{Diagnostic Note on Solver \texttt{ExitFlag}}
 \label{subsec:appendix_exitflag}

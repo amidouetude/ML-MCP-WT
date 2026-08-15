@@ -123,10 +123,129 @@ internal \texttt{data} struct in R2024a does not expose a
 \texttt{PredictionHorizon}, but no \texttt{Weights}); consequently $Q$,
 $Q_2$, and $R$ are hardcoded inside \texttt{cost\_gp.m} to match
 \texttt{stage0\_config.m}, with no automatic propagation if the
-configuration changes — a documented limitation of the custom-cost
+configuration changes a documented limitation of the custom-cost
 approach in this MATLAB version.
 
-\subsection{Operational Feasibility Analysis}
+\subsection{Experimental Protocol}
+\label{subsec:experimental_protocol}
+
+Table~\ref{tab:protocol_summary} summarizes the solver budget,
+hardware, and per-comparison settings used throughout this paper.
+\textbf{These settings are not yet fully unified across every
+comparison} (rotor-speed bounds, simulation window, and GP active-set
+size currently differ between the original V1/V2 evaluation and the
+Track~B diagnostic, as detailed in each affected table's caption) 
+a single unified protocol, treating the GP uncertainty term as an
+explicit ablation against a shared base cost, is planned but not yet
+executed (Section~\ref{subsec:limitations}).
+
+
+\begin{table}[H]
+	\centering
+	\caption{Experimental protocol summary.}
+	\label{tab:protocol_summary}
+	\begin{tabularx}{\textwidth}{l X}
+		\toprule
+		Setting & Value \\
+		\midrule
+		Solver & \texttt{fmincon} (SQP), via \texttt{nlmpc} \\
+		MaxIterations & $30$ (bounded worst-case compute time; non-convergence discussion in Section~\ref{subsec:limitations}) \\
+		ConstraintTolerance &  \\
+		OptimalityTolerance & $10^{-4}$ \\
+		StepTolerance & \\
+		Hardware & Intel Core i5-12450H (12th Gen), 16\,GB RAM \\
+		Software & MATLAB R2024a (primary) \\
+		Cost weights & $Q=100$, $Q_2=0.01$, $R=0.5$ (standard quadratic cost); $\kappa=0.8$ (GP uncertainty penalty, Eq.~\ref{eq:gp_mpc_cost}). Chosen once by manual tuning on the Baseline controller to balance rotor-speed tracking against pitch actuator effort, then \emph{shared across all controllers} (not re-tuned per architecture) so that closed-loop differences reflect the surrogate, not per-controller cost tuning; $\kappa=0.8$ was likewise fixed a priori rather than swept (Section~\ref{subsec:limitations} discusses the inconclusive attempt to test this choice's sensitivity). \\
+		Constraint sets & $\omega\in[11.5,13.31]$~rpm (Baseline, physics); $\omega\in[8.52,12.81]$~rpm (surrogates, training-domain margin, Section~\ref{subsec:surrogate_integration}) \\
+		Initial condition & $\omega(0)=0.97\,\omega_{\text{rated}}$, $\beta(0)=\SI{3.5}{\degree}$ (see Section~\ref{subsec:bypass_closed_loop} for the frozen-actuator issue an earlier, uncorrected initial condition caused) \\
+		Wind seeds & $2025$ (single-run tables); $2025$--$2029$ (extended Monte Carlo, 5 seeds) \\
+		V1 horizon & $N_p=10$, $N_c=4$, $T_s=\SI{0.1}{s}$ \\
+		V2 horizon & $N_p=15$, $N_c=1$, $T_s=\SI{0.1}{s}$ \\
+		Original (V1/V2) simulation window & $T=\SI{120}{s}$ \\
+		Track B simulation window & $T=\SI{60}{s}$ (not yet unified with the above) \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\caption{Experimental protocol summary.}
+	\label{tab:protocol_summary}
+	\small
+	
+	
+	\begin{tabularx}{\textwidth}{
+			>{\raggedright\arraybackslash}p{4cm}
+			>{\raggedright\arraybackslash}X
+		}
+		\toprule
+		Setting & Value \\
+		\midrule
+		
+		Solver
+		& \texttt{fmincon} (SQP), via \texttt{nlmpc} \\
+		
+		MaxIterations
+		& $30$ (bounded worst-case compute time; non-convergence discussion in Section~\ref{subsec:limitations}) \\
+		
+		ConstraintTolerance
+		& $10^{-4}$ \\
+		
+		OptimalityTolerance
+		& $10^{-4}$ \\
+		
+		StepTolerance
+		& $10^{-4}$ \\
+		
+		Hardware
+		& Intel Core i5-12450H (12th Gen), 16\,GB RAM \\
+		
+		Software
+		& MATLAB R2024a (primary) \\
+		
+		Cost weights
+		& $Q=100$, $Q_2=0.01$, $R=0.5$ (standard quadratic cost);
+		$\kappa=0.8$ (GP uncertainty penalty, Eq.~\ref{eq:gp_mpc_cost}).
+		Weights were chosen once by manual tuning on the Baseline controller
+		to balance rotor-speed tracking against pitch actuator effort, then
+		\emph{shared across all controllers} rather than re-tuned per
+		architecture, so that closed-loop differences reflect the surrogate
+		rather than per-controller cost tuning. The value $\kappa=0.8$ was
+		likewise fixed a priori rather than swept; Section~\ref{subsec:limitations}
+		discusses the inconclusive sensitivity test. \\
+		
+		Constraint sets
+		& $\omega\in[11.5,13.31]$~rpm (Baseline, physics);
+		$\omega\in[8.52,12.81]$~rpm (surrogates, training-domain margin,
+		Section~\ref{subsec:surrogate_integration}) \\
+		
+		Initial condition
+		& $\omega(0)=0.97\,\omega_{\text{rated}}$,
+		$\beta(0)=\SI{3.5}{\degree}$ (see Section~\ref{subsec:bypass_closed_loop}
+		for the frozen-actuator issue caused by an earlier, uncorrected
+		initial condition) \\
+		
+		Wind seeds
+		& $2025$ (single-run tables); $2025$--$2029$ (extended Monte Carlo,
+		5 seeds) \\
+		
+		V1 horizon
+		& $N_p=10$, $N_c=4$, $T_s=\SI{0.1}{s}$ \\
+		
+		V2 horizon
+		& $N_p=15$, $N_c=1$, $T_s=\SI{0.1}{s}$ \\
+		
+		Original (V1/V2) simulation window
+		& $T=\SI{120}{s}$ \\
+		
+		Track B simulation window
+		& $T=\SI{60}{s}$ (not yet unified with the above) \\
+		
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\section{Operational Feasibility Diagnostic}
 \label{subsec:operational_feasibility}
 
 This section reports a five-stage diagnostic investigation into why
@@ -137,61 +256,71 @@ conducted, including negative results, because the sequence of ruled-out
 hypotheses is itself informative for practitioners facing a similar
 symptom.
 
-\paragraph{Stage 1 --- Isolated inference latency is not predictive of
+\paragraph{Stage 1  Isolated inference latency is not predictive of
 closed-loop cost.} An isolated benchmark calling each surrogate's state
 function directly (bypassing \texttt{nlmpc} entirely, with randomized
 inputs drawn from the training domain at every call, replicating how
 SQP probes different state/input pairs) found per-call latencies in the
-sub-millisecond to low-millisecond range for TCN, SW-MLP, and PINN-v2,
-with only rare spikes (0--4 calls out of 250 exceeding \SI{50}{ms}) even
-for LSTM. Table~\ref{tab:isolated_benchmark} reports the isolated
-results.
+sub-millisecond to low-millisecond range for TCN, SW-MLP, and PINN-v2
+(0--2 spikes out of 250 exceeding \SI{50}{ms}), but LSTM shows a
+systematically elevated latency even in isolation under R2024a: median
+\SI{63.40}{ms}, with 249 of 250 calls exceeding \SI{50}{ms}  unlike the
+other seven surrogates, LSTM's isolated latency alone already exceeds a
+typical $T_s=\SI{0.1}{s}$ budget on most calls, before any SQP-solver
+interaction is considered. Table~\ref{tab:isolated_benchmark} reports the
+isolated results.
 
 \begin{table}[H]
 \centering
 \caption{Isolated state-function call latency (250 calls, randomized
-inputs), MATLAB R2026a.}
+inputs), MATLAB R2024a.}
 \label{tab:isolated_benchmark}
 \begin{tabular}{lcccc}
 \toprule
 Surrogate & Median (ms) & Max (ms) & Spikes ($>$\SI{50}{ms}) \\
 \midrule
-LLNFM   & 0.25 & 6.00   & 0/250 \\
-GP (V1) & 0.22 & 21.36  & 0/250 \\
-PINN    & 0.64 & 35.88  & 0/250 \\
-TCN     & 0.65 & 147.57 & 2/250 \\
-SW-MLP  & 0.64 & 3.47   & 0/250 \\
-GP-v2   & 0.31 & 5.84   & 0/250 \\
-PINN-v2 & 0.64 & 2.75   & 0/250 \\
-LSTM    & 6.94 & 321.82 & 4/250 \\
+LLNFM   & 0.65  & 10.55  & 0/250 \\
+GP (V1) & 0.61  & 27.89  & 0/250 \\
+PINN    & 2.11  & 50.13  & 1/250 \\
+TCN     & 2.05  & 244.63 & 2/250 \\
+SW-MLP  & 1.87  & 14.30  & 0/250 \\
+GP-v2   & 0.68  & 9.23   & 0/250 \\
+PINN-v2 & 2.19  & 4.86   & 0/250 \\
+LSTM    & 63.40 & 527.32 & 249/250 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Stage 2 --- Real closed-loop simulation reveals a
-catastrophe the isolated benchmark did not predict.} Running each
+\paragraph{Stage 2  Real closed-loop simulation reveals a
+catastrophe the isolated benchmark did not predict.} These closed-loop
+runs, and the apparent architectural incompatibility they at first
+suggested, predate the diagnosis reached in Stage 4 below; we report
+them in the order they actually occurred; readers should not conclude
+from the numbers in this paragraph alone that any surrogate is
+unusable in closed loop, since Stage 4's manual-bypass results for
+these same architectures directly supersede them. Running each
 surrogate inside an actual \texttt{nlmpcmove} closed loop (rather than
 calling the state function directly) produced per-step costs one to
 four orders of magnitude higher than the isolated benchmark, for every
 surrogate except LLNFM. TCN, previously the cleanest sequential
 architecture in isolation, degraded to a mean of $\SI{1173.5}{ms}$/step
 (max $\SI{7688.2}{ms}$); SW-MLP, PINN-v2, and GP-v2 each independently
-degraded to comparable means (1.1--$\SI{2.3}{s}$/step); LSTM required
-$\approx\SI{318}{s}$/step. Every one of these controllers exceeded the
+degraded to comparable means (0.85--$\SI{1.4}{s}$/step); LSTM required
+$\approx\SI{24.7}{s}$/step. Every one of these controllers exceeded the
 $T_s=\SI{0.1}{s}$ real-time budget on effectively $100\%$ of simulation
 steps. This result is central to our diagnostic: the common factor
 across all failing architectures is not network size, sequence length,
 or architecture family, but the presence of a \texttt{predict()} call
---- whether on a \texttt{dlnetwork} object (TCN, SW-MLP, PINN-v2, LSTM)
-or a \texttt{RegressionGP} object (GP-v2) --- evaluated repeatedly
+ whether on a \texttt{dlnetwork} object (TCN, SW-MLP, PINN-v2, LSTM)
+or a \texttt{RegressionGP} object (GP-v2)  evaluated repeatedly
 inside \texttt{fmincon}'s SQP iterations.
 
-\paragraph{Stage 3 --- Supplying an analytical Jacobian does not
+\paragraph{Stage 3  Supplying an analytical Jacobian does not
 resolve the catastrophe.} A natural hypothesis is that \texttt{fmincon}
 without a supplied \texttt{Jacobian.StateFcn} falls back to global
 numerical differentiation, re-evaluating the \emph{entire} predicted
 trajectory once per perturbed decision variable, and that this
-combinatorial cost --- not \texttt{predict()} per se --- is the true
+combinatorial cost  not \texttt{predict()} per se  is the true
 bottleneck. We tested this directly for GP-v2 by supplying a
 locally-computed (central finite-difference) Jacobian. Performance
 \emph{did not improve} (mean $\SI{2713.5}{ms}$/step versus
@@ -206,17 +335,17 @@ failure: it reflects a deliberately tight iteration budget
 (Section~\ref{subsec:nlmpc_formulation}) common to all controllers, not
 a symptom isolated to ML surrogates.
 
-\paragraph{Stage 4 --- Bypassing \texttt{predict()} with a hand-written
+\paragraph{Stage 4  Bypassing \texttt{predict()} with a hand-written
 forward pass resolves the catastrophe.} For each surrogate, we
 extracted its trained weights into plain double-precision arrays and
 implemented the corresponding forward pass by direct matrix arithmetic
---- \texttt{tanh}/\texttt{ReLU} dense layers for the residual MLP,
+ \texttt{tanh}/\texttt{ReLU} dense layers for the residual MLP,
 SW-MLP, and PINN-v2; the Mat\'ern~5/2 posterior-mean formula
 $m(\mathbf{x}) = \beta_0 + \sum_i \alpha_i\, k(\mathbf{x},\mathbf{x}_i)$
 for GP-v2, using its trained active set, dual coefficients $\alpha_i$,
 and constant basis coefficient $\beta_0$; and, for TCN, the three
 dilated causal convolution blocks plus per-timestep channel-wise layer
-normalization --- \emph{never} calling \texttt{predict()} or
+normalization  \emph{never} calling \texttt{predict()} or
 constructing a \texttt{dlarray}/\texttt{RegressionGP} query at
 simulation time. Each manual implementation was verified against
 \texttt{predict()} on multiple random test points before use (agreement
@@ -235,12 +364,12 @@ Section~\ref{subsec:lstm_precision_note}).}
 \toprule
 Surrogate & \texttt{predict()} (ms) & Manual (ms) & Speedup & Overruns (manual) \\
 \midrule
-MLP-residual\footnotemark[1] & 2188.3    & 22.3  & $98\times$   & 2/600 \\
-GP-v2 ($N_{\text{sub}}=50$)  & 196.2     & 25.2  & $7.8\times$  & 0/600 \\
-SW-MLP                        & 1383.9    & 30.4  & $45\times$   & 1/600 \\
-PINN-v2                       & 1650.2    & 12.1  & $136\times$  & 0/600 \\
-TCN (vectorized)              & 834.1     & 23.9  & $35\times$   & 8/600 \\
-LSTM                          & 148{,}475.7 & 52.2 & $2844\times$ & 1/600 \\
+MLP-residual\footnotemark[1] & 1303.9    & 8.4   & $155\times$  & 0/600 \\
+GP-v2 ($N_{\text{sub}}=50$)  & 52.0      & 9.4   & $5.5\times$  & 0/600 \\
+SW-MLP                        & 933.0     & 12.4  & $75\times$   & 1/600 \\
+PINN-v2                       & 1421.2    & 11.4  & $125\times$  & 0/600 \\
+TCN (vectorized)              & 846.0     & 19.7  & $43\times$   & 0/600 \\
+LSTM                          & 24{,}693.2 & 50.3 & $491\times$ & 1/600 \\
 \bottomrule
 \end{tabular}
 \footnotetext[1]{A small nominal-plus-correction residual network (130
@@ -265,7 +394,7 @@ reference and $T_s=\SI{100}{ms}$ real-time budget marked.}
 \centering
 \includegraphics[width=0.8\textwidth]{figures/Fig2_PredictBypass_Speedup.png}
 \caption{Speedup factor from bypassing \texttt{predict()}, all six
-surrogates (log scale); LSTM (largest speedup, $2844\times$) highlighted.}
+surrogates (log scale); LSTM (largest speedup, $491\times$) highlighted.}
 \label{fig:predictbypass_speedup}
 \end{figure}
 
@@ -282,11 +411,11 @@ deliberately tiny residual-correction network (130 parameters, following
 the nominal-plus-learned-correction structure of
 \citet{aswani_provably_2013}) showed the \emph{same} catastrophic
 \texttt{predict()}-based cost as the much larger TCN/GP/PINN-v2
-surrogates (mean $\SI{2188.3}{ms}$/step), directly refuting network
+surrogates (mean $\SI{1303.9}{ms}$/step), directly refuting network
 size as the explanatory variable. Second, the initial manual
-implementation of the TCN's causal convolution --- correct, verified to
-$2.18\times10^{-7}$, but written as explicit triple-nested loops over
-filters, timesteps, and kernel taps --- yielded only a modest $2.2\times$
+implementation of the TCN's causal convolution  verified correct
+(Table~\ref{tab:verification_tolerances}), but written as explicit triple-nested loops over
+filters, timesteps, and kernel taps  yielded only a modest $2.2\times$
 speedup ($\SI{1319.2}{ms}\rightarrow\SI{437.6}{ms}$/step), with
 overruns unchanged. Precomputing a reshaped weight matrix once at
 extraction time and reformulating the convolution as a single matrix
@@ -299,18 +428,17 @@ manual re-implementation are independently necessary; verifying
 numerical correctness alone is not sufficient evidence that a manual
 bypass will be fast.
 
-\paragraph{Stage 5 --- LSTM: the largest speedup, and the one
+\paragraph{Stage 5  LSTM: the largest speedup, and the one
 architecture that does not fully vanish.} LSTM shows both the most
-extreme \texttt{predict()} cost ($\approx\SI{318}{s}$/step, consistent
+extreme \texttt{predict()} cost ($\approx\SI{24.7}{s}$/step, consistent
 with its highest isolated latency in Table~\ref{tab:isolated_benchmark})
-and the largest bypass speedup ($2844\times$). Two aspects distinguish
+and the largest bypass speedup ($491\times$). Two aspects distinguish
 this case from the other five. First, verifying the manual
 gate-equation implementation (input/forget/cell-candidate/output gates,
 MATLAB's standard ordering, applied recurrently over the
 $L=10$-step window) against \texttt{predict()} yielded a consistently
-small but non-negligible discrepancy ($1.3\times10^{-5}$--$2.0\times10^{-4}$
-across five random test points), an order of magnitude larger than the
-$10^{-7}$--$10^{-13}$ agreement found for the feedforward architectures
+small but non-negligible discrepancy (Table~\ref{tab:verification_tolerances}),
+an order of magnitude larger than the agreement found for the feedforward architectures
 and GP. We attribute this to accumulated single-precision
 (\texttt{dlnetwork}'s default, \texttt{float32}) versus
 double-precision rounding compounding over ten sequential recurrent
@@ -336,11 +464,161 @@ SQP-based \texttt{nlmpc}. This finding is consistent with, and extends,
 \citet{salzmann_real-time_2022}'s independent report that decoupling a
 neural network's own evaluation from the surrounding MPC solver's
 iteration loop is necessary to embed large learned models in real-time
-optimal control --- our diagnostic identifies \emph{why} this
+optimal control  our diagnostic identifies \emph{why} this
 decoupling is necessary in this specific MATLAB toolchain
 (\texttt{predict()}'s per-call overhead, not gradient cost or
 model size) and \emph{quantifies} the remedy across six architecturally
-distinct surrogates. Full closed-loop tracking results using these
-manual-bypass controllers are reported in
+distinct surrogates.
+
+\paragraph{Isolating the Mechanism.} An early stage of this
+investigation attributed the observed overhead informally to
+non-deterministic just-in-time recompilation, without directly testing
+that hypothesis against alternatives. We isolated the mechanism via
+five controlled conditions on the same trained TCN network ($N=250$
+calls per condition): (1) \texttt{predict()} with an identical input
+repeated every call; (2) \texttt{predict()} with a freshly randomized
+input each call (matching SQP's actual usage pattern); (3)
+\texttt{predict()} called once on a batch of $250$ stacked randomized
+inputs, cost divided by $250$; (4) \texttt{predict()} with a
+pre-allocated \texttt{dlarray} object whose values are updated in
+place each call, isolating object-construction cost from
+\texttt{predict()} itself; and (5) the verified manual forward pass
+(no \texttt{predict()}, no \texttt{dlarray}).
+
+\begin{table}[H]
+\centering
+\caption{Mechanism-isolation results (TCN, $N=250$ calls/condition,
+median per-call latency, MATLAB R2024a).}
+\label{tab:mechanism_isolation}
+\begin{tabular}{lc}
+\toprule
+Condition & Median (ms) \\
+\midrule
+(1) Identical input repeated & 0.630 \\
+(2) Randomized input each call & 0.740 \\
+(3) Batch (250 stacked, per-call equiv.) & 0.362 \\
+(4) Pre-built \texttt{dlarray}, values updated in place & 0.645 \\
+(5) Manual forward pass (no \texttt{predict()}) & 0.031 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three ratios determine which mechanism is defensible. First,
+conditions (1) and (2) differ by only $1.17\times$ (\SI{0.630}{} vs
+\SI{0.740}{ms})  far too small to explain the $25$--$491\times$
+gaps documented elsewhere in this section, and inconsistent with
+input-dependent trace recompilation, which would be expected to make
+(1) (a cached, reused trace) meaningfully faster than (2) (a fresh
+trace on every call). \emph{Recompilation is not the mechanism.}
+Second, conditions (2) and (4) differ by only $1.15\times$
+(\SI{0.740}{} vs \SI{0.645}{ms}), showing that pre-allocating the
+\texttt{dlarray} input object and reusing it does not meaningfully
+reduce cost. \emph{\texttt{dlarray} object construction is not the
+mechanism.} Third, batching (condition 3) reduces the per-call cost
+by $2.0\times$ relative to condition (2) (\SI{0.740}{} vs
+\SI{0.362}{ms} per-call equivalent), and the gap between condition (2)
+and the manual floor (condition 5) is $23.9\times$  the same order
+of magnitude as the closed-loop \texttt{predict()}-vs-manual ratios in
+Table~\ref{tab:predict_bypass} (e.g.\ TCN: $43\times$), consistent
+with a per-call, input-independent dispatch/validation cost intrinsic
+to \texttt{predict()} itself, whose effect is multiplied by the number
+of internal calls \texttt{fmincon} makes per control step (a
+multiplier that cancels between the \texttt{predict()}-based and
+manual measurements, leaving \texttt{predict()}'s own per-call
+overhead as the defensible mechanism). This test was independently
+repeated after retraining TCN under the corrected NREL-reference
+torque-law parameters (Section~\ref{subsec:torque_switching}); the
+two ratios that rule out alternative mechanisms (1)/(2) and (2)/(4)
+reproduced closely ($1.17\times$ and $1.15\times$, against $1.41\times$
+and $1.16\times$ originally), consistent with these being properties
+of the network's structure rather than its learned weights. The
+batching ratio (2)/(3) was less stable across the two runs
+($2.0\times$ vs.\ $6.2\times$), which we attribute to run-to-run
+system load (consistent with similar per-step timing variability
+observed elsewhere in this diagnostic, e.g.\ Stage 3's manual-forward-
+pass timings) rather than a change in mechanism; this does not affect
+the mechanism conclusion, which rests on the two more stable ratios.
+
+\paragraph{A Second, Independent Mechanism: Single-Precision Gradient
+Corruption.} Beyond the per-call latency cost documented above, a
+second and independently damaging consequence of \texttt{predict()}
+was uncovered while executing the item 2.5 protocol-unification pass:
+building V2 closed-loop controllers with the original,
+\texttt{predict()}-based state functions (\texttt{sf\_tcn},
+\texttt{sf\_pinn}) rather than their manual-bypass counterparts, under
+otherwise identical conditions ($T=\SI{60}{s}$, $N_c=4$, $V=\SI{14}{m/s}$,
+seed$=2025$), produced dramatically elevated solver infeasibility for
+TCN and PINN-v2 relative to the same architectures' manual-bypass
+controllers under the identical $N_c=4$ setting (Table~\ref{tab:predict_vs_manual_infeasibility}).
+Isolating the cause directly: \texttt{predict()} on a
+\texttt{dlnetwork} returns \texttt{single}-precision output, whereas
+the manual forward pass returns \texttt{double}. We estimated
+$\partial(\text{output})/\partial(u)$ via forward finite differences
+at four step sizes for both paths on the same trained TCN and PINN-v2
+models (Table~\ref{tab:precision_diagnostic}). The manual (double-
+precision) estimate is stable to four significant figures across all
+four step sizes for both architectures. The \texttt{predict()}-based
+estimate collapses to exactly zero for step sizes at or below
+$10^{-5}$ -- below \texttt{single} precision's representable
+resolution, so that $\texttt{predict()}(u+h) - \texttt{predict()}(u)$
+rounds to zero even though the true sensitivity, confirmed by the
+manual column, is of order $10^{-3}$. \texttt{fmincon}'s default
+forward-difference Jacobian estimator uses step sizes in this same
+range; a state function returning a spuriously zero partial
+derivative for a decision variable that genuinely affects the cost
+gives the solver no exploitable gradient information along that
+direction, directly explaining the elevated infeasibility observed in
+closed loop.
+
+\begin{table}[H]
+\centering
+\caption{Forward finite-difference estimate of
+$\partial(\text{output})/\partial(u)$ at four step sizes, TCN and
+PINN-v2, \texttt{predict()}-based vs.\ manual (double-precision)
+forward pass. True sensitivity (manual column) is
+$\mathcal{O}(10^{-3})$ for both architectures.}
+\label{tab:precision_diagnostic}
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{TCN} & \multicolumn{2}{c}{PINN-v2} \\
+Step $h$ & \texttt{predict()} & manual & \texttt{predict()} & manual \\
+\midrule
+$10^{-3}$ & $4.29\times10^{-3}$ & $4.32\times10^{-3}$ & $7.15\times10^{-4}$ & $7.31\times10^{-4}$ \\
+$10^{-5}$ & $0$ & $4.32\times10^{-3}$ & $0$ & $7.31\times10^{-4}$ \\
+$10^{-7}$ & $0$ & $4.32\times10^{-3}$ & $0$ & $7.31\times10^{-4}$ \\
+$10^{-9}$ & $0$ & $4.32\times10^{-3}$ & $0$ & $7.31\times10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Closed-loop solver infeasibility, \texttt{predict()}-based vs.
+manual-bypass state functions, identical protocol ($T=\SI{60}{s}$,
+$N_c=4$, $V=\SI{14}{m/s}$, seed$=2025$).}
+\label{tab:predict_vs_manual_infeasibility}
+\begin{tabular}{lcc}
+\toprule
+Architecture & \texttt{predict()}-based & Manual-bypass \\
+\midrule
+TCN      & $323/600$ ($54\%$) & $0/600$ ($0\%$) \\
+PINN-v2  & $440/600$ ($73\%$) & $0/600$ ($0\%$) \\
+SW-MLP   & $105/600$ ($18\%$) & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This is a materially more serious finding than
+\texttt{predict()}'s documented latency cost alone: latency degrades
+real-time feasibility, but a silently zeroed gradient degrades the
+solver's ability to find a feasible solution \emph{at all},
+independent of any real-time deadline. Any closed-loop MPC result
+obtained with a \texttt{predict()}-based deep-learning state function
+and \texttt{fmincon}'s default finite-difference Jacobian should be
+treated as suspect on this basis alone, regardless of whether the
+per-step latency happens to be tolerable. We are not aware of this
+specific failure mode being documented elsewhere in the wind-MPC
+literature. Full closed-loop tracking
+results using these manual-bypass controllers are reported in
 Section~\ref{sec:closed_loop_results}.
 

@@ -1,133 +1,133 @@
 STAGE 5 RESULTS — Extended Monte Carlo
-Generated: 08-Aug-2026 12:17:05
+Generated: 13-Aug-2026 02:58:18
 (3 wind speeds x 5 seeds x 7 controllers, T=60s each)
 ================================================
 
 [Baseline, V=12m/s]
-  rmse_mean_rpm = 2.3807
-  rmse_std_rpm  = 0.0455
-  cv_pct        = 1.9
-  mean_cpu_ms   = 12.7
+  rmse_mean_rpm = 1.6817
+  rmse_std_rpm  = 0.0417
+  cv_pct        = 2.5
+  mean_cpu_ms   = 8.2
 
 [Baseline, V=14m/s]
-  rmse_mean_rpm = 1.2827
-  rmse_std_rpm  = 0.0531
-  cv_pct        = 4.1
-  mean_cpu_ms   = 8.4
+  rmse_mean_rpm = 0.8508
+  rmse_std_rpm  = 0.0812
+  cv_pct        = 9.5
+  mean_cpu_ms   = 7.8
 
 [Baseline, V=16m/s]
-  rmse_mean_rpm = 0.9582
-  rmse_std_rpm  = 0.0949
-  cv_pct        = 9.9
-  mean_cpu_ms   = 7.6
+  rmse_mean_rpm = 0.8708
+  rmse_std_rpm  = 0.1090
+  cv_pct        = 12.5
+  mean_cpu_ms   = 7.3
 
 [MLP-residual, V=12m/s]
-  rmse_mean_rpm = 2.3707
-  rmse_std_rpm  = 0.0455
-  cv_pct        = 1.9
-  mean_cpu_ms   = 10.7
+  rmse_mean_rpm = 1.6906
+  rmse_std_rpm  = 0.0436
+  cv_pct        = 2.6
+  mean_cpu_ms   = 9.7
 
 [MLP-residual, V=14m/s]
-  rmse_mean_rpm = 1.2857
-  rmse_std_rpm  = 0.0580
-  cv_pct        = 4.5
-  mean_cpu_ms   = 9.5
+  rmse_mean_rpm = 0.8498
+  rmse_std_rpm  = 0.0876
+  cv_pct        = 10.3
+  mean_cpu_ms   = 9.3
 
 [MLP-residual, V=16m/s]
-  rmse_mean_rpm = 0.9832
-  rmse_std_rpm  = 0.0605
-  cv_pct        = 6.2
-  mean_cpu_ms   = 9.4
+  rmse_mean_rpm = 0.8725
+  rmse_std_rpm  = 0.1068
+  cv_pct        = 12.2
+  mean_cpu_ms   = 8.8
 
 [GP, V=12m/s]
-  rmse_mean_rpm = 2.3768
-  rmse_std_rpm  = 0.0480
-  cv_pct        = 2.0
-  mean_cpu_ms   = 11.4
+  rmse_mean_rpm = 1.6991
+  rmse_std_rpm  = 0.0499
+  cv_pct        = 2.9
+  mean_cpu_ms   = 11.3
 
 [GP, V=14m/s]
-  rmse_mean_rpm = 1.2849
-  rmse_std_rpm  = 0.0512
-  cv_pct        = 4.0
+  rmse_mean_rpm = 0.8486
+  rmse_std_rpm  = 0.0911
+  cv_pct        = 10.7
   mean_cpu_ms   = 11.0
 
 [GP, V=16m/s]
-  rmse_mean_rpm = 0.9597
-  rmse_std_rpm  = 0.0940
-  cv_pct        = 9.8
-  mean_cpu_ms   = 11.0
+  rmse_mean_rpm = 0.8691
+  rmse_std_rpm  = 0.1089
+  cv_pct        = 12.5
+  mean_cpu_ms   = 10.4
 
 [SW-MLP, V=12m/s]
-  rmse_mean_rpm = 2.4328
-  rmse_std_rpm  = 0.0809
-  cv_pct        = 3.3
-  mean_cpu_ms   = 15.0
+  rmse_mean_rpm = 1.8128
+  rmse_std_rpm  = 0.1097
+  cv_pct        = 6.1
+  mean_cpu_ms   = 16.7
 
 [SW-MLP, V=14m/s]
-  rmse_mean_rpm = 1.1664
-  rmse_std_rpm  = 0.0995
-  cv_pct        = 8.5
-  mean_cpu_ms   = 15.5
+  rmse_mean_rpm = 0.8713
+  rmse_std_rpm  = 0.1536
+  cv_pct        = 17.6
+  mean_cpu_ms   = 16.9
 
 [SW-MLP, V=16m/s]
-  rmse_mean_rpm = 1.1182
-  rmse_std_rpm  = 0.0478
-  cv_pct        = 4.3
+  rmse_mean_rpm = 1.0295
+  rmse_std_rpm  = 0.0455
+  cv_pct        = 4.4
   mean_cpu_ms   = 16.2
 
 [PINN-v2, V=12m/s]
-  rmse_mean_rpm = 0.9743
-  rmse_std_rpm  = 0.1389
-  cv_pct        = 14.3
-  mean_cpu_ms   = 13.2
+  rmse_mean_rpm = 0.8568
+  rmse_std_rpm  = 0.1454
+  cv_pct        = 17.0
+  mean_cpu_ms   = 13.9
 
 [PINN-v2, V=14m/s]
-  rmse_mean_rpm = 1.1065
-  rmse_std_rpm  = 0.0312
-  cv_pct        = 2.8
-  mean_cpu_ms   = 13.5
+  rmse_mean_rpm = 1.0832
+  rmse_std_rpm  = 0.0279
+  cv_pct        = 2.6
+  mean_cpu_ms   = 13.8
 
 [PINN-v2, V=16m/s]
-  rmse_mean_rpm = 1.1768
-  rmse_std_rpm  = 0.0170
-  cv_pct        = 1.4
-  mean_cpu_ms   = 14.4
+  rmse_mean_rpm = 1.1723
+  rmse_std_rpm  = 0.0228
+  cv_pct        = 1.9
+  mean_cpu_ms   = 13.6
 
 [TCN, V=12m/s]
-  rmse_mean_rpm = 0.9743
-  rmse_std_rpm  = 0.1389
-  cv_pct        = 14.3
-  mean_cpu_ms   = 25.3
+  rmse_mean_rpm = 0.6647
+  rmse_std_rpm  = 0.1072
+  cv_pct        = 16.1
+  mean_cpu_ms   = 25.5
 
 [TCN, V=14m/s]
-  rmse_mean_rpm = 1.1065
-  rmse_std_rpm  = 0.0312
-  cv_pct        = 2.8
-  mean_cpu_ms   = 22.5
+  rmse_mean_rpm = 0.8527
+  rmse_std_rpm  = 0.0571
+  cv_pct        = 6.7
+  mean_cpu_ms   = 28.4
 
 [TCN, V=16m/s]
-  rmse_mean_rpm = 1.1765
-  rmse_std_rpm  = 0.0168
-  cv_pct        = 1.4
-  mean_cpu_ms   = 27.1
+  rmse_mean_rpm = 1.0353
+  rmse_std_rpm  = 0.0321
+  cv_pct        = 3.1
+  mean_cpu_ms   = 30.0
 
 [LSTM, V=12m/s]
-  rmse_mean_rpm = 1.5401
-  rmse_std_rpm  = 0.1704
-  cv_pct        = 11.1
-  mean_cpu_ms   = 50.1
+  rmse_mean_rpm = 1.0194
+  rmse_std_rpm  = 0.0839
+  cv_pct        = 8.2
+  mean_cpu_ms   = 50.4
 
 [LSTM, V=14m/s]
-  rmse_mean_rpm = 1.0276
-  rmse_std_rpm  = 0.0911
-  cv_pct        = 8.9
-  mean_cpu_ms   = 50.0
+  rmse_mean_rpm = 0.9887
+  rmse_std_rpm  = 0.1157
+  cv_pct        = 11.7
+  mean_cpu_ms   = 50.4
 
 [LSTM, V=16m/s]
-  rmse_mean_rpm = 1.1669
-  rmse_std_rpm  = 0.0108
-  cv_pct        = 0.9
-  mean_cpu_ms   = 49.2
+  rmse_mean_rpm = 1.1545
+  rmse_std_rpm  = 0.0205
+  cv_pct        = 1.8
+  mean_cpu_ms   = 50.3
 
 [Reference — original Monte Carlo, paper Section 6.5 pre-extension]
   Baseline: 1.127 +/- 0.163 rpm (CV=14.5%), 3 seeds, V=14m/s

@@ -1,5 +1,5 @@
 STAGE 1 RESULTS — Residual Dataset Generation
-Generated: 08-Aug-2026 00:02:33
+Generated: 13-Aug-2026 00:44:13
 ================================================
 
 [Dataset size]
@@ -10,9 +10,9 @@ val_samples   = 1800
 test_samples  = 1800
 
 [Residual magnitude (train set) — confirms genuine model mismatch]
-mean_abs_d_omega_radps = 1.637050e-04
+mean_abs_d_omega_radps = 1.760673e-04
 mean_abs_d_beta_deg    = 0.000000e+00
-std_d_omega_radps      = 1.409854e-04
+std_d_omega_radps      = 1.591497e-04
 std_d_beta_deg         = 0.000000e+00
 
 [Interpretation note]
