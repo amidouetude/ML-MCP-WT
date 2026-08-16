@@ -3,18 +3,17 @@
 % ===========================================================================
 
 \begin{abstract}
-Wind turbine speed regulation in above-rated operation requires fast,
-constraint-aware control; nonlinear Model Predictive Control (MPC) is
-well suited to this, but its internal plant model is expensive to
-evaluate at every step, motivating cheaper learned surrogates. We
-compare six surrogate architectures --- LLNFM, LSTM, GP, PINN, TCN, and
-SW-MLP --- as internal predictors in a nonlinear MPC for the NREL 5-MW
-turbine. One-step prediction accuracy and closed-loop tracking prove
-only loosely coupled. What initially appeared as a hard operational
-incompatibility between LSTM/TCN/SW-MLP/PINN-v2/GP-v2 and SQP-based
-\texttt{nlmpc} was traced, through a five-stage diagnostic, to
+Six machine learning surrogates for nonlinear Model Predictive Control
+(MPC) -- LLNFM, LSTM, GP, PINN, TCN, and SW-MLP, evaluated as internal
+predictors replacing an expensive physical plant model at every solver
+step for wind turbine speed regulation in above-rated operation -- at
+first appeared to hit a hard operational incompatibility with
+SQP-based \texttt{nlmpc} for five of the six architectures. This paper
+is a diagnostic study of that apparent incompatibility and a verified
+remedy for it. A five-stage diagnostic traces the failure to
 repeated \texttt{predict()} calls inside the solver --- not
-architecture, model size, or MATLAB version. Independently,
+architecture, model size, or MATLAB version. One-step prediction
+accuracy and closed-loop tracking prove only loosely coupled. Independently,
 \texttt{predict()}'s single-precision output was found to zero out
 \texttt{fmincon}'s default finite-difference gradient estimate for
 two of these architectures, corrupting solver feasibility regardless

@@ -176,9 +176,10 @@ in practice, not only a solution: each architecture required its own
 hand-verified forward-pass implementation (layer-by-layer for
 feedforward and convolutional networks, kernel-based for GP, gate
 equations for LSTM), and the LSTM case specifically showed a
-verification tolerance an order of magnitude looser
-($10^{-4}$ vs.\ $10^{-7}$--$10^{-13}$) than the other five
-architectures, attributed to single- versus double-precision
+verification tolerance an order of magnitude looser than the other
+five architectures (Table~\ref{tab:verification_tolerances} reports
+the consolidated per-architecture values), attributed to single-
+versus double-precision
 accumulation over recurrent steps rather than a logical error but not
 independently confirmed; this per-architecture verification burden does
 not disappear simply because the technique is shown to work here.
@@ -225,7 +226,7 @@ torque calibration indicated the identity was a genuine corner-solution
 coincidence: TCN's result was virtually unchanged between $N_c=1$ and
 $N_c=4$, while PINN-v2's activity increased substantially, suggesting
 PINN-v2's $N_c=1$ passivity was a control-horizon artifact and TCN's was
-a genuine, $N_c$-independent property. \textbf{This TCN conclusion did
+a genuine, $N_c$-independent property.\\ \textbf{This TCN conclusion did
 not survive adoption of the corrected, NREL-reference torque-switching
 parameters} (Section~\ref{subsec:torque_switching}): re-running the
 identical $N_c=1$ protocol under the corrected physics, TCN no longer

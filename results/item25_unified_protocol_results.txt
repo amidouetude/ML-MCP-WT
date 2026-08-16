@@ -1,5 +1,5 @@
 ITEM 2.5 UNIFIED PROTOCOL RESULTS
-Generated: 15-Aug-2026 20:52:48
+Generated: 15-Aug-2026 23:15:05
 T=60s, Np=15, Nc=4, Ts=0.10, V=14 m/s, seed=2025
 All state functions: manual bypass (no predict()).
 GP-v2 uncertainty term: explicit kappa=0/kappa=0.8 ablation.
@@ -7,16 +7,51 @@ LSTM excluded (predict() cost already quantified elsewhere).
 ================================================
 
 [Baseline]
-  rmse_omega_rpm = 2.7169
-  pitch_activity_deg = 30.36
-  mean_cp = 0.0930
-  mean_cpu_ms = 38.86
-  n_infeasible = 5/600
+  rmse_omega_rpm = 0.6707
+  pitch_activity_deg = 272.66
+  mean_cp = 0.2365
+  mean_cpu_ms = 23.66
+  n_infeasible = 0/600
 
 [LLNFM]
-  rmse_omega_rpm = 0.6887
-  pitch_activity_deg = 479.20
-  mean_cp = 0.2344
-  mean_cpu_ms = 1130.11
-  n_infeasible = 8/600
+  rmse_omega_rpm = 0.6016
+  pitch_activity_deg = 477.84
+  mean_cp = 0.2503
+  mean_cpu_ms = 3282.12
+  n_infeasible = 0/600
+
+[GP-v2 (kappa=0)]
+  rmse_omega_rpm = 0.6041
+  pitch_activity_deg = 0.00
+  mean_cp = 0.2498
+  mean_cpu_ms = 8604.49
+  n_infeasible = 600/600
+
+[GP-v2 (kappa=0.8)]
+  rmse_omega_rpm = 0.6041
+  pitch_activity_deg = 0.00
+  mean_cp = 0.2498
+  mean_cpu_ms = 8025.17
+  n_infeasible = 600/600
+
+[PINN-v2]
+  rmse_omega_rpm = 0.9659
+  pitch_activity_deg = 158.70
+  mean_cp = 0.3380
+  mean_cpu_ms = 21.44
+  n_infeasible = 0/600
+
+[TCN]
+  rmse_omega_rpm = 0.7165
+  pitch_activity_deg = 322.94
+  mean_cp = 0.2775
+  mean_cpu_ms = 105.97
+  n_infeasible = 0/600
+
+[SW-MLP]
+  rmse_omega_rpm = 0.7573
+  pitch_activity_deg = 400.97
+  mean_cp = 0.2264
+  mean_cpu_ms = 55.22
+  n_infeasible = 0/600
 

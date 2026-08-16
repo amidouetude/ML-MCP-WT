@@ -124,6 +124,10 @@ switch kind
         nlobj.Model.StateFcn = 'sf_swmlp_manual'; nlobj.Model.NumberOfParameters = 2;
         nlobj.OV(1).Min = p.omega_mpc_min_surrogate; nlobj.OV(1).Max = p.omega_mpc_max_surrogate;
 end
+nlobj.OV(2).Min = p.beta_cp_min;
+nlobj.OV(2).Max = p.beta_cp_max;
+nlobj.MV(1).RateMin = -p.dbeta_max * cfg.mpc.Ts;
+nlobj.MV(1).RateMax =  p.dbeta_max * cfg.mpc.Ts;
 nlobj.Weights.OutputVariables = [cfg.mpc.Q, 0.01];
 nlobj.Weights.ManipulatedVariablesRate = cfg.mpc.R;
 end

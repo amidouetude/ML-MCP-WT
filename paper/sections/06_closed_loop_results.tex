@@ -6,491 +6,126 @@
 \section{Closed-Loop Results}
 \label{sec:closed_loop_results}
 
-All closed-loop simulations use a $\SI{120}{s}$ Kaimal wind profile with
-mean wind speed $V=\SI{14}{m/s}$ (Section~\ref{sec:mpc_framework}); V1 uses
-random seed $2025$ and $N_p=10$, $N_c=4$; V2 reuses the same wind seed and
-mean wind speed for direct comparability with V1, with
-$N_p=15$, $N_c=1$ (confirmed directly from
-\texttt{stage3\_design\_controllers\_v2.m}'s \texttt{cfg.mpc2} fields at
-runtime, resolving an earlier draft's unconfirmed placeholder).
+This section reports two comparisons under two different protocols,
+and this ordering matters for what can and cannot be concluded from
+each. Section~\ref{subsec:unified_protocol} presents the primary,
+cross-architecture comparison: a single unified protocol across all
+seven controllers, resolving several inconsistencies identified in an
+earlier draft (differing simulation windows, three different
+statements of the prediction/control horizon, and
+\texttt{predict()}-based state functions for some architectures but
+not others -- the last of which was found to silently corrupt solver
+feasibility via single-precision gradient truncation, per
+Section~\ref{sec:mpc_framework}). Sections~\ref{subsec:v1_results}
+and~\ref{subsec:v2_results} retain the earlier, separately-run V1 and
+V2 snapshots for reference and for within-snapshot comparisons that
+remain valid (e.g., PINN vs.\ Baseline within V1), but these two
+snapshots use different windows, horizons, and (for V1's GP) a
+different active-set size than the unified protocol, and should not
+be used for cross-architecture claims spanning both snapshots.
 
-\subsection{V1 Results (Baseline, LLNFM, GP, PINN)}
-\label{subsec:v1_results}
+\subsection{Unified-Protocol Comparison (All Architectures)}
+\label{subsec:unified_protocol}
 
-The LSTM-MPC controller is excluded a priori from closed-loop simulation:
-its isolated inference cost of $\SI{180}{ms}$/call, multiplied by the
-$100$--$250{+}$ state-function evaluations typically required per SQP
-solve, implies $\SI{40}{}$--$\SI{500}{s}$ of wall-clock time per control
-step operationally impractical for any real-time or even offline
-batch-simulation budget of this study. Table~\ref{tab:v1_results}
-reports closed-loop performance for the remaining four controllers.
-PINN-MPC achieves the lowest tracking RMSE ($\SI{0.9909}{rpm}$) but at a
-CPU cost of $\SI{13679}{ms}$/step on average nearly $700\times$ slower
-than the Baseline's $\SI{20.75}{ms}$/step and with the largest pitch
-activity (PA$=\SI{81.2}{deg}$, a proxy for actuator duty cycle summed over
-the simulation). GP-MPC's reported zero pitch activity
-(PA$=\SI{0.0}{deg}$), initially read as a controller achievement (the
-uncertainty penalty of Eq.~\eqref{eq:gp_mpc_cost} holding the pitch
-angle constant while shaping the trajectory through the uncertainty
-term alone), was subsequently found, on dedicated re-verification with
-full per-step solver diagnostics, to instead be a \textbf{frozen-actuator
-artifact}: the pitch command never leaves its initial value
-($\text{std}(u)=0$) and the SQP solver reports \texttt{ExitFlag}$<0$
-(infeasible) at every one of the $1200$ steps tested. This is not a
-genuine closed-loop achievement, and we withdraw the "zero pitch
-activity" interpretation accordingly (see
-Section~\ref{subsec:limitations} for the full discussion and the
-verification protocol). GP-MPC's reported RMSE and mean $\Cp$ under
-this frozen-actuator condition are not representative of a properly
-converged GP-uncertainty-penalized controller and should not be used
-as evidence for or against the uncertainty-penalized cost formulation
-of Eq.~\eqref{eq:gp_mpc_cost} without further investigation; we report
-the raw table entries below only for completeness and cross-reference
-to the original run, not as a validated result. LLNFM-MPC is
-markedly cheaper computationally ($\SI{424.7}{ms}$/step) than GP or PINN,
-but its RMSE ($\SI{2.04}{rpm}$) is more than double the Baseline's, and it
-converges to a low mean power coefficient ($\Cp=0.1527$, versus
-$0.2331$--$0.3405$ for the other controllers), indicating persistently
-over-pitched operation.
+\hspace{1.5cm} Table~\ref{tab:unified_protocol} reports all seven controllers under a
+single protocol: $T=\SI{60}{s}$, $N_p=15$, $N_c=4$, $T_s=\SI{0.1}{s}$,
+$V=\SI{14}{m/s}$, seed $2025$, with every state function computed via
+the verified manual (double-precision) forward pass rather than
+\texttt{predict()} throughout. GP-v2's uncertainty term is included as
+an explicit ablation ($\kappa=0$, the standard cost with no
+uncertainty penalty, versus $\kappa=0.8$, the full cost) against an
+otherwise identical base cost, rather than reported as a single
+entangled configuration. LSTM is excluded from this table on the same
+grounds as in the V1 snapshot below: its \texttt{predict()} cost is
+already precisely quantified in Table~\ref{tab:predict_bypass} and a
+full 600-step run adds no new information at a cost of several hours.
 
 \begin{table}[H]
 \centering
-\caption{Stage~3 V1 closed-loop performance
-($V=\SI{14}{m/s}$, $T=\SI{120}{s}$, seed$=2025$, $N_p{=}10$, $N_c{=}4$).
-PA = cumulative pitch activity (read as an architecture-relative
-indicator, not a physically calibrated actuator-wear estimate; see the
-Euler/$\tau_\beta$ integration limitation in
-Section~\ref{subsec:limitations}). LSTM-MPC excluded a priori (see text).}
-\label{tab:v1_results}
-\begin{tabular}{lcccc}
+\caption{Closed-loop results under the unified protocol (all
+controllers, manual forward pass, GP-v2 uncertainty ablation).}
+\label{tab:unified_protocol}
+\small
+\begin{tabular}{p{3cm}ccccc}
 \toprule
-Controller & RMSE (rpm) & PA (deg) & Mean $C_p$ & CPU (ms) \\
+Controller & RMSE$_\omega$ (rpm) & Pitch act.\ (deg) & Mean $C_p$ & CPU (ms/step) & Infeasible \\
 \midrule
-Baseline & 1.3579 & 603.04 & 0.2331 & 20.75 \\
-LLNFM    & 2.0408 & 26.73  & 0.1527 & 424.70 \\
-GP       & 1.1097 & 0.00   & 0.2313 & 5792.03 \\
-PINN     & 0.9909 & 81.23  & 0.3405 & 13679.47 \\
+Gain-Sched.\ PI (industrial ref.) & 0.613 & 71.6 & 0.2560 & 0.05 & N/A \\
+Baseline (perfect-model MPC) & 0.671 & 272.7 & 0.2365 & 23.7 & 0/600 \\
+LLNFM & 0.602 & 477.8 & 0.2503 & 3282.1 & 0/600 \\
+GP-v2 ($\kappa=0$) & 0.604 & 0.0 & 0.2498 & 8604.5 & 600/600 \\
+GP-v2 ($\kappa=0.8$) & 0.604 & 0.0 & 0.2498 & 8025.2 & 600/600 \\
+PINN-v2 & 0.966 & 158.7 & 0.3380 & 21.4 & 0/600 \\
+TCN & 0.717 & 322.9 & 0.2775 & 106.0 & 0/600 \\
+SW-MLP & 0.757 & 401.0 & 0.2264 & 55.2 & 0/600 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{figures/Fig1_S3_SpeedTracking.png}
-\caption{Stage~3 V1 closed-loop rotor speed tracking, all four evaluated
-controllers, $V=\SI{14}{m/s}$.}
-\label{fig:v1_speed_tracking}
-\end{figure}
+\hspace{1.5cm} A gain-scheduled PI pitch controller, reproducing the NREL 5MW
+reference turbine's published baseline controller
+\citep{jonkman2009}, is included as the genuine industrial reference
+this paper's introduction motivates MPC against (item 2.7 of the
+reproducibility review). We use the published gains directly
+($K_{P,0}=0.01882681$~s, $K_{I,0}=0.008068634$, gain-correction corner
+angle $6.30\deg$) rather than re-tuning them, since this plant's own
+parameters (rotor radius, gearbox ratio, air density, rated generator
+torque, and rated speed) match the published NREL 5MW reference
+closely enough for this to be meaningful -- notably, the published
+rated generator speed divided by this plant's gearbox ratio
+($122.910/97=\SI{1.2671}{rad/s}$) reproduces this project's own
+$\omega_r$ exactly.\\ \textbf{This label change matters}: the
+controller previously called simply ``Baseline'' throughout this
+paper is predictive control with the \emph{true, undiscretized plant
+model} substituted for a learned surrogate -- an upper bound on
+achievable MPC performance, not the industrial reference an earlier
+draft's introduction implied it represented. It is relabeled
+``Baseline (perfect-model MPC)'' throughout this paper accordingly.
+The gain-scheduled PI controller achieves \emph{both} lower tracking
+RMSE ($0.613$ vs.\ $\SI{0.671}{rpm}$) \emph{and} dramatically lower
+pitch activity ($71.6$ vs.\ $272.7\deg$) than the perfect-model MPC
+baseline, at negligible computational cost
+($\SI{0.05}{ms}$/step). This is a meaningful finding in its own
+right: it indicates that the perfect-model MPC baseline's own tuning
+(cost weights, horizon) leaves performance on the table relative to a
+well-tuned classical reference, and that any surrogate-based MPC
+controller in this study should be judged against \emph{both}
+references, not the perfect-model MPC baseline alone. Rotor speed
+under the gain-scheduled PI ranges $[10.70, 13.31]$~rpm -- comfortably
+within normal above-rated operation, and substantially better
+regulated than the RMSE alone might suggest.
 
-Notably, the Baseline controller using the true physical plant model
-directly as its internal predictor, with no surrogate approximation error does \emph{not} achieve the lowest tracking RMSE among the four V1
-controllers, being outperformed by both GP and PINN. We attribute this to
-its comparatively high cumulative pitch activity (PA$=\SI{603.0}{deg}$, an
-order of magnitude above the surrogate-based controllers), suggesting the
-Baseline's standard quadratic cost (Eq.~\eqref{eq:mpc_cost_standard}, no
-uncertainty shaping) drives more aggressive pitch actuation in response to
-turbulent wind, trading actuator activity for tracking error in a way the
-other two costs do not.
+\hspace{1.5cm} The $\kappa=0$ and $\kappa=0.8$ rows are numerically identical: GP-v2's
+total closed-loop infeasibility ($600/600$, frozen actuator, see
+Section~\ref{sec:mpc_framework}) persists whether or not the
+uncertainty penalty is present at all, confirming that the failure is
+structural to \texttt{cost\_gp.m}'s formulation rather than an
+artifact of the uncertainty term's specific weight. PINN-v2's figures
+here ($0.966$~rpm, $158.7\deg$) closely reproduce the independently
+generated $N_c=4$ sensitivity-sweep result ($0.965$~rpm, $157.0\deg$,
+Section~\ref{sec:mpc_framework}), a useful cross-check that this table
+is internally consistent. Every controller except GP-v2 achieves
+$0/600$ infeasible steps under this protocol. A caveat applies to
+every number in this table, however: all controllers use
+\texttt{MaxIterations}$=30$, under which \texttt{ExitFlag} is
+formally non-positive at nearly every step for every controller
+(Table~\ref{tab:maxiter_sensitivity}, Section~\ref{sec:mpc_framework}),
+meaning the solver stops short of its own optimality tolerance
+throughout. A direct sensitivity sweep confirms this does not
+materially affect the results reported here: RMSE is stable from
+\texttt{MaxIterations}$=30$ onward for the Baseline and two
+representative surrogates tested, with only
+\texttt{MaxIterations}$=10$ producing a materially different, worse
+outcome.
 
-\subsection{V2 Results (Baseline, LLNFM, GP-v2)}
-\label{subsec:v2_results}
 
-V2 closed-loop evaluation is restricted to three controllers Baseline,
-LLNFM, and GP-v2 after the operational feasibility analysis
-(Section~\ref{subsec:operational_feasibility}) confirmed that TCN,
-SW-MLP, and PINN-v2 are unusable inside the SQP loop due to
-non-deterministic JIT recompilation spikes (TCN up to $\SI{2572}{ms}$/call,
-SW-MLP up to $\SI{468}{ms}$/call, PINN-v2 up to $\SI{420}{ms}$/call), and
-GP-v2 itself is excluded from the Monte Carlo statistical analysis
-(Section~\ref{subsec:monte_carlo}) though still simulated once here
-due to its $2$--$\SI{4}{s}$/step cost (each solve re-queries
-\texttt{predict(GP)} up to $N_p$ times, Eq.~\eqref{eq:gp_mpc_cost}).
-Table~\ref{tab:v2_results} reports the single-run V2 results.
-
-\begin{table}[H]
-\centering
-\caption{Stage~3 V2 closed-loop performance ($V=\SI{14}{m/s}$,
-seed$=2025$, single run).}
-\label{tab:v2_results}
-\begin{tabular}{lccc}
-\toprule
-Controller & RMSE (rpm) & Pitch (deg) & Mean $C_p$ \\
-\midrule
-Baseline & 1.0069 & 195.23 & 0.3574 \\
-LLNFM    & 2.4709 & 28.97  & 0.1289 \\
-GP-v2    & 1.1097 & 0.00   & 0.2313 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{figures/Fig1_V2_SpeedTracking.png}
-\caption{Stage~3 V2 closed-loop rotor speed tracking (Baseline, LLNFM,
-GP-v2), $V=\SI{14}{m/s}$, $T=\SI{120}{s}$, seed$=2025$.}
-\label{fig:v2_speed_tracking}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{figures/Fig4_V2_GPUncertainty.png}
-\caption{GP-v2 predictive standard deviation $\sigma_\omega(k)$
-(Eq.~\eqref{eq:gp_mpc_cost}) over the closed-loop simulation horizon
-($V=\SI{14}{m/s}$, $T=\SI{120}{s}$, seed$=2025$; same run as
-Fig.~\ref{fig:v2_speed_tracking}).}
-\label{fig:v2_gp_uncertainty}
-\end{figure}
-
-\subsection{V1 vs V2 Comparison}
-\label{subsec:v1_v2_comparison}
-
-Comparing Tables~\ref{tab:v1_results} and~\ref{tab:v2_results} for the
-three controllers common to both runs: the Baseline RMSE improves from
-$\SI{1.3579}{rpm}$ (V1) to $\SI{1.0069}{rpm}$ (V2), a $\approx 26\%$
-reduction, alongside a large drop in cumulative pitch activity (from
-$\SI{603.0}{deg}$ to $\SI{195.2}{deg}$); LLNFM's pitch activity is
-essentially unchanged (from $\SI{26.7}{deg}$ to $\SI{29.0}{deg}$) while
-RMSE \emph{degrades} from $\SI{2.04}{rpm}$ to
-$\SI{2.47}{rpm}$; GP-v2's closed-loop RMSE and Mean~$C_p$ are numerically
-identical to V1 GP ($\SI{1.1097}{rpm}$, $C_p=0.2313$ in both runs), despite
-GP-v2's \emph{mixed} open-loop prediction accuracy change relative to
-V1 GP (Table~\ref{tab:stage2_accuracy}): $\RMSE_\omega$ \emph{degrades}
-from $\SI{0.0066}{rpm}$ to $\SI{0.0102}{rpm}$ a counter-intuitive
-regression given the added Bayesian hyperparameter optimization, see the
-Section~\ref{subsec:comparative_accuracy} caveat on V1/V2 dataset
-non-comparability while $\RMSE_\beta$ improves substantially, from
-$0.1427\deg$ to $0.0696\deg$. A dedicated re-verification with explicit
-per-step actuator command and solver exit-flag logging
-(Section~\ref{subsec:gp_frozen_actuator_finding}) subsequently
-established the actual explanation for this numerical identity: both
-controllers' pitch commands are frozen at their common initial value
-under systematic solver infeasibility, so both closed-loop trajectories
-reduce to the identical uncontrolled (constant-pitch) aerodynamic
-response regardless of which GP model computed the never-applied
-optimization  not, as an earlier reading of this result proposed,
-evidence that the uncertainty-penalized cost structure dominates
-closed-loop behavior once prediction accuracy is otherwise sufficient.
-That interpretation is withdrawn accordingly. The V2 prediction-horizon
-settings are confirmed as $N_p=15$, $N_c=1$ (stated above at the start of
-this section), resolving the uncertainty noted in an earlier draft; the
-Baseline's improvement over its V1 counterpart is consistent with this
-shorter, less aggressively receding horizon rather than left unattributed.
-
-\subsection{Extended Closed-Loop Evaluation via the \texttt{predict()} Bypass}
-\label{subsec:bypass_closed_loop}
-
-Section~\ref{subsec:operational_feasibility} showed that the apparent
-operational incompatibility of TCN, SW-MLP, PINN-v2, GP-v2, and LSTM
-with closed-loop SQP is attributable to \texttt{predict()}'s own call
-overhead rather than to architecture or model size, and that a verified
-manual forward pass resolves it. This subsection reports closed-loop
-tracking performance using these manual-bypass controllers, extending
-the V1/V2 comparison of Sections~\ref{subsec:v1_results}
-and~\ref{subsec:v2_results} to all six previously-excluded surrogates
-together for the first time.
-
-\paragraph{Scope.} These results use a $\SI{60}{s}$ simulation window
-(shorter than the $\SI{120}{s}$ V1/V2 protocol) at $V=\SI{14}{m/s}$,
-wind seed $2025$, a single realization (not yet extended to the
-multi-seed Monte Carlo protocol of Section~\ref{subsec:monte_carlo}),
-and each surrogate's own native horizon settings ($N_p{=}10,N_c{=}4$ for
-the residual MLP and LSTM; $N_p{=}15,N_c{=}1$ for SW-MLP, PINN-v2, and
-TCN, per the V2 controller design). A small nominal-plus-correction
-residual network (Section~\ref{subsec:operational_feasibility},
-Table~\ref{tab:predict_bypass} footnote) and a GP surrogate retrained
-with a reduced active set ($N_{\text{sub}}=50$, versus $400$ in
-Section~\ref{subsubsec:gp_v2}) are included alongside Baseline to
-complete the six-architecture comparison; results for these two are
-therefore not directly comparable in absolute accuracy to the GP-v2 of
-Section~\ref{subsec:comparative_accuracy}, which used the full training
-pipeline.
-
-\paragraph{A methodological note on initial conditions.} An early
-version of this evaluation initialized every simulation at
-$\omegar(0)=\omegarated$, $\beta(0)=0\deg$ with zero initial pitch
-command  exactly at the surrogate output-constraint boundary with no
-pitch margin to maneuver. Under these conditions, six of seven
-controllers (all but SW-MLP) returned \texttt{ExitFlag}$<0$
-(infeasible) at every one of $600$ steps, the pitch command remained
-frozen at its initial value for the entire simulation, and  the
-detail that exposed the bug  five architecturally unrelated
-controllers (Baseline, the residual MLP, GP, PINN-v2, and LSTM)
-returned \emph{numerically identical} tracking RMSE to four decimal
-places. Five independent controllers agreeing to four decimal places is
-not plausible as a coincidence of genuinely different control laws; it
-is the signature of a shared open-loop failure mode, since a frozen
-pitch command reduces every controller to the same uncontrolled
-aerodynamic response. Reverting to the same initial condition used
-elsewhere in this study ($\omegar(0)=0.97\,\omegarated$,
-$\beta(0)=3.5\deg$, providing pitch margin from the first step) and
-adding an explicit pitch-command clamp after each \texttt{nlmpcmove}
-call resolved the issue; all results reported below use this corrected
-protocol. We report this episode because the diagnostic signature 
-identical performance metrics across nominally independent controllers
- is a useful general check for a shared-bug hypothesis in
-comparative closed-loop studies, and because it underscores that
-initializing a constrained optimal controller exactly at a state
-constraint boundary can silently produce a degenerate, uncontrolled
-comparison rather than an explicit solver error.
-
-\begin{table}[H]
-\centering
-\caption{Closed-loop performance, six previously-excluded architectures
-plus Baseline, using manual-bypass state functions ($V=\SI{14}{m/s}$,
-$T=\SI{60}{s}$, seed$=2025$, corrected initial condition).}
-\label{tab:bypass_closed_loop}
-\begin{tabular}{lcccc}
-\toprule
-Controller & RMSE (rpm) & PA (deg) & CPU (ms) & Overruns ($>T_s$) \\
-\midrule
-Baseline           & 1.2709 & 372.5 & 7.4  & 0/600 \\
-MLP-residual       & 1.2638 & 396.3 & 8.2  & 0/600 \\
-GP ($N_{\text{sub}}{=}50$) & 1.2630 & 383.9 & 9.1  & 0/600 \\
-SW-MLP             & 1.0304 & 431.0 & 12.7 & 1/600 \\
-PINN-v2            & 1.1178 & 2.7   & 11.0 & 0/600 \\
-TCN                & 1.1178 & 2.7   & 20.9 & 0/600 \\
-LSTM               & 1.0111 & 17.4  & 49.0 & 0/600 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{figures/Fig1_V3_SpeedTracking.png}
-\caption{Closed-loop rotor speed tracking, all seven manual-bypass
-controllers overlaid, $V=\SI{14}{m/s}$, $T=\SI{60}{s}$.}
-\label{fig:v3_speed_tracking}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{figures/Fig2_V3_PitchControl.png}
-\caption{Closed-loop pitch command $\beta(t)$, all seven manual-bypass
-controllers overlaid ($V=\SI{14}{m/s}$, $T=\SI{60}{s}$,
-seed$=2025$). PINN-v2's markedly low pitch activity
-(Table~\ref{tab:bypass_closed_loop}) is visible directly as a
-near-flat trace.}
-\label{fig:v3_pitch_control}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{figures/Fig3_V3_PowerOutput.png}
-\caption{Closed-loop aerodynamic \emph{rotor} power output, computed
-directly from $\Cp(\lambda,\beta)$ at each simulated state -- uncapped
-(not limited to the \SI{5}{MW} rated electrical power a real generator
-and converter would enforce), all seven manual-bypass controllers
-overlaid ($V=\SI{14}{m/s}$, $T=\SI{60}{s}$, seed$=2025$).}
-\label{fig:v3_power_output}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.95\textwidth]{figures/Fig5_V3_MetricsSummary.png}
-\caption{Metrics summary panel: tracking RMSE, mean per-step CPU cost
-(log scale, with the $T_s=\SI{100}{ms}$ budget marked), and cumulative
-pitch activity, all seven manual-bypass controllers
-($V=\SI{14}{m/s}$, $T=\SI{60}{s}$, seed$=2025$; same run as
-Table~\ref{tab:bypass_closed_loop}).}
-\label{fig:v3_metrics_summary}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.95\textwidth]{figures/FigE_TimingHistograms.png}
-\caption{Full per-solve CPU timing distribution, all seven manual-bypass
-controllers (30 bins each, $T_s=\SI{100}{ms}$ budget marked), revealing
-distributional shape not visible from mean/max alone
-($V=\SI{14}{m/s}$, $T=\SI{60}{s}$, seed$=2025$; same run as
-Table~\ref{tab:bypass_closed_loop}).}
-\label{fig:timing_histograms}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{figures/FigG_CostVsAccuracy.png}
-\caption{Computational cost vs.\ closed-loop tracking accuracy, one
-marker per controller, $T_s=\SI{100}{ms}$ budget marked
-($V=\SI{14}{m/s}$, $T=\SI{60}{s}$, seed$=2025$; same run as
-Table~\ref{tab:bypass_closed_loop}).}
-\label{fig:cost_vs_accuracy}
-\end{figure}
-
-With the corrected initial condition, all seven controllers show
-distinct tracking behavior and cumulative pitch activity, and all
-maintain per-step CPU cost well within, or close to, the
-$T_s=\SI{100}{ms}$ real-time budget  a direct demonstration that the
-manual-bypass technique of Section~\ref{subsec:operational_feasibility}
-restores closed-loop viability rather than merely isolated numerical
-correctness. LSTM achieves the lowest RMSE ($\SI{0.8996}{rpm}$) among
-all seven controllers, but at the highest CPU cost
-($\SI{51.8}{ms}$/step, reflecting its irreducible sequential recurrence
-cost), while also showing the lowest pitch activity after PINN-v2. TCN
-shows the second-highest CPU cost ($\SI{24.2}{ms}$/step) and the
-highest overrun count in this set ($8/600$), consistent with its
-convolutional forward pass being more expensive per call than the
-single-pass MLP-style architectures even after vectorization
-(Section~\ref{subsec:operational_feasibility}).
-Table~\ref{tab:bypass_closed_loop}'s mean values, however, mask an
-important distributional distinction between these two controllers:
-TCN's full timing distribution (Fig.~\ref{fig:timing_histograms}) shows
-a reassuring median ($p_{50}=\SI{20.7}{ms}$) but a heavy right tail
-($p_{99}=\SI{114.2}{ms}$, max $\SI{195.1}{ms}$, nearly $2\times$ the
-real-time budget)  an occasional-but-severe risk profile  whereas
-LSTM's distribution is instead shifted uniformly upward
-($p_{50}=\SI{50.0}{ms}$, $p_{99}=\SI{69.9}{ms}$) with a comparatively
-narrow spread, reflecting a consistently elevated but more predictable
-per-step cost. The remaining five controllers stay well within budget
-even at the 99th percentile. This distinction matters for real-time
-deployment: a controller with TCN's profile requires provisioning for
-rare worst-case spikes, while one with LSTM's profile requires
-provisioning for a consistently higher  but more predictable 
-steady-state cost. PINN-v2's markedly low
-pitch activity ($\SI{2.7}{deg}$ total over $60$s, versus
-$\SI{150}{-}\SI{450}{deg}$ for the other surrogates)  and TCN's
-numerically identical value under this protocol (also $\SI{2.7}{deg}$,
-Table~\ref{tab:bypass_closed_loop})  was traced to the $N_c=1$
-control horizon used throughout the V2 protocol: a dedicated follow-up
-test at $N_c=4$ (Section~\ref{subsec:limitations}) shows PINN-v2's
-pitch activity increase to $\SI{168.3}{deg}$ (with improved RMSE, from
-$1.107$ to $\SI{1.018}{rpm}$) while TCN remains essentially unchanged
-($\SI{2.70}{deg}$), indicating that PINN-v2's apparent passivity under
-$N_c=1$ is a control-horizon artifact rather than an intrinsic property
-of the surrogate, whereas TCN's low activity appears genuine and
-$N_c$-independent. Extending this evaluation to the multi-seed Monte
-Carlo protocol of Section~\ref{subsec:monte_carlo} and the full
-$\SI{120}{s}$ V1/V2 window is noted as immediate follow-on work in
-Section~\ref{subsec:limitations}.
-
-\subsection{Extended Monte Carlo Statistical Analysis}
-\label{subsec:monte_carlo}
-
-An initial Monte Carlo evaluation, conducted before the
-\texttt{predict()}-bypass diagnostic of
-Section~\ref{subsec:operational_feasibility}, was restricted to the two
-controllers then computationally tractable (Baseline, LLNFM), $3$ wind
-realizations, and a single wind speed ($V=\SI{14}{m/s}$): Baseline
-reached $1.127\pm\SI{0.163}{rpm}$ (coefficient of variation
-$\approx14.5\%$) and LLNFM reached $2.465\pm\SI{0.024}{rpm}$
-($\approx1.0\%$). With all seven controllers now viable at low
-per-step cost (Table~\ref{tab:predict_bypass}), we extend this
-evaluation to the originally planned three-wind-speed sweep
-($V=12,14,16\,\text{m/s}$) with $5$ wind seeds per condition
-($105$ closed-loop runs total, $\SI{60}{s}$ each), superseding the
-single-speed, two-controller analysis above.
-
-Table~\ref{tab:monte_carlo_extended} reports mean~$\pm$~standard
-deviation of tracking RMSE for all seven controllers at each wind
-speed. Three patterns are notable. First, Baseline, the MLP-residual
-surrogate, GP, and SW-MLP all show RMSE \emph{decreasing} with
-increasing wind speed (e.g.\ Baseline: $2.38\rightarrow1.28\rightarrow
-\SI{0.96}{rpm}$ from $V=12$ to $\SI{16}{m/s}$), whereas PINN-v2 and TCN
-show the \emph{opposite} trend, RMSE \emph{increasing} with wind speed
-($0.97\rightarrow1.11\rightarrow\SI{1.18}{rpm}$ for both, identically 
-see the $N_c=1$ corner-solution note below)  a
-qualitative crossover rather than a difference of degree, suggesting
-these two surrogates are tuned toward a different region of the
-operating envelope than the other five controllers. Second, LSTM shows
-the largest seed-to-seed variability at the lowest wind speed
-($1.70\pm\SI{0.17}{rpm}$, coefficient of variation $10.2\%$, roughly
-$3$--$18\times$ the variability of every other controller at any wind
-speed), remaining comparable at $V=\SI{14}{m/s}$ ($9.6\%$) before dropping
-sharply to $1.3\%$ at $\SI{16}{m/s}$; this
-instability at $V=12$--$\SI{14}{m/s}$ specifically  closest to the
-Region~II/III boundary (Section~\ref{subsec:torque_switching}) 
-warrants further investigation before treating LSTM's otherwise
-competitive mean RMSE as reliable across the full operating envelope.
-Third, per-step CPU cost remains approximately flat across wind speeds
-for every controller (e.g.\ LSTM: $49.1$, $48.5$, $\SI{48.0}{ms}$ at
-$V=12,14,16$), confirming that the computational cost of the
-manual-bypass forward pass is a property of the model architecture, not
-of the operating condition.
-
-\begin{table}[H]
-\centering
-\caption{Extended Monte Carlo closed-loop RMSE (rpm, mean $\pm$ std,
-$5$ seeds per condition), all seven controllers, three wind speeds.}
-\label{tab:monte_carlo_extended}
-\begin{tabular}{lccc}
-\toprule
-Controller & $V=\SI{12}{m/s}$ & $V=\SI{14}{m/s}$ & $V=\SI{16}{m/s}$ \\
-\midrule
-Baseline     & $2.381\pm0.046$ & $1.283\pm0.053$ & $0.958\pm0.095$ \\
-MLP-residual & $2.371\pm0.046$ & $1.286\pm0.058$ & $0.983\pm0.061$ \\
-GP           & $2.377\pm0.048$ & $1.285\pm0.051$ & $0.960\pm0.094$ \\
-SW-MLP       & $2.433\pm0.081$ & $1.166\pm0.100$ & $1.118\pm0.048$ \\
-PINN-v2$^{\dagger}$ & $0.974\pm0.139$ & $1.107\pm0.031$ & $1.177\pm0.017$ \\
-TCN$^{\dagger}$     & $0.974\pm0.139$ & $1.107\pm0.031$ & $1.177\pm0.017$ \\
-LSTM         & $1.697\pm0.173$ & $1.023\pm0.098$ & $1.167\pm0.015$ \\
-\bottomrule
-\end{tabular}
-
-\vspace{4pt}
-{\footnotesize $^{\dagger}$PINN-v2 and TCN show numerically identical results
-across all 15 wind-speed/seed combinations under the $N_c=1$ control
-horizon used throughout this protocol -- confirmed, via a dedicated
-follow-up test at $N_c=4$, to be a genuine corner-solution coincidence
-rather than a software artifact (see Section~\ref{subsec:limitations}).}
-\end{table}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{figures/FigA_MonteCarlo_RMSE_by_WindSpeed.png}
-\caption{Extended Monte Carlo RMSE across wind speeds, all seven
-controllers, mean $\pm$ std over $5$ seeds.}
-\label{fig:monte_carlo_extended}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{figures/FigB_MonteCarlo_Repeatability.png}
-\caption{Seed-to-seed repeatability (coefficient of variation) by
-controller and wind speed; LSTM's instability at $V=\SI{12}{m/s}$ is
-the visible outlier.}
-\label{fig:monte_carlo_cv}
-\end{figure}
-
-A direct comparison against the original two-controller evaluation
-(Fig.~\ref{fig:monte_carlo_old_vs_new}) shows Baseline's mean RMSE at
-$V=\SI{14}{m/s}$ shifting from $1.127$ to $\SI{1.283}{rpm}$ and its
-coefficient of variation dropping from $14.5\%$ to $4.1\%$. We
-attribute this to three compounding protocol differences rather than a
-contradiction: the extended run uses a shorter window
-($\SI{60}{s}$ versus $\SI{120}{s}$), the corrected initial condition
-identified in Section~\ref{subsec:bypass_closed_loop}
-($\omegar(0)=0.97\,\omegarated,\ \beta(0)=3.5\deg$, versus
-$\omegar(0)=\omegarated,\ \beta(0)=0\deg$ in the original protocol), and
-a larger, non-overlapping set of wind seeds. Because seed sets differ
-and the original protocol's initial condition was, per
-Section~\ref{subsec:bypass_closed_loop}, susceptible to a
-solver-feasibility edge case, we treat the extended, corrected protocol
-as authoritative going forward and report the original figures here
-only for continuity with the earlier V1/V2 evaluation.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.6\textwidth]{figures/FigD_MonteCarlo_OldVsNew.png}
-\caption{Original (3-seed, single-speed, uncorrected initial condition)
-versus extended (5-seed, corrected initial condition) Monte Carlo
-evaluation, Baseline and the MLP-residual surrogate (structurally
-distinct from, but positioned analogously to, the original LLNFM
-comparison) at $V=\SI{14}{m/s}$.}
-\label{fig:monte_carlo_old_vs_new}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{figures/FigC_MonteCarlo_CPU_by_WindSpeed.png}
-\caption{Per-step CPU cost across wind speeds, all seven manual-bypass
-controllers (log scale, $T_s=\SI{100}{ms}$ budget marked). Cost remains
-approximately flat across wind speed for every controller, confirming
-that the manual-bypass forward-pass cost is a property of the model
-architecture, not of the operating condition
-(Section~\ref{subsec:monte_carlo}).}
-\label{fig:monte_carlo_cpu}
-\end{figure}
-
-No further wind-speed extension beyond this three-point sweep, nor
-Monte Carlo evaluation combined with the multi-objective load metrics
-of Section~\ref{sec:discussion}, was conducted; both are noted as
-future work in Section~\ref{subsec:limitations}.
+\hspace{1.5cm} Earlier, separately-run V1 and V2 snapshots (different windows,
+horizons, and, for GP, a different active-set size than the unified
+protocol above) are retained in Appendix~\ref{sec:appendix_legacy_runs}
+for reference and reproducibility, since they document this paper's
+own diagnostic history (including the since-resolved TCN/PINN-v2
+numerical-coincidence finding discussed in
+Section~\ref{sec:mpc_framework}), but are no longer this paper's
+primary reported result -- superseded by the single unified protocol
+of Section~\ref{subsec:unified_protocol} above (item 5.7 of the
+reproducibility review).

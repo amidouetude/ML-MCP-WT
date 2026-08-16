@@ -1,101 +1,101 @@
 SENSITIVITY SWEEP — SQP MaxIterations Cap (item 2.6)
-Generated: 13-Aug-2026 11:56:22
+Generated: 16-Aug-2026 11:18:03
 (Baseline, TCN, MLP-residual, V=14 m/s, T=60s, seed=2025)
 ================================================
 
 [Baseline, MaxIterations=10]
-  rmse_omega_rpm = 0.8142
-  pitch_activity_deg = 299.68
-  mean_cpu_ms = 8.0
-  n_converged = 600/600
+  rmse_omega_rpm = 0.6840
+  pitch_activity_deg = 289.58
+  mean_cpu_ms = 18.2
+  n_converged = 599/600
   n_maxiter_reached = 0/600
-  n_infeasible = 0/600
+  n_infeasible = 1/600
 
 [Baseline, MaxIterations=30]
-  rmse_omega_rpm = 0.8142
-  pitch_activity_deg = 299.68
-  mean_cpu_ms = 7.7
-  n_converged = 600/600
+  rmse_omega_rpm = 0.6840
+  pitch_activity_deg = 289.58
+  mean_cpu_ms = 16.7
+  n_converged = 599/600
   n_maxiter_reached = 0/600
-  n_infeasible = 0/600
+  n_infeasible = 1/600
 
 [Baseline, MaxIterations=50]
-  rmse_omega_rpm = 0.8142
-  pitch_activity_deg = 299.68
-  mean_cpu_ms = 7.4
-  n_converged = 600/600
+  rmse_omega_rpm = 0.6840
+  pitch_activity_deg = 289.58
+  mean_cpu_ms = 15.9
+  n_converged = 599/600
   n_maxiter_reached = 0/600
-  n_infeasible = 0/600
+  n_infeasible = 1/600
 
 [Baseline, MaxIterations=100]
-  rmse_omega_rpm = 0.8142
-  pitch_activity_deg = 299.68
-  mean_cpu_ms = 8.0
-  n_converged = 600/600
+  rmse_omega_rpm = 0.6840
+  pitch_activity_deg = 289.58
+  mean_cpu_ms = 17.2
+  n_converged = 599/600
   n_maxiter_reached = 0/600
-  n_infeasible = 0/600
+  n_infeasible = 1/600
 
 [TCN, MaxIterations=10]
-  rmse_omega_rpm = 0.8884
-  pitch_activity_deg = 256.58
-  mean_cpu_ms = 92.6
-  n_converged = 598/600
-  n_maxiter_reached = 2/600
-  n_infeasible = 0/600
+  rmse_omega_rpm = 0.6970
+  pitch_activity_deg = 328.09
+  mean_cpu_ms = 40.0
+  n_converged = 565/600
+  n_maxiter_reached = 32/600
+  n_infeasible = 3/600
 
 [TCN, MaxIterations=30]
-  rmse_omega_rpm = 0.8427
-  pitch_activity_deg = 272.72
-  mean_cpu_ms = 92.2
+  rmse_omega_rpm = 0.7340
+  pitch_activity_deg = 330.29
+  mean_cpu_ms = 42.3
   n_converged = 600/600
   n_maxiter_reached = 0/600
   n_infeasible = 0/600
 
 [TCN, MaxIterations=50]
-  rmse_omega_rpm = 0.8427
-  pitch_activity_deg = 272.72
-  mean_cpu_ms = 101.6
+  rmse_omega_rpm = 0.7340
+  pitch_activity_deg = 330.29
+  mean_cpu_ms = 85.4
   n_converged = 600/600
   n_maxiter_reached = 0/600
   n_infeasible = 0/600
 
 [TCN, MaxIterations=100]
-  rmse_omega_rpm = 0.8427
-  pitch_activity_deg = 272.72
-  mean_cpu_ms = 124.3
+  rmse_omega_rpm = 0.7340
+  pitch_activity_deg = 330.29
+  mean_cpu_ms = 139.4
   n_converged = 600/600
   n_maxiter_reached = 0/600
   n_infeasible = 0/600
 
 [MLP-residual, MaxIterations=10]
-  rmse_omega_rpm = 0.8028
-  pitch_activity_deg = 364.58
-  mean_cpu_ms = 30.9
-  n_converged = 599/600
-  n_maxiter_reached = 0/600
-  n_infeasible = 1/600
+  rmse_omega_rpm = 0.6844
+  pitch_activity_deg = 313.44
+  mean_cpu_ms = 52.3
+  n_converged = 586/600
+  n_maxiter_reached = 1/600
+  n_infeasible = 13/600
 
 [MLP-residual, MaxIterations=30]
-  rmse_omega_rpm = 0.8023
-  pitch_activity_deg = 354.67
-  mean_cpu_ms = 31.9
-  n_converged = 600/600
+  rmse_omega_rpm = 0.6744
+  pitch_activity_deg = 329.84
+  mean_cpu_ms = 52.7
+  n_converged = 597/600
   n_maxiter_reached = 0/600
-  n_infeasible = 0/600
+  n_infeasible = 3/600
 
 [MLP-residual, MaxIterations=50]
-  rmse_omega_rpm = 0.8023
-  pitch_activity_deg = 354.67
-  mean_cpu_ms = 32.7
-  n_converged = 600/600
+  rmse_omega_rpm = 0.6752
+  pitch_activity_deg = 321.12
+  mean_cpu_ms = 47.3
+  n_converged = 597/600
   n_maxiter_reached = 0/600
-  n_infeasible = 0/600
+  n_infeasible = 3/600
 
 [MLP-residual, MaxIterations=100]
-  rmse_omega_rpm = 0.8023
-  pitch_activity_deg = 354.67
-  mean_cpu_ms = 32.3
-  n_converged = 600/600
+  rmse_omega_rpm = 0.6743
+  pitch_activity_deg = 318.76
+  mean_cpu_ms = 44.2
+  n_converged = 596/600
   n_maxiter_reached = 0/600
-  n_infeasible = 0/600
+  n_infeasible = 4/600
 

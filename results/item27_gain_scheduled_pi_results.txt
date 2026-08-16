@@ -1,0 +1,13 @@
+ITEM 2.7 GAIN-SCHEDULED PI RESULTS (NREL 5MW reference, Jonkman 2009)
+Generated: 16-Aug-2026 11:41:00
+T=60s, Ts=0.10, V=14 m/s, seed=2025
+PC_KP=0.01882681, PC_KI=0.008068634, PC_KK=0.109996, PC_MaxRat=0.1396263, PC_RefSpd=122.910
+================================================
+
+[Gain-Scheduled PI]
+  rmse_omega_rpm = 0.6132
+  pitch_activity_deg = 71.63
+  mean_cp = 0.2560
+  mean_cpu_ms = 0.053
+  min_omega_rpm = 10.70
+  max_omega_rpm = 13.31

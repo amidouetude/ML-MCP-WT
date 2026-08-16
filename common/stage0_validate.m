@@ -211,7 +211,7 @@ V_mean = 14; T_wind = 300;
 
 sigma_target = 0.16 * V_mean;
 sigma_actual = std(V_t);
-pass4 = abs(sigma_actual - sigma_target) / sigma_target < 0.05;  % within 5% (IEC Class B)
+pass4 = abs(sigma_actual - sigma_target) / sigma_target < 0.05;  % within 5% (IEC Class A)
 fprintf('  sigma target = %.4f m/s\n', sigma_target);
 fprintf('  sigma actual = %.4f m/s  (error = %.1f%%)  → %s\n', ...
     sigma_actual, abs(sigma_actual-sigma_target)/sigma_target*100, tf(pass4));

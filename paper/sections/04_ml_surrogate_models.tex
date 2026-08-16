@@ -37,8 +37,8 @@ sub-network converges quickly (error goal reached at epoch~2), while the
 beta sub-network trains for the full $80$ epochs without reaching the error
 goal, oscillating around a training RMSE of $\approx 0.013$--$0.017$ in
 normalized units. Despite this, LLNFM achieves the best test-set accuracy
-among all V1 surrogates: $\RMSE_{\omega} = \SI{0.0069}{rpm}$,
-$\RMSE_{\beta} = 0.0936\deg$, in $\SI{5.8}{s}$ of training time.
+among all V1 surrogates: $\RMSE_{\omega} = \SI{0.0088}{rpm}$,
+$\RMSE_{\beta} = 0.0964\deg$, in $\SI{8.2}{s}$ of training time.
 
 \subsubsection{Gaussian Process (V1)}
 \label{subsubsec:gp_v1}
@@ -134,11 +134,17 @@ $\omegar^{+}$, $l=109.35$, $\sigma_f=3.152$, $\sigma_n=0.0052$; for
 $\beta^{+}$, $l=996.68$, $\sigma_f=5281.3$, $\sigma_n=0.0729$ -- the
 large length scale on the beta channel reflecting the near-linear,
 low-curvature relationship between normalized
-inputs and $\beta^{+}$. Training takes $\SI{77.9}{s}$ (versus
-$\SI{4.0}{s}$ for V1, a one-time cost with no impact on inference), and
-test accuracy improves to $\RMSE_{\omega}=\SI{0.0102}{rpm}$,
-$\RMSE_{\beta}=0.0692\deg$  a $44.6\%$ gain over the linear baseline and,
-notably, the best $\beta$ accuracy of any surrogate evaluated. Critically,
+inputs and $\beta^{+}$. Training takes $\SI{50.4}{s}$ (versus
+$\SI{4.5}{s}$ for V1, a one-time cost with no impact on inference), and
+test accuracy reaches $\RMSE_{\omega}=\SI{0.0129}{rpm}$,
+$\RMSE_{\beta}=0.1448\deg$ -- a $26.3\%$ gain over the linear baseline
+on the $\omega$ channel, though worse than both V1 GP
+($\SI{0.0083}{rpm}$) and V1 LLNFM ($\SI{0.0088}{rpm}$) in absolute
+terms, and not the best $\beta$ accuracy of any surrogate evaluated
+either (LLNFM's $\SI{0.0964}{deg}$ remains lower). GP-v2 is not the
+best-accuracy surrogate on either channel; its practical advantage,
+discussed next, is calibrated predictive uncertainty rather than
+raw accuracy. Critically,
 the Bayesian-optimized hyperparameters directly calibrate the predictive
 uncertainty $\sigma_{\text{te}}$, which motivates the GP-based
 uncertainty-penalized MPC cost introduced in

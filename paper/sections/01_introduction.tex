@@ -19,7 +19,16 @@ well-suited to it precisely because it handles input and state
 constraints explicitly and can anticipate disturbance effects over a
 prediction horizon \citep{rawlings2017}, in contrast to classical
 gain-scheduled PI pitch
-controllers \citep{bianchi2006,pao2009,laks2009}. The practical obstacle to
+controllers \citep{bianchi2006,pao2009,laks2009}. Realizing these
+specific advantages in closed loop requires exercising them --
+multiple simultaneously active constraints, or genuine disturbance
+preview -- neither of which the single-constraint, no-preview
+protocol used throughout this paper does; a gain-scheduled PI
+reference is included in Section~\ref{sec:closed_loop_results}
+accordingly, and this paper's central comparison is instead among
+surrogate architectures' fidelity to the true-model MPC they replace,
+not a claim that MPC outperforms classical control under this
+specific protocol. The practical obstacle to
 nonlinear MPC (NMPC) for this problem is computational: at every control
 step, the solver must repeatedly evaluate the internal plant model and,
 for gradient-based solvers, its Jacobian which is expensive when that
@@ -103,15 +112,18 @@ LSTM, GP, PINN, TCN, SW-MLP) as internal state predictors for nonlinear
 MPC of wind turbine rotor speed, evaluated both open-loop (one-step
 prediction accuracy) and closed-loop (tracking performance under
 turbulent wind), across two model generations (V1, V2).
-\item A five-stage operational feasibility diagnostic tracing what
-initially appeared, in an early stage of this investigation, to be a
-hard incompatibility between \texttt{dlarray}-based deep-learning
-surrogates and SQP-based \texttt{nlmpc} to a specific, resolvable
-cause  repeated \texttt{predict()} calls inside the solver, not
-architecture, model size, or MATLAB version  together with a
-verified manual forward-pass remedy restoring closed-loop viability
-for all six surrogates tested, with per-call and per-solve timing
-evidence throughout. A second, independent failure mode is
+\item A five-stage operational feasibility diagnostic that discovered,
+contrary to an initial hypothesis of architectural incompatibility,
+that deep-learning surrogates can be successfully integrated into
+closed-loop SQP-based \texttt{nlmpc} when the repeated \texttt{predict()}
+calls inside the solver loop are replaced with a verified manual
+forward-pass computation in double precision. The diagnostic traced a
+$10^{2}$--$10^{3}\times$ per-call overhead to \texttt{predict()}'s
+internal dlarray dispatch and JIT recompilation, not to architecture,
+model size, or MATLAB version, and demonstrated that the remedy is
+both effective (restoring closed-loop feasibility for all six
+surrogates tested) and general (applicable to any \texttt{dlnetwork} or
+similar architecture). A second, independent failure mode is
 additionally identified and quantified: \texttt{predict()}'s
 single-precision output can silently zero out \texttt{fmincon}'s
 default finite-difference gradient estimate for a given decision
@@ -222,6 +234,23 @@ now-retracted claim
 			paper addresses.}
 	}
 \end{table}
+
+%% [TODO -- item 4.4, decide with supervisor] Referee requests a minimum
+%% of 4 reference categories. Status: 3/4 already covered above
+%% (surrogate-in-controller outside wind: salzmann_real-time_2022;
+%% GP-in-wind incl. 2025 floating turbine study: fu_gaussian_2025,
+%% liu_wind_2018; reference controller for this turbine: jonkman2009,
+%% already used for turbine params and the Section~6 PI controller).
+%% MISSING: explicit-MPC/neural-approximation-of-control-law
+%% literature (category 1) -- no citation yet, needs adding.
+%% ALSO UNRESOLVED: fu_gaussian_2025 is cited only once (this table)
+%% and never discussed against this paper's own Contribution 4
+%% (GP-uncertainty-cost frozen-actuator finding) -- Fu et al.
+%% successfully deploy uncertainty-aware GP-MPC while we find ours
+%% structurally infeasible; this contrast needs either a deeper read
+%% of Fu et al.'s cost formulation to identify the actual difference,
+%% or an explicit acknowledgment that the discrepancy is unexplained.
+%% Both points pending supervisor decision.
 
 \subsection{Relationship to a Companion Manuscript}
 \label{subsec:companion_manuscript}

@@ -1,0 +1,29 @@
+ITEM 2.7 GAIN-SCHEDULED PI -- ALL TABLES
+Generated: 16-Aug-2026 12:31:38
+
+[V1 (T=120s,Np=10,Nc=4)]
+  rmse_omega_rpm = 0.5496
+  pitch_activity_deg = 112.26
+  mean_cp = 0.2508
+  mean_cpu_ms = 0.0025
+  omega_range_rpm = [10.66, 13.31]
+
+[V2 (T=120s,Np=15,Nc=4)]
+  rmse_omega_rpm = 0.5496
+  pitch_activity_deg = 112.26
+  mean_cp = 0.2508
+  mean_cpu_ms = 0.0012
+  omega_range_rpm = [10.66, 13.31]
+
+[Piste B (T=60s,V=14,seed=2025)]
+  rmse_omega_rpm = 0.6132
+  pitch_activity_deg = 71.63
+  mean_cp = 0.2560
+  mean_cpu_ms = 0.0004
+  omega_range_rpm = [10.70, 13.31]
+
+[Monte Carlo, Gain-Scheduled PI]
+  V=12: mean=0.468 std=0.091 (rmse per seed: [0.404 0.374 0.437 0.529 0.593])
+  V=14: mean=0.545 std=0.060 (rmse per seed: [0.613 0.562 0.568 0.452 0.531])
+  V=16: mean=0.733 std=0.043 (rmse per seed: [0.748 0.756 0.657 0.747 0.756])
+

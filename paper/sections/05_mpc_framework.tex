@@ -13,8 +13,11 @@ Closed-loop control is implemented with MATLAB's nonlinear MPC object
 (\texttt{nlmpc}), instantiated separately for each surrogate with state
 vector $x=[\omegar,\beta]$, output vector $y=x$ (identity output map),
 manipulated variable $u=\betacmd$, and measured disturbance $V$. All
-controllers share the sampling time $T_s = \SI{0.1}{s}$, prediction
-horizon $N_p = 10$, and control horizon $N_c = 4$. The standard quadratic
+controllers share the sampling time $T_s = \SI{0.1}{s}$. The
+prediction and control horizons ($N_p$, $N_c$) are now unified across
+all controllers at $N_p=15$, $N_c=4$ (item 2.5 of the reproducibility
+review; see Section~\ref{subsec:unified_protocol} for the
+corresponding re-run under this single protocol). The standard quadratic
 cost (used by the Baseline, LLNFM, and PINN controllers) is
 
 \begin{equation}
@@ -67,7 +70,12 @@ itself and passed only to satisfy the shared-parameter-count requirement
 with \texttt{cost\_gp}, Section~\ref{subsec:gp_uncertainty_cost}).
 
 The rotor-speed output constraint uses two distinct bounds for two
-distinct failure modes. The Baseline controller, which evaluates the true
+distinct failure modes. The Baseline controller (perfect-model MPC:
+an upper-bound reference, using the true, undiscretized plant model
+in place of a learned surrogate -- not the industrial reference; see
+Section~\ref{subsec:unified_protocol} for the gain-scheduled PI
+controller added as that reference, item 2.7 of the reproducibility
+review), which evaluates the true
 plant directly, uses a physics-based defense-in-depth floor
 $\omegar \in [\SI{11.5}{rpm}, \omega_{\max}]$
 ($\omega_{\max}=\SI{13.31}{rpm}$); this bound is not load-bearing for
@@ -91,7 +99,7 @@ to constrain the MPC's own admissible operating region.
 \subsection{GP-MPC Uncertainty Cost (Gap-1)}
 \label{subsec:gp_uncertainty_cost}
 
-For the GP controller, the standard quadratic cost is replaced entirely
+For the GP controller, the standard quadratic cost is replaced entirely \\
 (\texttt{Optimization.ReplaceStandardCost = true}) with a custom cost
 function that adds a predictive-uncertainty penalty over the prediction
 horizon:
@@ -129,43 +137,30 @@ approach in this MATLAB version.
 \subsection{Experimental Protocol}
 \label{subsec:experimental_protocol}
 
+\textbf{Software version (stated once, canonically, here):} all
+results in this paper were obtained under MATLAB R2024a. A subset
+was additionally re-run under R2026a to confirm the
+\texttt{predict()}-cost mechanism (item 2.2, Contribution~2) does not
+depend on MATLAB release; no other version is used anywhere in this
+paper, and any other MATLAB release mentioned elsewhere in this text
+should be read as referring back to this statement, not as an
+independent or conflicting one.
+
 Table~\ref{tab:protocol_summary} summarizes the solver budget,
 hardware, and per-comparison settings used throughout this paper.
-\textbf{These settings are not yet fully unified across every
-comparison} (rotor-speed bounds, simulation window, and GP active-set
-size currently differ between the original V1/V2 evaluation and the
-Track~B diagnostic, as detailed in each affected table's caption) 
-a single unified protocol, treating the GP uncertainty term as an
-explicit ablation against a shared base cost, is planned but not yet
-executed (Section~\ref{subsec:limitations}).
-
-
-\begin{table}[H]
-	\centering
-	\caption{Experimental protocol summary.}
-	\label{tab:protocol_summary}
-	\begin{tabularx}{\textwidth}{l X}
-		\toprule
-		Setting & Value \\
-		\midrule
-		Solver & \texttt{fmincon} (SQP), via \texttt{nlmpc} \\
-		MaxIterations & $30$ (bounded worst-case compute time; non-convergence discussion in Section~\ref{subsec:limitations}) \\
-		ConstraintTolerance &  \\
-		OptimalityTolerance & $10^{-4}$ \\
-		StepTolerance & \\
-		Hardware & Intel Core i5-12450H (12th Gen), 16\,GB RAM \\
-		Software & MATLAB R2024a (primary) \\
-		Cost weights & $Q=100$, $Q_2=0.01$, $R=0.5$ (standard quadratic cost); $\kappa=0.8$ (GP uncertainty penalty, Eq.~\ref{eq:gp_mpc_cost}). Chosen once by manual tuning on the Baseline controller to balance rotor-speed tracking against pitch actuator effort, then \emph{shared across all controllers} (not re-tuned per architecture) so that closed-loop differences reflect the surrogate, not per-controller cost tuning; $\kappa=0.8$ was likewise fixed a priori rather than swept (Section~\ref{subsec:limitations} discusses the inconclusive attempt to test this choice's sensitivity). \\
-		Constraint sets & $\omega\in[11.5,13.31]$~rpm (Baseline, physics); $\omega\in[8.52,12.81]$~rpm (surrogates, training-domain margin, Section~\ref{subsec:surrogate_integration}) \\
-		Initial condition & $\omega(0)=0.97\,\omega_{\text{rated}}$, $\beta(0)=\SI{3.5}{\degree}$ (see Section~\ref{subsec:bypass_closed_loop} for the frozen-actuator issue an earlier, uncorrected initial condition caused) \\
-		Wind seeds & $2025$ (single-run tables); $2025$--$2029$ (extended Monte Carlo, 5 seeds) \\
-		V1 horizon & $N_p=10$, $N_c=4$, $T_s=\SI{0.1}{s}$ \\
-		V2 horizon & $N_p=15$, $N_c=1$, $T_s=\SI{0.1}{s}$ \\
-		Original (V1/V2) simulation window & $T=\SI{120}{s}$ \\
-		Track B simulation window & $T=\SI{60}{s}$ (not yet unified with the above) \\
-		\bottomrule
-	\end{tabularx}
-\end{table}
+Following item 2.5 of the reproducibility review, the prediction/
+control horizon, simulation window, and GP cost structure are now
+unified across all seven controllers (Table~\ref{tab:unified_protocol},
+Section~\ref{subsec:unified_protocol}); rotor-speed bounds remain
+deliberately different between the physics-based Baseline and the
+training-domain-limited surrogates (Section~\ref{subsec:surrogate_integration}),
+and the GP active-set size genuinely differs by design between the
+accuracy table (Section~\ref{subsubsec:gp_v2}, $N=400$) and the
+predict()-bypass diagnostic (Table~\ref{tab:predict_bypass}, $N=50$,
+a deliberately lighter architecture for that specific diagnostic, not
+a reduced version of GP-v2) -- both documented explicitly in their
+respective locations rather than treated as inconsistencies to
+resolve.
 
 \begin{table}[H]
 	\centering
@@ -210,9 +205,10 @@ executed (Section~\ref{subsec:limitations}).
 		to balance rotor-speed tracking against pitch actuator effort, then
 		\emph{shared across all controllers} rather than re-tuned per
 		architecture, so that closed-loop differences reflect the surrogate
-		rather than per-controller cost tuning. The value $\kappa=0.8$ was
-		likewise fixed a priori rather than swept; Section~\ref{subsec:limitations}
-		discusses the inconclusive sensitivity test. \\
+		rather than per-controller cost tuning. The value $\kappa=0.8$ is
+		now treated as an explicit ablation ($\kappa=0$ vs.\ $\kappa=0.8$)
+		against the same base cost in Table~\ref{tab:unified_protocol}
+		(item 2.5), rather than fixed a priori without comparison. \\
 		
 		Constraint sets
 		& $\omega\in[11.5,13.31]$~rpm (Baseline, physics);
@@ -229,17 +225,19 @@ executed (Section~\ref{subsec:limitations}).
 		& $2025$ (single-run tables); $2025$--$2029$ (extended Monte Carlo,
 		5 seeds) \\
 		
-		V1 horizon
-		& $N_p=10$, $N_c=4$, $T_s=\SI{0.1}{s}$ \\
+		Unified horizon (item 2.5)
+		& $N_p=15$, $N_c=4$, $T_s=\SI{0.1}{s}$, applied to all seven
+		controllers in Table~\ref{tab:unified_protocol} \\
 		
-		V2 horizon
-		& $N_p=15$, $N_c=1$, $T_s=\SI{0.1}{s}$ \\
+		Unified simulation window (item 2.5)
+		& $T=\SI{60}{s}$, applied to all seven controllers in
+		Table~\ref{tab:unified_protocol} \\
 		
-		Original (V1/V2) simulation window
-		& $T=\SI{120}{s}$ \\
-		
-		Track B simulation window
-		& $T=\SI{60}{s}$ (not yet unified with the above) \\
+		Original V1/V2 snapshots (Sections~\ref{subsec:v1_results}--\ref{subsec:v2_results})
+		& $T=\SI{120}{s}$, V1: $N_p=10,N_c=4$; V2: $N_p=15,N_c=4$ (Nc
+		unified with V1 per item 2.5; retained as separate snapshots
+		only for within-snapshot comparisons, per
+		Section~\ref{sec:closed_loop_results}) \\
 		
 		\bottomrule
 	\end{tabularx}
@@ -275,7 +273,7 @@ isolated results.
 \caption{Isolated state-function call latency (250 calls, randomized
 inputs), MATLAB R2024a.}
 \label{tab:isolated_benchmark}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \toprule
 Surrogate & Median (ms) & Max (ms) & Spikes ($>$\SI{50}{ms}) \\
 \midrule
@@ -335,6 +333,62 @@ failure: it reflects a deliberately tight iteration budget
 (Section~\ref{subsec:nlmpc_formulation}) common to all controllers, not
 a symptom isolated to ML surrogates.
 
+\hspace{1.5cm} Because every reported number in this paper therefore comes from a
+solver that reached its iteration cap without formally satisfying its
+optimality tolerance, we tested directly whether
+\texttt{MaxIterations}$=30$ is actually sufficient, rather than
+relying on the appendix note alone. Table~\ref{tab:maxiter_sensitivity}
+sweeps \texttt{MaxIterations}$\in\{10,30,50,100\}$ for the Baseline
+and two representative surrogates (TCN, MLP-residual) under the
+unified protocol (Section~\ref{subsec:unified_protocol}).
+
+\begin{table}[H]
+\centering
+\caption{Sensitivity of closed-loop results to the SQP
+\texttt{MaxIterations} cap, Baseline and two surrogates, unified
+protocol ($T=\SI{60}{s}$, $N_p=15$, $N_c=4$, $V=\SI{14}{m/s}$,
+seed$=2025$).}
+\label{tab:maxiter_sensitivity}
+\begin{tabular}{lcccc}
+\toprule
+Controller & MaxIter & RMSE$_\omega$ (rpm) & Pitch act.\ (deg) & Non-converged \\
+\midrule
+\multirow{4}{*}{Baseline}
+ & 10  & 0.6840 & 289.6 & 1/600 \\
+ & 30  & 0.6840 & 289.6 & 1/600 \\
+ & 50  & 0.6840 & 289.6 & 1/600 \\
+ & 100 & 0.6840 & 289.6 & 1/600 \\
+\midrule
+\multirow{4}{*}{TCN}
+ & 10  & 0.6970 & 328.1 & 35/600 \\
+ & 30  & 0.7340 & 330.3 & 0/600 \\
+ & 50  & 0.7340 & 330.3 & 0/600 \\
+ & 100 & 0.7340 & 330.3 & 0/600 \\
+\midrule
+\multirow{4}{*}{MLP-residual}
+ & 10  & 0.6844 & 313.4 & 14/600 \\
+ & 30  & 0.6744 & 329.8 & 3/600 \\
+ & 50  & 0.6752 & 321.1 & 3/600 \\
+ & 100 & 0.6743 & 318.8 & 4/600 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\hspace{1.5cm} Results are effectively unchanged from
+\texttt{MaxIterations}$=30$ onward for all three controllers (RMSE
+stable to at least three significant figures for Baseline and TCN;
+MLP-residual varies by $<0.2\%$, within run-to-run noise). Only
+\texttt{MaxIterations}$=10$ shows a materially different, and worse,
+result, with a visibly elevated non-convergence count for TCN and
+MLP-residual. \texttt{MaxIterations}$=30$ is therefore a genuine
+sufficiency point, not an arbitrary budget: the formally non-positive
+\texttt{ExitFlag} reported throughout this paper reflects the solver
+stopping short of its own optimality tolerance, not a control
+trajectory that would materially improve given a larger budget. We
+state this explicitly here, where the closed-loop numbers themselves
+are reported, rather than confining it to the appendix note it
+previously carried alone.
+
 \paragraph{Stage 4  Bypassing \texttt{predict()} with a hand-written
 forward pass resolves the catastrophe.} For each surrogate, we
 extracted its trained weights into plain double-precision arrays and
@@ -348,19 +402,25 @@ dilated causal convolution blocks plus per-timestep channel-wise layer
 normalization  \emph{never} calling \texttt{predict()} or
 constructing a \texttt{dlarray}/\texttt{RegressionGP} query at
 simulation time. Each manual implementation was verified against
-\texttt{predict()} on multiple random test points before use (agreement
-to $10^{-13}$--$10^{-7}$ for the feedforward architectures and GP; see
-Stage 5 for TCN and LSTM). Table~\ref{tab:predict_bypass} reports the
-closed-loop result.
+\texttt{predict()} on multiple random test points before use (see
+Table~\ref{tab:verification_tolerances} for the consolidated
+per-architecture tolerance, the single reporting convention used
+throughout this paper; agreement was confirmed for TCN and LSTM). Table~\ref{tab:predict_bypass} reports the
+result (an isolated Stage~3 diagnostic benchmark, not the full
+multi-architecture closed-loop simulation of
+Section~\ref{sec:closed_loop_results}'s Table~\ref{tab:bypass_closed_loop}
+-- an earlier draft's caption conflated the two).
 
 \begin{table}[H]
 \centering
-\caption{Closed-loop per-step cost, \texttt{predict()} versus manual
-forward pass, all six surrogates, identical trained weights (verified
-numerically equivalent to $10^{-13}$--$10^{-4}$ per
-Section~\ref{subsec:lstm_precision_note}).}
+\caption{Isolated Stage~3 diagnostic: per-step cost,
+\texttt{predict()} versus manual forward pass, all six surrogates,
+identical trained weights (per-architecture verification tolerance
+consolidated in Table~\ref{tab:verification_tolerances}).
+Not to be confused with the full closed-loop comparison of
+Table~\ref{tab:bypass_closed_loop}.}
 \label{tab:predict_bypass}
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccc}
 \toprule
 Surrogate & \texttt{predict()} (ms) & Manual (ms) & Speedup & Overruns (manual) \\
 \midrule
