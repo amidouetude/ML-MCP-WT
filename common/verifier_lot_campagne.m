@@ -209,9 +209,22 @@ else
                      'rien a rattacher au manifeste'];
     end
 
-    if isfield(meta, 'identite_script_verifiee') && ~meta.identite_script_verifiee
+    % Le champ ABSENT est un refus, pas un laissez-passer. Correction du
+    % 25/09 : la version precedente ecrivait « isfield(...) && ~... », si bien
+    % qu'un lot produit par un stamp_campaign SANS controle d'identite passait
+    % cette condition sans rien dire. C'est arrive : le stamp_campaign commite
+    % en 63edb10 etait une version anterieure a ce controle, le premier smoke
+    % test n'a enregistre aucun champ identite_script_verifiee, et la
+    % verification l'a laisse passer.
+    if ~isfield(meta, 'identite_script_verifiee')
+        pb{end+1} = ['identite du script NON controlee au run : ' ...
+                     'meta.identite_script_verifiee absent — le lot vient d''un ' ...
+                     'stamp_campaign anterieur au controle d''identite'];
+    elseif ~meta.identite_script_verifiee
         pb{end+1} = sprintf(['identite du script NON etablie au run : %s'], ...
             meta.identite_script_detail);
+    else
+        fprintf('     identite     : verifiee au run\n');
     end
 end
 

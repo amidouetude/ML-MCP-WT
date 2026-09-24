@@ -210,6 +210,88 @@ if ~isempty(E.incomplet)
     end
 end
 
+% --- IDENTITE DU SCRIPT : les deux empreintes doivent COINCIDER -----------
+%
+% Sans ce controle, script_sha256 et code_manifeste_sha sont tous deux
+% enregistres mais leur egalite n'est jamais verifiee. Deux preuves cote a cote
+% qui ne se regardent pas ne valent pas une preuve : si le chemin du script est
+% mal resolu, ou si le manifeste exclut par accident le fichier qui tourne, les
+% deux champs restent remplis et paraissent se corroborer alors qu'ils parlent
+% de fichiers differents.
+%
+% Quatre conditions, dans cet ordre : suivi, non modifie, PRESENT au manifeste,
+% et EMPREINTE EGALE a l'entree du manifeste.
+meta.identite_script_verifiee = false;
+meta.identite_script_detail   = 'non applicable (appel console)';
+
+if ~strcmp(meta.script, 'console')
+    pb = {};
+
+    if ~meta.script_suivi
+        pb{end+1} = sprintf(['le script %s n''est suivi par aucun commit : ' ...
+            'script_commit est vide'], meta.script_rel); %#ok<AGROW>
+    elseif meta.script_dirty
+        pb{end+1} = sprintf(['le script %s est suivi mais MODIFIE sans ' ...
+            'commit : la version qui tourne n''est dans aucun commit'], ...
+            meta.script_rel); %#ok<AGROW>
+    end
+
+    % --- presence au manifeste -------------------------------------------
+    cles = meta.code_manifeste(:,1);
+    idx  = find(strcmp(cles, meta.script_rel), 1);
+    if isempty(idx)
+        % Sous Windows la casse ne distingue pas les fichiers : une entree qui
+        % ne differe que par la casse est le MEME fichier, et le signaler est
+        % plus utile que de conclure a une absence.
+        idx_ci = find(strcmpi(cles, meta.script_rel), 1);
+        if ~isempty(idx_ci)
+            pb{end+1} = sprintf(['le script figure au manifeste sous une ' ...
+                'casse differente (%s contre %s) : normaliser, sinon le ' ...
+                'registre et le manifeste ne se rejoindront pas sur un ' ...
+                'systeme sensible a la casse'], cles{idx_ci}, meta.script_rel); %#ok<AGROW>
+            idx = idx_ci;
+        else
+            pb{end+1} = sprintf(['le script %s est ABSENT du manifeste ' ...
+                '(%d fichiers).\n    Le code qui tourne n''est donc pas ' ...
+                'couvert par l''empreinte : soit il est hors du perimetre ' ...
+                'de perimetre_code,\n    soit son chemin a ete mal resolu ' ...
+                'depuis %s.'], meta.script_rel, meta.code_manifeste_n, ROOT); %#ok<AGROW>
+        end
+    end
+
+    % --- egalite des deux empreintes -------------------------------------
+    if ~isempty(idx)
+        sha_manifeste = meta.code_manifeste{idx, 2};
+        if ~strcmp(sha_manifeste, meta.script_sha256)
+            pb{end+1} = sprintf(['DESACCORD entre les deux empreintes du ' ...
+                'meme fichier :\n    script_sha256 = %s\n    manifeste     ' ...
+                '= %s\n    Le fichier a change ENTRE les deux lectures, ou ' ...
+                'les deux chemins ne designent pas le meme fichier.'], ...
+                meta.script_sha256, sha_manifeste); %#ok<AGROW>
+        else
+            meta.identite_script_verifiee = true;
+            meta.identite_script_detail = sprintf( ...
+                ['script %s : suivi (%s), non modifie, present au manifeste, ' ...
+                 'empreintes concordantes (%s)'], meta.script_rel, ...
+                court(meta.script_commit), court(meta.script_sha256));
+        end
+    end
+
+    if ~isempty(pb)
+        meta.identite_script_detail = strjoin(pb, sprintf('\n  . '));
+        msg = sprintf(['Identite du script d''entree non etablie :\n  . %s'], ...
+                      meta.identite_script_detail);
+        if SMOKE
+            warning('stamp_campaign:identite_smoke', '[SMOKE] %s', msg);
+        else
+            error('stamp_campaign:identite', ...
+                ['%s\nLa regle 1 exige que le code EXECUTE soit identifie, pas ' ...
+                 'seulement qu''un\ncode du meme nom existe quelque part dans ' ...
+                 'le depot.'], msg);
+        end
+    end
+end
+
 % --- environnement --------------------------------------------------------
 meta.matlab_release = version('-release');           % ex. '2024a'
 meta.matlab_version = version;                       % ex. '24.1.0.2537033 (R2024a)'
@@ -249,9 +331,11 @@ tag_smoke = ''; if SMOKE,           tag_smoke = ' [SMOKE]';     end
 fprintf('[stamp]%s %s%s | %s | git %s | MATLAB %s | fiche %s\n', ...
     tag_smoke, meta.campaign_id, tag_sale, meta.run_datetime, ...
     court(meta.code_sha1), meta.matlab_release, court(meta.fiche_commit));
-fprintf('[stamp] script %s | sha %s | empreinte perimetre %s (%d fichiers)\n', ...
+tag_id = 'IDENTITE NON ETABLIE';
+if meta.identite_script_verifiee, tag_id = 'identite verifiee'; end
+fprintf('[stamp] script %s | sha %s | empreinte perimetre %s (%d fichiers) | %s\n', ...
     nom_court(meta.script_path_effective), court(meta.script_sha256), ...
-    court(meta.code_manifeste_sha), meta.code_manifeste_n);
+    court(meta.code_manifeste_sha), meta.code_manifeste_n, tag_id);
 end
 
 
