@@ -1,0 +1,22 @@
+﻿id;manuscrit;tableau;ligne;colonne;valeur_publiee;tolerance;campagne;fichier_brut;sha256_brut;calcul
+# --- Serie ARCHIVEE du 13/08/2026 : candidate au remplacement de tab:predict_bypass ---
+P2-13082026-MLP-predict;P2;tab:predict_bypass;MLP-residuel;predict_ms;919.59;0.005;P2-13082026;results/test_residual_manual_closed_loop_20260813_010002.mat;befe6b720fc61fd3ab8c739a4cbc093f4396811fd17e8e483cf444188329cf8d;moy(bras('Nominal+Correction (predict)').cpu_ms)
+P2-13082026-MLP-manuel;P2;tab:predict_bypass;MLP-residuel;manuel_ms;8.71;0.005;P2-13082026;results/test_residual_manual_closed_loop_20260813_010002.mat;befe6b720fc61fd3ab8c739a4cbc093f4396811fd17e8e483cf444188329cf8d;moy(bras('Nominal+Correction (manual)').cpu_ms)
+P2-13082026-MLP-facteur;P2;tab:predict_bypass;MLP-residuel;facteur;105.6;0.01;P2-13082026;results/test_residual_manual_closed_loop_20260813_010002.mat;befe6b720fc61fd3ab8c739a4cbc093f4396811fd17e8e483cf444188329cf8d;moy(bras('Nominal+Correction (predict)').cpu_ms)/moy(bras('Nominal+Correction (manual)').cpu_ms)
+P2-13082026-MLP-npas;P2;tab:predict_bypass;MLP-residuel;n_pas_predict;600;0.0;P2-13082026;results/test_residual_manual_closed_loop_20260813_010002.mat;befe6b720fc61fd3ab8c739a4cbc093f4396811fd17e8e483cf444188329cf8d;n(bras('Nominal+Correction (predict)').cpu_ms)
+P2-13082026-GP-predict;P2;tab:predict_bypass;GP Nsub=50;predict_ms;59.70;0.005;P2-13082026;results/test_gp_residual_manual_closed_loop_20260813_010049.mat;136098c6b6a8d4a6bdbdc7862c0809caa9deabfc269c8ddcd6ecc1b14564ab02;moy(bras('Nominal+GP (predict)').cpu_ms)
+P2-13082026-GP-manuel;P2;tab:predict_bypass;GP Nsub=50;manuel_ms;9.94;0.005;P2-13082026;results/test_gp_residual_manual_closed_loop_20260813_010049.mat;136098c6b6a8d4a6bdbdc7862c0809caa9deabfc269c8ddcd6ecc1b14564ab02;moy(bras('Nominal+GP (manual)').cpu_ms)
+P2-13082026-GP-facteur;P2;tab:predict_bypass;GP Nsub=50;facteur;6.0;0.02;P2-13082026;results/test_gp_residual_manual_closed_loop_20260813_010049.mat;136098c6b6a8d4a6bdbdc7862c0809caa9deabfc269c8ddcd6ecc1b14564ab02;moy(bras('Nominal+GP (predict)').cpu_ms)/moy(bras('Nominal+GP (manual)').cpu_ms)
+P2-13082026-SWMLP-manuel;P2;tab:predict_bypass;SW-MLP;manuel_ms;51.56;0.005;P2-13082026;results/test_swmlp_pinn_manual_closed_loop_20260813_020324.mat;55c082c47c7246d3451f7b778d6ae76dc0793924819aa97407a6de9dbb328077;moy(bras('SW-MLP (manual)').cpu_ms)
+P2-13082026-SWMLP-depass;P2;tab:predict_bypass;SW-MLP;depassements;47;0.0;P2-13082026;results/test_swmlp_pinn_manual_closed_loop_20260813_020324.mat;55c082c47c7246d3451f7b778d6ae76dc0793924819aa97407a6de9dbb328077;nb_sup(bras('SW-MLP (manual)').cpu_ms, 100)
+P2-13082026-PINN-manuel;P2;tab:predict_bypass;PINN-v2;manuel_ms;33.77;0.005;P2-13082026;results/test_swmlp_pinn_manual_closed_loop_20260813_020324.mat;55c082c47c7246d3451f7b778d6ae76dc0793924819aa97407a6de9dbb328077;moy(bras('PINN-v2 (manual)').cpu_ms)
+P2-13082026-TCN-manuel;P2;tab:predict_bypass;TCN;manuel_ms;30.54;0.005;P2-13082026;results/test_tcn_manual_closed_loop_20260813_022410.mat;ad867851b59799b010fb1759f8ef53bcd7df812b46a334889c7b9af33328fc4e;moy(bras('TCN (manual)').cpu_ms)
+P2-13082026-TCN-depass;P2;tab:predict_bypass;TCN;depassements;4;0.0;P2-13082026;results/test_tcn_manual_closed_loop_20260813_022410.mat;ad867851b59799b010fb1759f8ef53bcd7df812b46a334889c7b9af33328fc4e;nb_sup(bras('TCN (manual)').cpu_ms, 100)
+P2-13082026-LSTM-manuel;P2;tab:predict_bypass;LSTM;manuel_ms;53.46;0.005;P2-13082026;results/test_lstm_manual_closed_loop_20260813_022723.mat;fa501e49d2ad9f3e43a1bc10570226befcb41031afc66ea518ee1d166c6a3957;moy(bras('LSTM (manual)').cpu_ms)
+P2-13082026-LSTM-npas;P2;tab:predict_bypass;LSTM;n_pas_predict;5;0.0;P2-13082026;results/test_lstm_manual_closed_loop_20260813_022723.mat;fa501e49d2ad9f3e43a1bc10570226befcb41031afc66ea518ee1d166c6a3957;n(bras('LSTM (predict)').cpu_ms)
+# --- Serie ACTUELLEMENT PUBLIEE dans le manuscrit : aucun fichier brut connu ---
+P2-manuscrit-MLP-predict;P2;tab:predict_bypass;MLP-residuel;predict_ms;1303.9;0.005;INCONNUE;;;
+P2-manuscrit-GP-predict;P2;tab:predict_bypass;GP-v2 Nsub=50;predict_ms;52.0;0.005;INCONNUE;;;
+P2-manuscrit-SWMLP-manuel;P2;tab:predict_bypass;SW-MLP;manuel_ms;12.4;0.005;INCONNUE;;;
+P2-manuscrit-LSTM-facteur;P2;abstract;LSTM;facteur;491;0.01;INCONNUE;;;
+P2-manuscrit-SWMLP-depass;P2;tab:predict_bypass;SW-MLP;depassements;1;0.0;INCONNUE;;;

@@ -1,0 +1,170 @@
+================================================================================
+REGULARISATION DU DEPOT — 23/09/2026
+Ordre arrete avec le directeur. Les etapes ne sont pas interchangeables.
+================================================================================
+
+ETAT DE DEPART, mesure et non suppose
+  HEAD ................. 11b4368
+  perimetre .............. sale : 2 fichiers suivis modifies, 37 fichiers de
+                           code jamais commites
+  .gitignore ............. ABSENT
+  fiche de campagne ...... presente, NON commitee
+  homonymes .............. run_sensitivity_maxiter.m en 2 exemplaires suivis,
+                           de contenus DIFFERENTS
+  residu _SMOKE.mat ...... aucun (results/ verifie)
+
+OU LA CAMPAGNE S'ARRETE AUJOURD'HUI, verifie en executant stamp_campaign
+  campagne reelle ........ stamp_campaign:dirty
+  smoke test ............. avertit sur le code sale, puis stamp_campaign:fiche
+
+  C'est pourquoi le smoke test est en etape 8 et non plus tot : il ne PEUT PAS
+  tourner avant que la fiche soit commitee. L'ordre ci-dessous n'est pas une
+  precaution, il est ce que la machine impose.
+
+--------------------------------------------------------------------------------
+1. LE .gitignore
+--------------------------------------------------------------------------------
+   Relire docs/gitignore_propose.txt, puis :
+     git mv docs/gitignore_propose.txt .gitignore     (ou copier a la main)
+     git add .gitignore
+   Verifier AVANT de commiter que rien d'utile n'est exclu :
+     git status --porcelain --untracked-files=all -- ":(glob)*.m" common
+   Les fiches de campagne et les registres ont des exceptions explicites (!) :
+   confirmer qu'ils apparaissent toujours.
+
+--------------------------------------------------------------------------------
+2. LES HOMONYMES
+--------------------------------------------------------------------------------
+   run_sensitivity_maxiter.m existe a la racine ET dans
+   piste_B_nominal_correction/, avec des protocoles DIFFERENTS :
+     racine  Np=15 Nc=4 pour TOUTES les architectures  (protocole unifie)
+     piste_B Np=15 pour le TCN seul, Np=10 ailleurs
+
+   NE PAS supprimer avant d'avoir tranche : la copie supprimee est peut-etre
+   celle qui a produit tab:maxiter_sensitivity. Choix a faire par le directeur :
+     a) renommer l'une des deux de facon parlante
+        (ex. run_sensitivity_maxiter_np_unifie.m / _np_par_archi.m) ;
+     b) ou archiver la copie ecartee hors perimetre, avec une note.
+
+   Dans les deux cas, inscrire la decision dans docs/P2_homonymes_2026-09-23.md.
+   stamp_campaign refusera toute campagne reelle tant que deux fichiers suivis
+   porteront le nom du script appele (condition 9).
+
+--------------------------------------------------------------------------------
+3. COMMITER LE DISPOSITIF
+--------------------------------------------------------------------------------
+   common/perimetre_code.m          le perimetre, definition unique
+   common/etat_proprete_code.m      « propre », definition unique
+   common/sha256_fichier.m          l'empreinte, definition unique
+   common/empreinte_code.m          le manifeste pris AU RUN
+   common/audit_version_code.m      l'audit rétrospectif
+   common/stamp_campaign.m          l'estampille
+   common/verifier_lot_campagne.m   les six conditions d'acceptation
+   common/pct7.m                    quantiles, convention numpy
+
+   Supprimer au passage le stub obsolete :
+     git rm docs/stamp_campaign.m
+
+--------------------------------------------------------------------------------
+4. VERIFIER QUE L'AUDIT S'ACCUSE — AVANT le commit de l'etape 3
+--------------------------------------------------------------------------------
+   Executer audit_version_code AVANT de commiter et confirmer qu'il imprime :
+     AVERTISSEMENT : common/audit_version_code.m n'est pas suivi par git.
+   Un outil d'audit qui ne se signale pas lui-meme quand il n'est pas versionne
+   est complaisant, et son silence vaudrait aussi pour le reste. Ce test se fait
+   une seule fois, et il faut le faire dans le bon sens : apres le commit,
+   l'avertissement disparait et on ne peut plus savoir s'il aurait parle.
+
+--------------------------------------------------------------------------------
+5. COMMIT DE REGULARISATION HISTORIQUE — SEPARE
+--------------------------------------------------------------------------------
+   Les 37 fichiers de code non suivis restants + les 2 fichiers modifies.
+   Message obligatoirement explicite, par exemple :
+
+     Regularisation retroactive du code des campagnes d'aout et septembre
+
+     Ces fichiers n'etaient versionnes par AUCUN commit au moment ou ils ont
+     produit les resultats publies. Ce commit enregistre leur etat au
+     23/09/2026. Il n'etablit PAS que cet etat est celui qui a tourne : aucune
+     empreinte n'a ete prise pendant ces runs, et le depot ne contient pas
+     l'information. A citer comme code_commit_retroactif, jamais comme
+     version du code.
+
+   NE PAS mélanger avec l'etape 7. L'un documente le passe, l'autre atteste le
+   protocole du futur. Melanges, le registre ne pourrait plus dire lequel
+   atteste quoi.
+
+--------------------------------------------------------------------------------
+6. RECLASSER, SANS EXAGERER LA PREUVE RETROACTIVE
+--------------------------------------------------------------------------------
+   docs/classement_P2.csv, colonne version_code. Etat arrete au 23/09 :
+     ETABLI ............ 1  tab:isolated_benchmark (57d98a4, sous reserve
+                            documentaire permanente)
+     PLAUSIBLE ......... 3  mechanism_isolation, unified_protocol, v1/v2
+                            (commit posterieur au run)
+     EXCLU ............. 0
+     INDETERMINABLE .... 8  dont maxiter_sensitivity (homonymes) et les cinq
+                            campagnes de septembre (aucune version)
+
+   Formulations a employer telles quelles :
+     tab:isolated_benchmark  « VALIDE selon la chaine de provenance disponible
+                               dans le depot », plus la reserve : le brut ne
+                               contient pas l'empreinte du code execute.
+     campagnes de septembre  « code commite retroactivement le 23/09/2026, non
+                               versionne au moment de l'execution ».
+   A ne jamais ecrire : « version du code : commit X » pour une campagne
+   anterieure au 23/09. Cela suggererait que le commit existait au moment du run.
+
+--------------------------------------------------------------------------------
+7. COMMIT DE LANCEMENT — la fiche
+--------------------------------------------------------------------------------
+     git add docs/campagnes/P2-BYPASS-2026-09-24-a.yaml
+     git commit -m "Fiche de campagne P2-BYPASS-2026-09-24-a"
+     git rev-parse HEAD        --> reporter dans le champ code_version
+   Puis re-commiter la fiche ainsi completee. La fiche doit etre commitee ET
+   non modifiee au lancement : stamp_campaign le verifie.
+
+--------------------------------------------------------------------------------
+8. SMOKE TEST
+--------------------------------------------------------------------------------
+     cd piste_B_nominal_correction
+     run_bypass_2026_09_24(0)
+
+   Contrat attendu, 8 points :
+     1. 12 bras dans P2-BYPASS-2026-09-24-a_SMOKE.mat
+     2. 5 valeurs de cpu_ms par bras
+     3. metadonnees completes sur chaque bras
+     4. meta.smoke = true
+     5. rapport distinct montrant ZERO probleme reel de composition
+     6. verifier_lot_campagne echoue avec EXACTEMENT verifier_lot:refuse
+     7. aucun fichier .sha256 ecrit
+     8. un fichier .REFUSE present
+
+   Plus deux points nouveaux, a lire dans la trace [stamp] :
+     9.  « identite verifiee » et non « IDENTITE NON ETABLIE »
+     10. empreinte du perimetre inscrite, avec le nombre de fichiers (132 au
+         23/09 ; un autre nombre signifie que le perimetre a bouge)
+
+   LE REFUS EST LE RESULTAT ATTENDU. Un smoke accepte serait l'anomalie, et le
+   code la signale comme telle (run_bypass:smokeAccepte).
+
+   Supprimer ensuite le _SMOKE.mat.
+
+--------------------------------------------------------------------------------
+9. CAMPAGNE REELLE
+--------------------------------------------------------------------------------
+     run_bypass_2026_09_24(600)      relancer jusqu'a « TOUT TERMINE »
+   Environ 5 h 30 en tranches de 10 minutes. Le verrou de reprise bloque si le
+   commit, le perimetre, la fiche ou le mode changent entre deux tranches.
+
+================================================================================
+LE POINT QUI COMMANDE TOUT LE RESTE
+
+Une empreinte prise au moment du run etablit une provenance future ; elle ne
+peut pas etre reconstruite apres coup par git, par les dates, ni par la
+proximite numerique.
+
+Les deux run_sensitivity_maxiter.m le demontrent concretement : deux protocoles
+differents, un artefact qui n'enregistre ni Np ni Nc, et aucun moyen de savoir
+lequel a tourne. Rien de ce qui sera fait aujourd'hui ne repare cela.
+================================================================================

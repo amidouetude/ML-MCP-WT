@@ -36,6 +36,9 @@ __pycache__/
 !docs/campagnes/*.yaml
 # Le registre des valeurs publiees est le maillon central de la regle 2.
 !registre_valeurs_publiees.csv
-!docs/registre_valeurs_publiees.csv
+# (25/09) !docs/registre_valeurs_publiees.csv retire : cet exemplaire etait une
+# version anterieure du registre de la racine, sans la colonne sha256_brut, et
+# ne differait de lui QUE par cette colonne (verifie ligne a ligne). Les outils
+# lisent la racine. Deux registres de valeurs publiees, c'est la regle 2 violee.
 !docs/registre_campagnes.csv
 !docs/classement_P2.csv

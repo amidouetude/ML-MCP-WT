@@ -1,0 +1,56 @@
+# =====================================================================
+# FICHE DE CAMPAGNE — à remplir AVANT le lancement, pas après.
+# Règle 1 : une campagne sans fiche ne produit aucun chiffre publiable.
+# Copier sous docs/campagnes/<campaign_id>.yaml, remplir, commiter,
+# PUIS lancer. Le commit de la fiche donne le code_version.
+# =====================================================================
+
+campaign_id:            # ex. P2-BENCH-2026-09-24-a   (unique, jamais réutilisé)
+date:                   # AAAA-MM-JJ du lancement prévu
+purpose:                # une phrase : à quelle question cette campagne répond
+
+# --- versions ---------------------------------------------------------
+protocol_version:       # ex. PROTO-2026-09-24-v1  (incrémenter à tout changement)
+code_version:           # SHA-1 du commit ; l'arbre doit être propre
+MATLAB_version:         # ex. R2024a
+toolboxes:              # nom + version des toolboxes réellement chargées
+  - Optimization Toolbox:
+  - Model Predictive Control Toolbox:
+  - Deep Learning Toolbox:
+  - Statistics and Machine Learning Toolbox:
+
+# --- procédé ----------------------------------------------------------
+model_version:          # ex. stage2_models_v2.mat + son empreinte SHA-256
+plant_parameters:       # ex. NREL réf. : Tg_rated=43093.55 N.m, K_opt=2.128616e6
+                        # (LE point qui a fait diverger la série orpheline)
+
+# --- contrôleur -------------------------------------------------------
+IsContinuousTime:       # true | false — jamais laissé au défaut
+solver:                 # ex. sqp
+solver_tolerances:
+  ConstraintTolerance:  # ex. 1e-4
+  OptimalityTolerance:  # ex. 1e-4
+  StepTolerance:        # ex. 1e-4
+MaxIterations:          # ex. 60
+MaxFunctionEvaluations: # ex. 2000
+Ts:                     # ex. 0.1
+Np:                     # ex. 15
+Nc:                     # ex. 4
+
+# --- excitation -------------------------------------------------------
+wind:                   # ex. Kaimal, V_moy = 14 m/s, T = 60 s
+seed:                   # ex. 2025 ; lister toutes les graines si plusieurs
+
+# --- exécution --------------------------------------------------------
+hardware:               # ex. Intel Core i5-12450H, 16 Go, machine au repos
+n_repetitions:          # >= 3 pour toute grandeur de coût ; 1 est interdit
+                        # (la remesure du 08/09 a montré 2,7 à 3,8x de dérive
+                        #  inter-session pour un calcul identique)
+statistic:              # médiane | moyenne — et laquelle sera publiée
+sample_size:            # nombre de pas PAR BRAS ; si un bras diffère, le dire
+                        # (le bras LSTM predict du 13/08 : 5 pas, pas 600)
+
+# --- sorties ----------------------------------------------------------
+raw_output_file:        # results/<campaign_id>.mat  — contiendra meta + results
+analysis_script:        # le script qui calcule les valeurs publiées
+published_tables:       # labels des tableaux du manuscrit alimentés par elle
