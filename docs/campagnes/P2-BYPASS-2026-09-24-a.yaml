@@ -1,0 +1,350 @@
+# =====================================================================
+# FICHE DE CAMPAGNE — première campagne sous chaîne de provenance complète.
+# Remplacement de tab:predict_bypass.
+#
+# ÉTAT : décisions arrêtées le 23/09/2026. La fiche est COMPLÈTE sauf les champs
+# marqués À RELEVER, qui ne peuvent l'être qu'au lancement.
+#
+# NON CONFORME tant que les DOUZE conditions de la section CONFORMITÉ ne sont
+# pas toutes remplies. Commiter AVANT de lancer.
+# =====================================================================
+
+campaign_id: P2-BYPASS-2026-09-24-a
+date: 2026-09-24
+purpose: >
+  Mesurer le coût par pas de six substituts en boucle fermée, sous appel
+  predict() puis sous passage manuel, avec le drapeau de temps continu
+  correctement déclaré et sous la physique NREL corrigée. Produit le tableau
+  qui remplace tab:predict_bypass, dont la série d'origine est orpheline et
+  antérieure à la correction des 11-12/08.
+
+# --- versions ---------------------------------------------------------
+protocol_version: PROTO-P2-BYPASS-v1
+code_version: À RELEVER          # = meta.code_sha1, recopié APRÈS la campagne
+  # CORRECTION du 25/09. La procédure prévoyait : commiter la fiche, relever
+  # git rev-parse HEAD, l'inscrire ici, puis re-commiter. C'est impossible : un
+  # commit ne peut pas contenir son propre identifiant. La fiche re-commitée
+  # porterait le hash du commit PRÉCÉDENT, HEAD au lancement serait le suivant,
+  # et valider_campagne.py (meta.code_sha1 doit commencer par code_version)
+  # rejetterait une campagne correcte.
+  # Règle retenue, la même que pour les cinq champs d'identité ci-dessous :
+  # stamp_campaign relève HEAD au lancement dans meta.code_sha1 ; ce HEAD est le
+  # commit de la fiche, qui contient AUSSI tout le code — un seul identifiant
+  # ancre les deux. Après la campagne, meta.code_sha1 est recopié ici, dans un
+  # commit qui ne touche QUE cette fiche.
+
+# --- IDENTITE DU CODE RÉELLEMENT EXÉCUTÉ -----------------------------------
+# Ajout du 23/09/2026. Le chemin d'un script ne l'identifie pas : le dépôt
+# contenait run_sensitivity_maxiter.m en DEUX exemplaires, à la racine et dans
+# piste_B_nominal_correction, aux contenus DIFFÉRENTS (horizons unifiés dans
+# l'un, dépendants de l'architecture dans l'autre). L'artefact publié n'enregistre
+# ni Np ni Nc : rien ne permet de dire lequel a produit tab:maxiter_sensitivity.
+#
+# Ces cinq champs sont relevés AU LANCEMENT par stamp_campaign.m et doivent
+# être recopiés ici après la campagne. Un commit ne suffit pas : git n'établit
+# pas qu'aucune modification locale n'a été faite puis annulée entre le run et
+# l'état actuel. Seule une empreinte prise PENDANT le run l'établit.
+script_path_effective: À RELEVER   # chemin ABSOLU du fichier exécuté
+script_sha256: À RELEVER           # empreinte de CE fichier, au moment du run
+script_commit: À RELEVER           # dernier commit le touchant, ou vide si non suivi
+working_directory: À RELEVER       # les chemins relatifs des scripts en dépendent
+code_manifeste_sha: À RELEVER      # empreinte de TOUT le code du périmètre
+  # Le manifeste complet est sauvé dans le .mat sous meta.code_manifeste : un
+  # audit ultérieur peut alors dire QUEL fichier a changé, au lieu de constater
+  # qu'un digest global diffère. Le NOMBRE de fichiers n'est pas un critère —
+  # voir la condition 10 de la section CONFORMITÉ.
+MATLAB: R2024a
+MATLAB_version: 24.1.0.2537033
+  # DÉCISION du 23/09. R2024a et R2026a ne sont pas interchangeables en boucle
+  # fermée (journal du 11/08). R2024a est retenue : c'est la version du seul
+  # artefact pleinement reproductible du projet, celle du diagnostic
+  # d'isolement du mécanisme, et celle que le résumé annonce déjà.
+  # La version complète est inscrite ici et doit être re-relevée au lancement :
+  # si elle diffère, la campagne est bloquée.
+toolboxes:                       # À RELEVER au lancement, via stamp_campaign.m
+  - Optimization Toolbox:
+  - Model Predictive Control Toolbox:
+  - Deep Learning Toolbox:
+  - Statistics and Machine Learning Toolbox:
+
+# --- procédé ----------------------------------------------------------
+# CORRECTION du 25/09 (D11). Les deux modèles résiduels n'avaient pas de
+# dossier ici, et le script les chargeait par nom nu, donc contre le dossier
+# courant : le premier smoke test a échoué sur ce point. Chemins mesurés le
+# 25/09 — un seul exemplaire de chacun dans le dépôt, tous suivis :
+#   common/stage2_models_v2.mat     5ae6245330c290bb…
+#   common/stage2_models.mat        0561a48ac9a0d331…
+#   stage2_residual_model.mat       c52fef022e39c242…
+#   stage2_gp_residual_model.mat    218e22f928fa5032…
+# run_bypass les résout désormais depuis la racine, les inscrit dans
+# meta.model_paths, et recalcule l'empreinte avant CHAQUE chargement.
+model_version: >
+  common/stage2_models_v2.mat (SW-MLP, PINN-v2, TCN, GP-v2) et
+  common/stage2_models.mat (LSTM), plus stage2_residual_model.mat et
+  stage2_gp_residual_model.mat, ces deux derniers À LA RACINE du dépôt.
+  Empreintes SHA-256 À RELEVER au lancement et comparées par le validateur.
+  Réentraînés le 13/08 sous physique NREL.
+plant_parameters: >
+  NREL référence, option A adoptée les 11-12/08 : Tg_rated = 43093.55 N.m
+  (P_rated_elec = 5e6 W, eta_gen = 0.944), K_opt = 2.128616e6.
+  C'EST LE PARAMÈTRE QUI A FAIT DIVERGER LA SÉRIE ORPHELINE. Il est verrouillé
+  ici et VÉRIFIÉ dans le .mat produit, pas seulement déclaré.
+
+# --- contrôleur -------------------------------------------------------
+IsContinuousTime: false
+solver: sqp
+solver_tolerances:
+  ConstraintTolerance: 1.0e-4
+  OptimalityTolerance: 1.0e-4
+  StepTolerance: 1.0e-4
+MaxIterations: 30
+MaxFunctionEvaluations: 300
+  # DÉCISION du 23/09. 30/300 sont les valeurs des campagnes du 13/08 et du
+  # 08/09, ce qui garde la nouvelle campagne comparable à l'historique de P2.
+  # C'EST UN CHOIX DE PROTOCOLE ARRÊTÉ AVANT EXÉCUTION, et non une
+  # optimisation postérieure destinée à améliorer le résultat : il est
+  # justifié par tab:maxiter_sensitivity, qui établit la stabilité des
+  # résultats à partir de MaxIterations = 30. Les campagnes du 19/09 tournent
+  # à 60/2000 ; cet écart est déclaré, non corrigé.
+Ts: 0.1
+Np: 15
+Nc: 4
+
+# --- excitation -------------------------------------------------------
+wind: Kaimal, V_moy = 14 m/s, T = 60 s, IEC classe A
+seed: [2025, 2026, 2027]         # une graine par répétition
+
+# --- exécution --------------------------------------------------------
+hardware: >
+  Intel Core i5-12450H (12e gén.), 16 Go. Machine AU REPOS : aucun processus
+  lourd, pas de navigateur, synchronisation OneDrive suspendue. À confirmer
+  explicitement au lancement.
+n_repetitions: 3
+statistic: >
+  MÉDIANE comme statistique principale, publiée avec Q1, Q3 et l'intervalle
+  interquartile. La moyenne est rapportée en complément, jamais seule.
+  Le facteur d'accélération est calculé À PARTIR DE LA MÊME STATISTIQUE pour
+  les deux bras : médiane(predict) / médiane(manuel). GELÉE AVANT EXÉCUTION :
+  la remesure du 08/09 a montré qu'un même bras passe de 24,6x à 90,1x selon
+  la statistique choisie.
+
+sample_size:
+  defaut: 600                    # pas par bras, par répétition
+  LSTM_predict:
+    sample_size: 30
+    repetitions: 3
+  LSTM_manual:
+    sample_size: 30
+    repetitions: 3
+  # DÉCISION du 23/09. À 30,7 s par pas, 600 pas coûteraient 5 h par
+  # répétition. 30 pas coûtent 15 min, soit 45 min pour les trois — six fois
+  # plus que les 5 pas de l'archive du 13/08, assez pour une médiane et des
+  # quartiles. Les DEUX bras LSTM sont mesurés sur 30 pas, pour que le
+  # facteur reste un rapport entre deux mesures de même taille.
+  #
+  # RÈGLE DE PUBLICATION : le LSTM est rapporté comme MESURE SÉPARÉE,
+  # n = 30 par répétition, trois répétitions. Son facteur n'est PAS comparé
+  # directement à ceux des bras n = 600 sans mention explicite. Le tableau
+  # porte n_predict et n_manual en colonnes pour tous les bras.
+
+# --- sorties ----------------------------------------------------------
+raw_output_file: results/P2-BYPASS-2026-09-24-a.mat
+  # contient meta (stamp_campaign) + results ; CHAQUE bras porte le VECTEUR
+  # cpu_ms complet, pas seulement ses agrégats. C'est ce qui manque à quinze
+  # des dix-sept tableaux actuels de P2.
+analysis_script: piste_B_nominal_correction/analyse_bypass_2026_09_24.m
+campaign_script: piste_B_nominal_correction/run_bypass_2026_09_24.m
+published_tables:
+  - tab:predict_bypass
+  - tab:predict_vs_manual_infeasibility
+
+# --- définitions imposées par l'audit ---------------------------------
+budget_temps_reel_ms: 100
+definition_depassement: >
+  un pas est en dépassement si cpu_ms > 100 STRICTEMENT. Publié sous la forme
+  n/N avec N explicite. Le pourcentage accompagne le compte, jamais seul.
+colonnes_obligatoires_du_tableau_publie: >
+  architecture ; n_predict ; n_manual ; médiane predict (ms) ; [Q1, Q3] ;
+  médiane manuel (ms) ; [Q1, Q3] ; facteur = méd(predict)/méd(manuel) ;
+  dépassements manuel n/N ; durée totale de mesure.
+
+# =====================================================================
+# CONFORMITÉ — douze conditions, toutes bloquantes
+# =====================================================================
+conformite:
+  1_decisions_inscrites: OUI          # MATLAB, 30/300, LSTM 30x3 — arrêtées
+  2_code_et_fiche_propres_au_demarrage: À FAIRE
+  3_commit_inscrit_dans_la_fiche: APRÈS LA CAMPAGNE   # champ code_version
+    # Relevé au lancement dans meta.code_sha1 par stamp_campaign, recopié ici
+    # ensuite — voir le commentaire de code_version. Au lancement, l'ancrage est
+    # meta.fiche_commit == meta.code_sha1 : la fiche commitée EST le HEAD.
+  4_meta_enregistre_dans_chaque_mat: À FAIRE  # via stamp_campaign.m
+  5_vecteur_brut_complet_par_bras: À FAIRE    # cpu_ms, 600 ou 30 valeurs
+  6_empreintes_des_modeles_verifiees: À FAIRE
+  7_IsContinuousTime_false_verifie: À FAIRE   # dans les 12 constructions nlmpc
+  8_statistique_gelee_avant_execution: OUI    # médiane + quartiles
+  9_aucun_homonyme_dans_le_depot: À FAIRE
+    # stamp_campaign refuse le lancement si plusieurs fichiers suivis portent le
+    # nom du script appelé. Motif : un registre qui ne porte que le nom ne dirait
+    # pas lequel a produit les chiffres. Cas connu à régler :
+    # run_sensitivity_maxiter.m (racine + piste_B_nominal_correction).
+    #
+    # RÉGLÉ le 25/09 par le commit 53bd9f1 : les deux copies portent désormais
+    # des noms distincts, run_sensitivity_maxiter_np_unifie.m (racine) et
+    # piste_B_nominal_correction/run_sensitivity_maxiter_np_par_archi.m.
+    # Vérifié : git ls-files ne renvoie plus d'homonyme.
+    #
+    # MAIS LE RENOMMAGE NE RÉSOUT PAS L'INDÉTERMINATION HISTORIQUE, il la
+    # déguise. L'audit rendait « INDETERMINABLE — 2 homonymes, refus de
+    # choisir », ce qui était l'état épistémique exact et désignait la question
+    # ouverte. Il rend maintenant « EXCLU — fichier modifié APRÈS le résultat »
+    # pour les DEUX copies, parce que le renommage a touché 3 lignes (la
+    # déclaration de fonction et l'en-tête) et a repoussé la date du dernier
+    # commit au 25/09 00:09, postérieure à l'artefact du 16/08 11:23.
+    # Cet EXCLU est littéralement vrai et pratiquement trompeur : il se lit
+    # comme un constat clos, alors que la question — laquelle des deux a
+    # produit tab:maxiter_sensitivity, donc sous quels horizons — reste
+    # entièrement ouverte. Seul le test d'exclusion (rejouer les deux
+    # protocoles, comparer mean_cpu_ms du Baseline) peut la trancher, et il
+    # peut seulement EXCLURE une copie, jamais établir laquelle a tourné.
+  10_empreinte_du_perimetre_relevee_au_run: À FAIRE
+    # meta.code_manifeste_sha, via common/empreinte_code.m. C'est le seul maillon
+    # de la règle 1 qui ne peut pas être reconstitué après coup.
+    #
+    # LE NOMBRE DE FICHIERS N'EST PAS UN CRITÈRE. Il en comptait 132 le 23/09 au
+    # matin, 133 le soir après l'ajout de common/digest_manifeste.m — versionné
+    # et intentionnel. Un critère n_fichiers == 132 aurait fait échouer une
+    # campagne correcte sans rien attraper. Le compte est un DIAGNOSTIC : s'il
+    # change, c'est une ÉVOLUTION DU PÉRIMÈTRE, qui appelle une nouvelle fiche ou
+    # une nouvelle version de protocole — pas un échec.
+    #
+    # L'acceptation porte sur la STRUCTURE (condition 6 de verifier_lot_campagne) :
+    #   a. manifeste présent et non vide
+    #   b. périmètre enregistré dans meta.code_scope
+    #   c. aucune empreinte indisponible
+    #   d. digest RECALCULÉ depuis le manifeste égal au digest enregistré
+    #      — un manifeste retouché après coup se trahit ici
+    #   e. script d'entrée présent au manifeste, empreinte concordante
+    #
+    # La convention de calcul du digest est figée des DEUX côtés, MATLAB
+    # (common/digest_manifeste.m) et Python (common/digest_manifeste_reference.py),
+    # et vérifiée bit pour bit le 23/09 sur un manifeste synthétique — vecteur de
+    # test 175d74d94fa64c5d... Un digest qu'un seul programme sait produire n'est
+    # pas vérifiable : c'est une signature qu'on est obligé de croire.
+    #
+    # CHEMIN CORRIGÉ le 25/09. La référence Python vivait dans docs/, hors
+    # périmètre surveillé : le fichier qui fige la convention n'était donc lui-
+    # même ni versionné ni empreinté. Le commit b1a0484 l'a placée dans common/,
+    # où l'extension .py la fait entrer dans le périmètre automatiquement.
+    # L'exemplaire docs/digest_manifeste_reference.py subsiste sur le disque,
+    # non suivi, et DOIT être supprimé : deux copies de l'artefact qui fixe une
+    # convention partagée, c'est la divergence que cette convention existe pour
+    # empêcher. Elles diffèrent déjà — sha e3c91f01… sur le disque contre
+    # da3e6120… dans l'index, par les fins de ligne (voir condition 12).
+  11_identite_du_script_verifiee_au_run: À FAIRE
+    # meta.identite_script_verifiee. QUATRE conditions, pas trois : script suivi,
+    # NON MODIFIÉ, présent au manifeste, et empreinte ÉGALE à l'entrée du
+    # manifeste. Sans la comparaison finale, script_sha256 et code_manifeste_sha
+    # sont deux preuves côte à côte qui ne se regardent pas : si le chemin est mal
+    # résolu, ou si le manifeste exclut par accident le fichier qui tourne, les
+    # deux champs restent remplis et paraissent se corroborer.
+    #
+    # Vérifié le 23/09 sur quatre cas réels du dépôt. Le cas décisif :
+    # run_extended_monte_carlo.m a des empreintes CONCORDANTES tout en étant
+    # MODIFIÉ sans commit. La concordance ne prouve donc que l'identité du fichier
+    # lu — ici, fidèlement, un fichier non commité. Elle ne prouve ni le
+    # versionnement, ni l'adéquation au commit déclaré.
+    # Et docs/verifier_chaine.py, hors périmètre, doit donner « sans objet » —
+    # jamais « OK ».
+  12_fins_de_ligne_normalisees: CORRECTIF POSÉ, RESTE À COMMITER
+    # DÉFAUT D10, mesuré le 25/09. Le dépôt a core.autocrlf = true dans sa
+    # config LOCALE et AUCUN .gitattributes. Conséquence : les octets d'un
+    # fichier de code dans la copie de travail dépendent du checkout, donc son
+    # SHA-256 aussi. Mesure sur common/digest_manifeste_reference.py :
+    #     disque (CRLF) e3c91f01edbb3c7a8061f7de5f0ceb75192a3585c39c9489fc347ccdf6e247ca
+    #     index  (LF)   da3e6120082d367d1022346aadd4749c94b5eb2bee567118b1fc09a33e735984
+    # État actuel des 129 fichiers suivis du périmètre :
+    #     i/lf   w/lf     100   ← écrits en LF, JAMAIS re-checkoutés
+    #     i/lf   w/crlf     3   ← déjà divergents aujourd'hui
+    #     i/-text w/-text  22   ← binaires, non concernés
+    #     i/none w/none     4
+    # Les 100 fichiers « i/lf w/lf » basculeraient en CRLF au premier clone
+    # frais sous Windows, et leur empreinte changerait — sans qu'une seule
+    # ligne de code ait bougé. Le digest enregistré identifie donc une COPIE DE
+    # TRAVAIL, pas le contenu du dépôt, et un tiers qui reclone ne peut pas le
+    # reproduire. C'est exactement le maillon que l'empreinte doit fournir.
+    #
+    # À RÉGLER AVANT le commit du dispositif, pas après : les 9 fichiers de
+    # common/ entreront en LF dans l'index et ressortiront en CRLF sur le
+    # disque, ce qui ferait passer le défaut de 3 fichiers à 12 d'un coup, et
+    # le rendrait structurel au lieu de résiduel.
+    #
+    # Correctif retenu : un .gitattributes qui impose eol=lf aux extensions de
+    # code, puis une renormalisation. La solution concurrente — normaliser les
+    # octets DANS sha256_fichier — est écartée : elle romprait la propriété qui
+    # fait la valeur de l'empreinte, à savoir qu'un tiers la recalcule avec
+    # sha256sum ou certutil, sans notre code.
+    #
+    # ÉTAT au 25/09, mesuré :
+    #   .gitattributes posé à la racine. Effet sur les fichiers SUIVIS : AUCUN —
+    #     32 fichiers signalés par git status avant, 32 après. Le dépôt n'a aucun
+    #     fichier en i/crlf, l'index est uniformément LF, donc rien n'est marqué
+    #     modifié par la seule pose du fichier.
+    #   les 5 divergents du dépôt (dont 1 seul fichier de code, la référence
+    #     Python) ont été re-checkoutés : divergents restants = 0, et
+    #     common/digest_manifeste_reference.py vaut désormais da3e6120…,
+    #     exactement l'empreinte de l'index.
+    #   troisième catégorie ajoutée à common/etat_proprete_code.m, contrôlée par
+    #     `git ls-files --eol` et NON par git status — git s'était tu sur les
+    #     cinq divergents. Vérifiée POSITIVEMENT : le fichier reconverti en CRLF
+    #     au niveau octet ressort « !! index=lf disque=crlf », puis restauré.
+    #
+    # RESTE : .gitattributes est lui-même NON SUIVI, et n'a pas d'extension, donc
+    # le contrôle de propreté ne le voit pas. Il doit faire partie du commit du
+    # dispositif, sans quoi un clone frais ne reçoit pas le correctif et le
+    # défaut revient chez le tiers qui vérifie — c'est-à-dire là où il compte.
+
+definition_de_la_proprete:
+  # Correction du 23/09 : le contrôle ne porte PAS sur l'arbre entier.
+  # Les artefacts produits par la campagne vivent dans results/ et sont
+  # référencés par empreinte ; ils ne rendent pas la campagne non conforme.
+  perimetre_surveille:
+    - common
+    - piste_B_nominal_correction
+    - piste_A_rom_autoencoder
+    - benchmarks
+    - docs/campagnes
+    # Ajout du 23/09 : la RACINE du dépôt, où vivent run_all.m, run_stage1..6.m
+    # et run_sensitivity_maxiter.m — des scripts qui produisent des résultats et
+    # étaient hors contrôle. Pas indistinctement : le pathspec ':(glob)*.m' ne
+    # descend pas dans les sous-dossiers et ne saisit que les extensions de code,
+    # de sorte que les .mat et .slxc de la racine restent dehors.
+    - ":(glob)*.m"
+    - ":(glob)*.mlx"
+    - ":(glob)*.py"
+    - ":(glob)*.yaml"
+    - ":(glob)*.yml"
+  regle: >
+    le CODE et la FICHE doivent être propres et commités AU DÉMARRAGE.
+    Contrôle : common/etat_proprete_code.m — DÉFINITION UNIQUE, partagée par
+    stamp_campaign (démarrage) et run_bypass (reprise).
+    DÉFAUT D9 corrigé le 23/09 : --untracked-files=no masquait les fichiers
+    JAMAIS commités, c'est-à-dire le cas le plus grave. Le contrôle porte
+    désormais sur (1) les fichiers suivis modifiés et (2) les fichiers de CODE
+    non suivis, l'appartenance au code se jugeant à l'EXTENSION et non au dossier.
+    results/ est hors périmètre et doit figurer dans .gitignore.
+  verrou_de_reprise: >
+    la campagne dure environ 5 h 30 et se reprend en plusieurs sessions. À
+    chaque reprise, HEAD est comparé à meta.code_sha1 : s'il a changé, la
+    reprise est REFUSÉE. Sinon les bras déjà mesurés et ceux qui restent ne
+    viendraient pas du même état du code, et le .mat serait un mélange que
+    rien ne signalerait. En cas de changement volontaire : repartir sous un
+    nouvel identifiant (suffixe -b) avec sa propre fiche.
+
+controles_post_execution:
+  - meta.code_dirty doit valoir false
+  - meta.matlab_version doit valoir 24.1.0.2537033
+  - les 12 constructions doivent porter IsContinuousTime = false
+  - les empreintes SHA-256 des modèles doivent correspondre à model_version
+  - valider_campagne.py doit afficher cinq « yes »
+  - verifier_chaine.py doit sortir en code 0 sur les lignes de cette campagne
