@@ -1,0 +1,100 @@
+LANCEMENT DE L'AUDIT DU GEL DE L'ACTIONNEUR — 18/09/2026
+
+Question : le gel de l'actionneur du bras GP est-il une PROPRIETE DU MODELE
+ou un ARTEFACT DE CONDITIONNEMENT du probleme d'optimisation ?
+
+Tant que cette question n'est pas tranchee, P3 n'a pas de resultat central
+et le document Feuille_Route_These.docx ne doit pas etre revise.
+
+====================================================================
+LANCEMENT
+====================================================================
+
+  cd('C:\Users\AMIDOU MAIGA\OneDrive - Institut 2IE\Desktop\ML-MPC-WIND TURBINE\ML-MPC-Wind Turbine\ML-MPC-WT-V3')
+  addpath('common'); addpath('piste_B_nominal_correction');
+  run_audit_gp
+
+  Duree : environ 40 min. Sauvegarde apres chaque sonde, reprise
+  automatique si interrompu. Pour tout refaire : supprimer
+  results\audit_gp.mat
+
+====================================================================
+CE QUE LE SCRIPT FAIT
+====================================================================
+
+ETAGE 1 — 32 configurations x 3 modeles, sonde a un pas.
+  Cinq facteurs croises :
+    UseSuboptimalSolution  false / true
+    ConstraintTolerance    1e-4 / 1e-2
+    Mise a l'echelle       non / plages physiques
+    Algorithme             sqp / interior-point
+    Horizon                15 / 5
+  Trois modeles :
+    GP        le cas a auditer
+    Persistance  autorite de commande NULLE par construction (temoin negatif)
+    PINN      fonctionne normalement (temoin positif)
+
+ETAGE 2 — pour chaque configuration qui debloque le GP, boucle fermee sur
+  120 pas, comparee a la persistance dans la MEME configuration.
+
+====================================================================
+CE QUE LE PRE-TEST A DEJA MONTRE (18/09, 5 sondes)
+====================================================================
+
+  modele    subopt  ctol   echelle | ExitFlag   delta mv    slack
+  ----------------------------------------------------------------
+  GP             0  1e-04        0 |       -2  +0.000000   0.0040
+  GP             1  1e-04        0 |       -2  +0.000000   0.0040
+  GP             1  1e-02        1 |        0  -0.000313   0.0026
+  Persistance    1  1e-04        0 |        1  +0.000000   0.0000
+  PINN           0  1e-04        0 |        1  -0.800000   0.0000
+
+TROIS ENSEIGNEMENTS, DEJA ACQUIS :
+
+1. UseSuboptimalSolution seul ne debloque RIEN. L'hypothese selon laquelle
+   nlmpcmove rejetait simplement l'itere est FAUSSE.
+
+2. Mise a l'echelle + tolerance relachee DEBLOQUENT le solveur (ExitFlag
+   passe de -2 a 0) mais la commande demandee vaut -0,000313 deg, soit
+   environ 2500 fois moins que les -0,800 deg du PINN. Le solveur reussit,
+   et l'action optimale reste numeriquement indiscernable de l'inaction.
+
+3. LE PLUS IMPORTANT. Le zero de la Persistance est un zero CONVERGE
+   (ExitFlag 1) : le solveur resout le probleme et conclut correctement
+   qu'aucune action n'ameliore le cout, puisque le modele n'a aucune
+   autorite. Le zero du GP est un zero d'ECHEC (ExitFlag -2). Les deux
+   produisent la meme trajectoire en boucle fermee, mais PAS pour la meme
+   raison. Parler d'equivalence GP/persistance sans cette distinction
+   serait une faute qu'un relecteur releverait.
+
+====================================================================
+FICHIERS A M'ENVOYER
+====================================================================
+
+  results\audit_gp_results.txt   <- LE PLUS IMPORTANT
+  results\audit_gp_log.txt
+  results\audit_gp.mat
+
+====================================================================
+COMMENT LE RESULTAT SERA LU
+====================================================================
+
+CAS A — aucune configuration ne debloque le GP alors que le PINN bouge
+  partout. Le gel est une propriete du modele. Le resultat central de P3
+  tient, en le reformulant : le canal de commande est si faible que le
+  probleme d'optimisation induit n'est pas resoluble.
+
+CAS B — une configuration debloque le GP et l'actionneur bouge vraiment
+  en boucle fermee, alors que la persistance reste figee. Le gel etait un
+  artefact de configuration : il faut refaire la campagne multi-graines et
+  l'equivalence n'est plus le resultat central.
+
+CAS C — une configuration debloque le GP ET la persistance. Elle force du
+  mouvement independamment du modele : a ecarter.
+
+Au vu du pre-test, le CAS A est le plus probable, avec une nuance
+importante : le gel n'est pas une incapacite du modele a repondre a la
+commande (il repond, gain 0,20 contre 1,0 pour la verite), mais une
+incapacite du PROBLEME D'OPTIMISATION a etre resolu, causee par la
+faiblesse de ce gain. C'est plus precis, plus defendable, et cela repond
+exactement a l'objection du directeur.

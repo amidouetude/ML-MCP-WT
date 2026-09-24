@@ -61,8 +61,16 @@ mdl_res_manual = extract_residual_weights(mdl_res);
 fprintf('\n');
 
 % ── Build controllers (built once, reused across all seeds/speeds) ────────
-Np1 = cfg.mpc.Np;  Nc1 = cfg.mpc.Nc;      % V1 settings
-Np2 = cfg.mpc2.Np; Nc2 = cfg.mpc2.Nc;      % V2 settings
+% Unified protocol (item 2.5 / Table tab:protocol_summary): Np=15,
+% Nc=4 for ALL SEVEN controllers. Previously this script split V1-family
+% controllers (Baseline/MLP-residual/GP/LSTM) at Np=10 (cfg.mpc) from
+% V2-family controllers (SW-MLP/PINN-v2/TCN) at Np=15 (cfg.mpc2) -- a
+% leftover from before the protocol was unified (run_item25_unified_
+% protocol.m confirms Np=15/Nc=4 as the intended unified setting), never
+% actually applied here. Fixed 2026-08-20 so the extended Monte Carlo
+% uses the same Np=15, Nc=4 horizon for every controller.
+Np1 = cfg.mpc2.Np; Nc1 = cfg.mpc2.Nc;      % unified: Np=15, Nc=4
+Np2 = cfg.mpc2.Np; Nc2 = cfg.mpc2.Nc;      % unified: Np=15, Nc=4
 
 nlobj_baseline = build_ctrl('sf_baseline', 2, p, cfg, Np1, Nc1, Ts, true);
 nlobj_res      = build_ctrl('sf_residual_manual', 4, p, cfg, Np1, Nc1, Ts, false);

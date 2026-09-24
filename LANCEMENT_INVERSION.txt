@@ -1,0 +1,129 @@
+================================================================
+CAMPAGNE « INVERSION DU CLASSEMENT »
+Preparee le 19/09/2026 — a lancer en local
+================================================================
+
+POURQUOI UNE CAMPAGNE DE PLUS
+-----------------------------
+La campagne de confirmation du 18/09 a fait deux choses : elle a CONFIRME
+le deficit d'autorite du canal beta, et elle a REFUTE la chaine causale
+que nous en avions tiree.
+
+Confirme : sur 64/64 points de la grille, le GP delivre 0.133 deg/pas de
+pitch la ou le procede en delivre 0.800 — gain median 0.167, de 0.29
+(basse vitesse, beta eleve) a -0.014 (un point ou le signe s'inverse).
+Le deficit s'aggrave avec la vitesse du vent : 0.237 a 10 m/s, 0.093 a
+22 m/s. Aucune exception sur la grille.
+
+Refute : nous ecrivions « le canal beta faible empeche la contrainte de
+continuite de se fermer, d'ou ExitFlag -2 et actionneur fige ». Test
+decisif : fournir au solveur un point initial ADMISSIBLE (rollout du GP
+a commande tenue, qui satisfait toutes les egalites exactement).
+  - a froid       : 0/16 points convergent
+  - point fourni  : 4/16 convergent, residu de continuite EXACTEMENT nul
+  - en boucle fermee sur 15 pas : 13/15 pas convergent (ExitFlag 2)
+    ET LA COMMANDE NE BOUGE PAS — activite de pitch exactement 0.000,
+    u = 3.50 aux quinze pas.
+
+Le -2 etait donc, pour une part, un echec de convergence a froid, pas une
+preuve d'infaisabilite. Et surtout : l'actionneur n'est pas fige par le
+solveur. Il est fige parce que l'optimum du probleme, TEL QUE LE MODELE LE
+VOIT, est de ne rien faire. Avec un gain de 0.167, bouger la commande de
+0.80 deg n'achete que 0.13 deg de pitch, donc presque aucune reduction de
+vitesse, tandis que la penalite de variation R = 0.5 facture le mouvement.
+L'optimiseur decline, correctement, sur la base d'un modele faux.
+
+Consequence methodologique : le defaut est INVISIBLE A L'EXITFLAG, qui est
+le diagnostic le plus couramment employe. C'est un resultat plus fort que
+celui que nous poursuivions.
+
+Une observation supplementaire, non encore expliquee, justifie a elle seule
+cette campagne : au meme point (omega 1.30, beta 3.5, V 18), le NMPC-PINN
+converge (ExitFlag 1) et commande +0.800 deg, alors que son gain de canal
+beta (0.185) est INFERIEUR a celui du GP (0.200). Le gain du canal
+d'actionneur ne suffit donc pas a predire le comportement. Ce qui compte
+est l'effet predit de la commande sur la VITESSE, sur tout l'horizon.
+
+CE QUE MESURE LA CAMPAGNE
+-------------------------
+ETAGE 1 — taux d'inversion du classement (~1 min, evaluations seules)
+  48 points (omega 1.2291/1.27/1.30/1.34 x beta 0/3.5/10/18 x V 14/18/22),
+  cinq premieres actions atteignables u = beta + {-0.8,-0.4,0,+0.4,+0.8}
+  tenues sur Np = 15. On compare l'action optimale selon chaque modele a
+  l'action optimale selon le procede.
+  Metrique honnete : le taux d'inversion est calcule uniquement sur les
+  points ou le procede demande effectivement une action. Ailleurs, un
+  accord avec le procede ne prouve rien.
+  Colonne « ecart de cout » : le cout REEL paye en suivant le modele.
+
+  PORTEE LIMITEE, DITE EXPLICITEMENT : TCN et SW-MLP sont ecartes de cet
+  etage. Leur tampon de sequence devrait etre propage le long du rollout ;
+  le figer, comme le faisait carte_gain.m pour une simple derivee locale,
+  donnerait un rollout faux. Modeles retenus : Persistance, ARX lineaire,
+  LLNFM, GP-v2, PINN-v2.
+
+ETAGE 2 — sensibilite au poids R : R = 0 / 0.05 / 0.5 / 5
+  Si l'optimum du modele se deplace quand R tombe a 0, le gel est un effet
+  de balance des couts. S'il reste a « tenir » meme a R = 0, le modele ne
+  voit aucun benefice a agir, a aucun prix — diagnostic bien plus grave.
+
+ETAGE 3 — remede C en boucle fermee, GP, 300 pas x 3 graines, froid contre
+  point initial coherent. Transforme la sonde de 15 pas en resultat :
+  la convergence remonte-t-elle alors que l'activite de pitch reste nulle ?
+
+ETAGE 4 — controle de corpus : meme chose avec le PINN, 2 graines.
+  Si le PINN gele aussi le pitch, le resultat cesse d'etre une anecdote sur
+  le GP et devient une propriete des surrogates entraines sur ce jeu de
+  donnees. S'il ne gele pas, il faut expliquer ce qui le distingue — et
+  l'etage 1 donne la reponse.
+
+LANCEMENT
+---------
+  1. Ouvrir MATLAB
+  2. cd vers la racine du projet (ML-MPC-WT-V3)
+  3. Taper :
+
+         run_inversion_test
+
+  Duree estimee : 25 a 35 min. Reprise automatique apres chaque etage et
+  chaque essai en boucle fermee (results/inversion.mat). En cas
+  d'interruption, relancer la meme commande.
+  A lancer depuis la fenetre MATLAB, pas via le pont (coupure a 60 s).
+
+SORTIES A ME RENVOYER
+---------------------
+  results/inversion_results.txt
+  results/inversion_log.txt
+
+VERIFICATIONS DEJA FAITES (19/09)
+---------------------------------
+  - checkcode : aucun message de fond (alignements de boucles sur une
+    ligne, et datestr/now deja employes partout dans le projet)
+  - les six fonctions d'etat testees a blanc sur un pas, u = 4.30 depuis
+    omega 1.30 / beta 3.5 / V 18 :
+        procede   [1.30248  4.30000]
+        GP-v2     [1.30392  3.58845]
+        PINN-v2   [1.30354  3.71336]
+        LLNFM     [1.30316  3.71059]
+        ARX       [1.30324  3.61710]
+        persist   [1.30000  3.50000]
+  - controleur NMPC-PINN construit et resolu : ExitFlag 1, dmv +0.800
+  - toutes les dependances presentes, extract_dlnetwork_generic inclus
+
+CE QUI SE PASSE ENSUITE
+-----------------------
+La feuille de route sera revisee sur le retour de cette campagne, et pas
+avant. Son theme central ne sera plus « equivalence GP/persistance » ni
+« l'autorite d'actionneur cause l'infaisabilite » — les deux sont
+maintenant intenables. Selon le resultat de l'etage 4 :
+  - si le gel touche plusieurs modeles : theme = la conception de
+    l'excitation et le controle d'autorite comme condition d'emploi d'un
+    surrogate en NMPC, resultat de corpus ;
+  - s'il ne touche que le GP : theme = un critere d'acceptation des
+    surrogates avant leur mise en boucle, avec le GP comme cas d'ecole.
+Dans les deux cas, la cause racine est deja etablie et chiffree (voir
+docs/analyse_confirmation_2026-09-19.md) : 81.6 % des 24000 echantillons
+d'apprentissage ont |u - beta| < 0.05 deg, 2.6 % seulement tombent dans la
+bande atteignable utile 0.05-0.80 deg, et 15.9 % portent des commandes que
+l'actionneur ne peut pas executer en un pas.
+================================================================

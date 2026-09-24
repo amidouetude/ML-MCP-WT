@@ -72,8 +72,13 @@ mdl_res_manual = extract_residual_weights(mdl_res);   % NOTE: sf_residual_manual
 fprintf('\n');
 
 % ── Build controllers ────────────────────────────────────────────────────────
-Np1 = cfg.mpc.Np;  Nc1 = cfg.mpc.Nc;  Ts = cfg.mpc.Ts;     % V1 settings (residual, LSTM)
-Np2 = cfg.mpc2.Np; Nc2 = cfg.mpc2.Nc;                       % V2 settings (SW-MLP, PINN-v2, TCN)
+% Unified protocol (item 2.5 / Table tab:protocol_summary): Np=15,
+% Nc=4 for ALL SEVEN controllers -- same fix applied to
+% run_extended_monte_carlo.m on 2026-08-20 (see docs/experiment_log.md).
+% Previously split V1-family (Np=10, cfg.mpc) from V2-family
+% (Np=15, cfg.mpc2), a leftover from before the protocol was unified.
+Np1 = cfg.mpc2.Np; Nc1 = cfg.mpc2.Nc; Ts = cfg.mpc2.Ts;   % unified: Np=15, Nc=4
+Np2 = cfg.mpc2.Np; Nc2 = cfg.mpc2.Nc;                     % unified: Np=15, Nc=4
 
 nlobj_baseline = build_ctrl('sf_baseline', 2, p, cfg, Np1, Nc1, Ts, true);
 nlobj_res      = build_ctrl('sf_residual_manual', 4, p, cfg, Np1, Nc1, Ts, false);

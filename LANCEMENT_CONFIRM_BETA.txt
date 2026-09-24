@@ -1,0 +1,115 @@
+================================================================
+CAMPAGNE DE CONFIRMATION — CANAL D'ACTIONNEUR DU SURROGATE
+Preparee le 18/09/2026 — a lancer en local
+================================================================
+
+POURQUOI CETTE CAMPAGNE
+-----------------------
+Le mecanisme a ete etabli LOCALEMENT, par intervention controlee en un
+seul point de fonctionnement : le GP n'offre que 0.140 deg/pas
+d'autorite de pitch la ou le procede en offre 0.800, la contrainte de
+continuite sur beta ne peut pas se fermer, ExitFlag = -2 a chaque pas,
+l'actionneur est fige.
+
+Un point de fonctionnement ne fait pas une these. Cette campagne verifie
+la GENERALITE du mecanisme sur une grille de fonctionnement et en boucle
+fermee, et met a l'epreuve la revendication d'invisibilite a l'erreur de
+prediction.
+
+Deux corrections de protocole par rapport aux essais precedents :
+  1. COMMANDES ATTEIGNABLES UNIQUEMENT. u est borne a
+     [beta - 0.80, beta + 0.80] puis sature aux butees de pitch.
+     Les sondes a u = 25 deg depuis beta = 3.5 deg (Delta_u = 21.5 deg)
+     mesuraient une dynamique que le controleur ne peut jamais demander ;
+     elles avaient produit une conclusion de signe oppose a la realite.
+  2. CRITERE CONJONCTIF. Un cas n'est declare resolu que si
+     ExitFlag > 0  ET  residu_beta proche de 0  ET  |d_beta| <= 0.80.
+     La seule convergence du solveur ne suffit pas : un solveur peut
+     converger vers une solution qui viole la physique de l'actionneur.
+
+LES TROIS CAS COMPARES
+----------------------
+  cas 1  GP pur                  situation de reference (echec attendu)
+  cas 2  GP + contrainte |d_beta| <= 0.80     REMEDE A — formulation
+  cas 3  GP hybride (ligne beta physique)     REMEDE B — modele
+
+Le cas 3 est un TEMOIN MECANISTIQUE, pas un modele a publier. Il sert a
+isoler la contribution du canal beta en laissant le canal omega intact.
+Il ne doit etre presente ni dans l'article ni dans la these comme une
+methode proposee.
+
+LANCEMENT
+---------
+  1. Ouvrir MATLAB
+  2. cd vers le dossier racine du projet (ML-MPC-WT-V3)
+  3. Taper :
+
+         run_confirm_beta
+
+  Duree estimee : 25 a 45 min selon la machine.
+  Reprise automatique : le script sauvegarde apres chaque sonde et
+  apres chaque essai en boucle fermee dans results/confirm_beta.mat.
+  Si MATLAB est interrompu, relancer la meme commande : les essais deja
+  faits sont sautes.
+
+  Ne PAS lancer depuis une session pilotee a distance : le pont coupe a
+  60 s et l'execution serait avortee. Lancer depuis la fenetre MATLAB.
+
+CE QUI EST MESURE
+-----------------
+ETAGE 1 — grille locale 4 x 4 x 4 x 3 cas (192 sondes, ~2 min)
+  omega : 1.15 / 1.2291 / 1.30 / 1.34 rad/s   (dont le regime de survitesse)
+  beta  : 0 / 3.5 / 10 / 18 deg
+  V     : 10 / 14 / 18 / 22 m/s
+  diagnostic du modele : d_beta GP, d_beta vrai, rapport, err_beta, err_omega
+  diagnostic du solveur : ExitFlag, iterations, slack, cout, d_mv,
+                          residu_omega, residu_beta, |d_beta| max le long
+                          de la trajectoire predite
+
+ETAGE 2 — boucle fermee, 300 pas, 3 cas x 3 graines (2025, 7, 42)
+  activite de pitch, RMSE de vitesse, nombre de pas infaisables,
+  depassements de borne, |d_beta| max
+
+ETAGE 3 — RMSE stratifie par |u - beta| sur le jeu de test
+  tranches : 0-0.05 / 0.05-0.2 / 0.2-0.4 / 0.4-0.8 / 0.8-2 / > 2 deg
+  C'est le test honnete de la revendication "invisible au RMSE". Si le
+  RMSE beta grimpe nettement dans les tranches a fort |u - beta|, la
+  revendication devra etre restreinte a "invisible au RMSE GLOBAL, pas a
+  un RMSE stratifie".
+
+SORTIES A ME RENVOYER
+---------------------
+  results/confirm_beta_results.txt     <- le principal, tableaux formates
+  results/confirm_beta_log.txt         <- journal des essais boucle fermee
+  results/confirm_beta.mat             <- donnees brutes (si besoin)
+
+CE QUI SE PASSE ENSUITE
+-----------------------
+La feuille de route n'est PAS revisee avant le retour de ces resultats.
+Une fois les fichiers analyses :
+  - gel des resultats actuels comme diagnostic local ;
+  - verification sur grille et en boucle fermee ;
+  - analyse de la sensibilite au domaine atteignable ;
+  - seulement ensuite, revision de la feuille de route, avec bascule du
+    theme central de "equivalence GP/persistance" vers "verification de
+    l'autorite de commande et de la coherence des contraintes
+    d'actionneur dans les surrogates destines au NMPC".
+
+VERIFICATIONS DEJA FAITES DE MON COTE (18/09)
+---------------------------------------------
+  - build_confirm_ctrl.m : 0 message de checkcode
+  - run_confirm_beta.m : execute sans erreur, les trois etages testes a
+    blanc sur un point
+  - toutes les dependances presentes : wt_step, kaimal_wind, sf_gp,
+    sf_gp_hybrid, con_dbeta, stage0_config, get_wt_params
+  - stage1_data.mat : colonnes confirmees [omega, beta, V, u], 3600
+    points de test
+  - essai a blanc au point nominal (omega 1.2291, beta 3.5, V 14) :
+        cas 1  ExitFlag -2  residu_beta 8.28e-01  d_mv +0.000
+        cas 2  ExitFlag -2  residu_beta 1.39e-01  d_mv +0.000
+        cas 3  ExitFlag +1  residu_beta 0.00e+00  d_mv -0.800
+        diagnostic local a u atteignable (4.30 deg) :
+            GP 0.1452 deg/pas contre 0.8000 vrai, rapport 5.51x
+    Le remede A (formulation) echoue, le remede B (modele) reussit.
+    La campagne dit si cela tient ailleurs qu'en ce point.
+================================================================

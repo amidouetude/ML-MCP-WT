@@ -1,0 +1,88 @@
+LANCEMENT DE LA REMESURE predict() vs PASSAGE MANUEL
+Objet : verifier si les facteurs d'acceleration publies le 13/08/2026
+        ont ete gonfles par Model.IsContinuousTime laisse a true.
+Ecrit le 08/09/2026.
+
+====================================================================
+OPTION 1 — dans la console MATLAB (la console reste bloquee)
+====================================================================
+
+  cd('C:\Users\AMIDOU MAIGA\OneDrive - Institut 2IE\Desktop\ML-MPC-WIND TURBINE\ML-MPC-Wind Turbine\ML-MPC-WT-V3')
+  addpath('common'); addpath('piste_B_nominal_correction');
+  run_remesure_predict
+
+====================================================================
+OPTION 2 — en arriere-plan (recommande : la console reste libre)
+====================================================================
+
+  Copier-coller ces trois lignes dans la console MATLAB :
+
+  exe = fullfile(matlabroot,'bin','matlab.exe');
+  cmd = sprintf('start /min \
+  system(cmd);
+
+  La commande rend la main immediatement. Suivre l'avancement avec :
+    type results\remesure_predict_log.txt
+
+====================================================================
+DUREE, REPRISE, INTERRUPTION
+====================================================================
+
+  Duree : 1 a 2 h. 24 bras au total.
+  Le script sauvegarde APRES CHAQUE BRAS. Une interruption (Ctrl+C,
+  fermeture de MATLAB, redemarrage) ne fait perdre que le bras en cours :
+  relancer la meme commande reprend ou il s'etait arrete.
+  Pour tout refaire de zero : supprimer results\remesure_predict.mat
+
+====================================================================
+FICHIERS PRODUITS — a m'envoyer pour analyse
+====================================================================
+
+  results\remesure_predict_results.txt   <- LE PLUS IMPORTANT
+       tableau de synthese : cout par pas, facteur d'acceleration a
+       IsCT=false et a IsCT=true, comparaison au facteur publie le
+       13/08, effet propre du drapeau, detail des 24 bras.
+
+  results\remesure_predict_log.txt
+       journal ligne a ligne, ecrit au fil de l'eau ; utile aussi si
+       un bras echoue (le message d'erreur et la pile y sont).
+
+  results\remesure_predict.mat
+       donnees brutes (cout par pas de chaque bras) si besoin d'aller
+       plus loin.
+
+====================================================================
+CE QUE LE SCRIPT MESURE
+====================================================================
+
+  6 architectures : MLP-residuel, GP-residuel, SW-MLP, PINN-v2, TCN, LSTM
+  x 2 fonctions d'etat : predict() et passage manuel
+  x 2 valeurs de Model.IsContinuousTime : false (correct) et true (fautif)
+
+  Protocole identique aux tests du 13/08/2026 : T = 60 s, V = 14 m/s,
+  graine 2025, memes horizons et memes bornes par architecture. La SEULE
+  chose qui change est que IsContinuousTime est desormais fixe
+  explicitement au lieu d'etre laisse a sa valeur par defaut.
+
+  Nombre de pas : 600 pour les bras manuels ; 100 pour MLP-residuel et
+  600 pour GP-residuel en mode predict() ; 60 pour SW-MLP, PINN-v2 et TCN
+  en mode predict() ; 5 pour le LSTM en mode predict() (environ 30 s par
+  pas). Seul le cout PAR PAS est compare entre bras.
+
+====================================================================
+CE QU'ON ATTEND DU RESULTAT
+====================================================================
+
+  Hypothese a tester : en mode continu, nlmpc appelle un solveur d'EDO
+  qui evalue la fonction d'etat bien plus souvent par pas d'horizon. Le
+  surcout par appel de predict() est donc multiplie par un nombre
+  d'appels artificiellement eleve, ce qui GONFLE le rapport
+  predict/manuel. Si c'est vrai, la colonne fact a IsCT=false sera
+  NETTEMENT INFERIEURE aux facteurs publies (105,6x pour le MLP-residuel,
+  46,9x pour le SW-MLP, 110,8x pour le PINN-v2, 66,2x pour le TCN,
+  573,6x pour le LSTM), et ce sont les nouvelles valeurs qui devront
+  figurer dans l'article.
+
+  Si au contraire les facteurs sont stables entre les deux conditions,
+  le resultat de cout de calcul du projet est confirme tel quel et
+  redevient citable sans reserve.

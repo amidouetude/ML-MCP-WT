@@ -1,0 +1,92 @@
+LANCEMENT DE LA CONSOLIDATION — 08/09/2026
+Objet : repondre aux quatre faiblesses bon marche relevees en relecture
+        (point de fonctionnement unique, N=5 modeles, graine unique,
+        p asymptotique non valide).
+
+====================================================================
+ORDRE DES OPERATIONS
+====================================================================
+
+  cd('C:\Users\AMIDOU MAIGA\OneDrive - Institut 2IE\Desktop\ML-MPC-WIND TURBINE\ML-MPC-Wind Turbine\ML-MPC-WT-V3')
+  addpath('common'); addpath('piste_B_nominal_correction');
+
+  1) carte_gain           <- DEJA EXECUTE le 08/09, resultat en place.
+                             A relancer seulement si les modeles changent.
+                             Duree : 5 secondes.
+
+  2) run_multiseed        <- LE LONG. 40 bras = 8 modeles x 5 graines.
+                             Duree : environ 1 h pour les 7 premiers
+                             modeles, puis environ 4 h pour le GP seul
+                             (traite en dernier exprES).
+
+  3) analyse_multiseed    <- Duree : quelques secondes. Peut etre lance
+                             a tout moment sur les bras deja termines.
+
+====================================================================
+LANCEMENT EN ARRIERE-PLAN DU POINT 2 (recommande)
+====================================================================
+
+  exe = fullfile(matlabroot,'bin','matlab.exe');
+  cmd = sprintf('start /min \
+  system(cmd);
+
+  Suivi :  type results\multiseed_log.txt
+
+====================================================================
+REPRISE
+====================================================================
+
+  run_multiseed sauvegarde APRES CHAQUE BRAS dans results\multiseed.mat.
+  Une interruption ne fait perdre que le bras en cours ; relancer la meme
+  commande reprend ou il s'etait arrete.
+  Pour tout refaire : supprimer results\multiseed.mat
+
+  Le GP etant traite en dernier, vous pouvez interrompre apres les sept
+  premiers modeles et lancer analyse_multiseed : elle fonctionne sur les
+  bras disponibles et signale les manquants.
+
+====================================================================
+FICHIERS A M'ENVOYER
+====================================================================
+
+  results\carte_gain_results.txt          (deja produit)
+  results\analyse_multiseed_results.txt   <- LE PLUS IMPORTANT
+  results\multiseed_log.txt
+  results\multiseed.mat                   (si besoin d'aller plus loin)
+
+====================================================================
+CE QUI A CHANGE PAR RAPPORT AUX MESURES PRECEDENTES
+====================================================================
+
+  - Le gain du canal de commande n'est plus mesure en UN point mais sur
+    une grille de 180 points (150 non satures) ; on en prend la mediane.
+  - Deux modeles s'ajoutent : Persistence et Linear ARX, deja entraines.
+    On passe de 5 a 7 modeles de substitution.
+  - Cinq graines de vent au lieu d'une : 2025, 7, 42, 1234, 90210.
+  - Le p asymptotique est remplace par un test de permutation EXACT
+    (7! = 5040 permutations enumerees).
+  - Model.IsContinuousTime = false partout, et les tolerances du solveur
+    sont FIXEES explicitement a 1e-4 dans multiseed_arm.m. C'est le
+    debut de l'experience de reference : les campagnes du 05/09 et du
+    08/09 differaient sur ce point et n'etaient pas comparables.
+
+====================================================================
+AVERTISSEMENT HONNETE
+====================================================================
+
+  Cette consolidation peut AFFAIBLIR le resultat principal, et c'est
+  precisement pourquoi il faut la faire. Deux signaux le laissent
+  presager des maintenant, a partir de la seule carte de gain :
+
+  - Le classement par fidelite du gain change entre la mesure en un
+    point et la mediane sur la carte. Le TCN passe de MEILLEUR gain
+    (0,3718 au point nominal) a sixieme sur sept (mediane 0,1847), sa
+    plage allant de 0,0356 a 0,3991. La mesure en un point etait un
+    artefact.
+  - Le GP-v2 passe de PIRE gain a troisieme sur sept (mediane 0,2003).
+    L'argument « le GP a le pire canal de commande » ne tient plus sous
+    cette forme et devra etre reformule.
+
+  Le rho = 0,975 obtenu le 05/09 sur 5 modeles et un point de
+  fonctionnement unique ne doit plus etre cite tant que cette campagne
+  n'a pas rendu son verdict.
