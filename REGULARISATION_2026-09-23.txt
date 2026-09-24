@@ -168,3 +168,38 @@ Les deux run_sensitivity_maxiter.m le demontrent concretement : deux protocoles
 differents, un artefact qui n'enregistre ni Np ni Nc, et aucun moyen de savoir
 lequel a tourne. Rien de ce qui sera fait aujourd'hui ne repare cela.
 ================================================================================
+
+================================================================================
+ADDENDUM DU 25/09/2026 — execution, et trois ecarts a la procedure ci-dessus
+================================================================================
+
+Etapes 1 a 8 FAITES. Detail et mesures : docs/P2_constats_2026-09-25.md.
+
+  1-2  586e384, 53bd9f1                      .gitignore, homonymes
+  3    63edb10  dispositif + .gitattributes  (+ c687d42, voir ecart c)
+  4    constatee AVANT 63edb10               auto-accusation de l'audit
+  5    28aff11  regularisation historique
+  6    651cb7d  reclassement, registres, documents
+  7    commit de lancement, dernier de la branche
+  8    smoke test : 10 points sur 10, verifies sur l'artefact
+
+ECART a — etape 7 : « relever git rev-parse HEAD, l'inscrire dans code_version,
+  puis re-commiter » est IMPOSSIBLE : un commit ne peut pas contenir son propre
+  identifiant. code_version est recopie depuis meta.code_sha1 APRES la
+  campagne, dans un commit qui ne touche que la fiche.
+
+ECART b — etape 8 : « cd piste_B_nominal_correction » faisait ECHOUER le smoke
+  (D11 : modeles charges par nom nu, et empreintes sautees en silence). Corrige
+  dans run_bypass ; le smoke valide a ete lance depuis ce dossier precisement.
+
+ECART c — etape 3 : le stamp_campaign commite etait anterieur au controle
+  d'identite (D12) ; verifier_lot_campagne laissait passer le champ absent.
+  Corrige en c687d42.
+
+Point 10 du contrat : 134 fichiers, et non 132. Diagnostic, pas critere.
+
+Etape 3 : « git rm docs/stamp_campaign.m » ne s'appliquait pas — le stub
+n'etait pas suivi. Supprime du disque apres controle de son contenu.
+
+RESTE : etape 9, la campagne reelle. Machine AU REPOS, OneDrive suspendu.
+    run_bypass_2026_09_24(600)      relancer jusqu'a « TOUT TERMINE »
