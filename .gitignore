@@ -1,0 +1,41 @@
+# .gitignore — ML-MPC-WT-V3
+# Propose le 23/09/2026. Le depot n'en avait aucun : un « git add -A » y aurait
+# fait entrer plusieurs Mo de .mat et de .slxc, et surtout aurait rendu les
+# resultats de campagne indissociables du code qui les produit.
+#
+# PRINCIPE, aligne sur la regle 1 : le code et les fiches sont versionnes ;
+# ce que les campagnes ECRIVENT ne l'est pas. La tracabilite des resultats
+# passe par leur empreinte SHA-256 inscrite au registre, pas par git.
+
+# ---- artefacts de campagne ----------------------------------------------
+results/
+*/results/
+*.mat
+*.slxc
+slprj/
+
+# ---- sorties de mesure --------------------------------------------------
+*_results.txt
+*_log.txt
+mc_run_log.txt
+
+# ---- figures ------------------------------------------------------------
+**/figures/*.png
+**/figures/*.pdf
+**/figures/*.eps
+
+# ---- environnement ------------------------------------------------------
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.asv
+*.autosave
+
+# ---- EXCEPTIONS : ces fichiers DOIVENT etre versionnes ------------------
+# Les fiches de campagne sont du protocole, pas du resultat.
+!docs/campagnes/*.yaml
+# Le registre des valeurs publiees est le maillon central de la regle 2.
+!registre_valeurs_publiees.csv
+!docs/registre_valeurs_publiees.csv
+!docs/registre_campagnes.csv
+!docs/classement_P2.csv
