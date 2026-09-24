@@ -1,0 +1,71 @@
+# =====================================================================
+# .gitattributes — normalisation des fins de ligne
+#
+# À placer À LA RACINE du dépôt sous le nom .gitattributes
+#
+# MOTIF — défaut D10, mesuré le 25/09/2026
+#
+# Le dépôt a core.autocrlf = true dans sa config LOCALE et aucun
+# .gitattributes. Les octets d'un fichier de code dans la copie de travail
+# dépendent donc du checkout, et son SHA-256 avec eux. Mesure sur
+# common/digest_manifeste_reference.py :
+#     disque (CRLF) e3c91f01edbb3c7a8061f7de5f0ceb75192a3585c39c9489fc347ccdf6e247ca
+#     index  (LF)   da3e6120082d367d1022346aadd4749c94b5eb2bee567118b1fc09a33e735984
+#
+# Sur les 129 fichiers suivis du périmètre : 3 divergent déjà, 100 sont en LF
+# sur le disque parce qu'ils n'ont jamais été re-checkoutés et basculeraient en
+# CRLF au premier clone frais sous Windows. Le digest enregistré identifie donc
+# une COPIE DE TRAVAIL et non le contenu du dépôt : un tiers qui reclone ne peut
+# pas le reproduire. C'est précisément le maillon que l'empreinte doit fournir.
+#
+# POURQUOI PAS L'AUTRE SOLUTION
+#
+# On aurait pu normaliser les octets À L'INTÉRIEUR de sha256_fichier. Écarté :
+# cela romprait la seule propriété qui donne sa valeur à l'empreinte — qu'un
+# tiers la recalcule avec sha256sum ou certutil, sans notre code. Une empreinte
+# que seul notre code sait reproduire est une signature qu'on est obligé de
+# croire, ce que ce dispositif existe pour éviter.
+# =====================================================================
+
+# Défaut : git décide texte/binaire, et tout texte est en LF sur le disque,
+# sous Windows comme sous Linux.
+* text=auto eol=lf
+
+# --- code : le périmètre surveillé (voir common/perimetre_code.m) ----------
+*.m      text eol=lf
+*.py     text eol=lf
+*.yaml   text eol=lf
+*.yml    text eol=lf
+
+# --- documentation et données texte ---------------------------------------
+*.md     text eol=lf
+*.txt    text eol=lf
+*.csv    text eol=lf
+*.tex    text eol=lf
+*.bib    text eol=lf
+*.json   text eol=lf
+*.cls    text eol=lf
+*.sty    text eol=lf
+*.bst    text eol=lf
+
+# --- binaires : déclarés explicitement -------------------------------------
+# .mlx est un conteneur OOXML, pas du texte, malgré son appartenance au
+# périmètre de code. Une normalisation le corromprait.
+*.mlx    binary
+*.mat    binary
+*.slx    binary
+*.slxc   binary
+*.mdl    binary
+*.sldd   binary
+*.fig    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.pdf    binary
+*.docx   binary
+*.xlsx   binary
+*.pptx   binary
+*.zip    binary
+*.mlapp  binary
+*.mldatx binary
