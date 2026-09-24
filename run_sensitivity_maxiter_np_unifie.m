@@ -1,5 +1,5 @@
-function results = run_sensitivity_maxiter()
-% RUN_SENSITIVITY_MAXITER  Sensitivity sweep over the SQP MaxIterations
+function results = run_sensitivity_maxiter_np_unifie()
+% RUN_SENSITIVITY_MAXITER_NP_UNIFIE  Sensitivity sweep with unified horizons.
 % cap (reproducibility review, item 2.6). Every controller in this
 % project uses MaxIterations=30, and the Appendix notes that this
 % causes ExitFlag<=0 (non-positive: either the iteration cap is hit, or
@@ -12,7 +12,7 @@ function results = run_sensitivity_maxiter()
 % despite formally non-positive exit flags, consistent with common
 % real-time MPC practice of capping iterations under warm-starting).
 %
-%   results = run_sensitivity_maxiter()
+%   results = run_sensitivity_maxiter_np_unifie()
 %
 %   METHOD
 %     Re-runs Baseline, TCN (manual), and MLP-residual (manual) in
@@ -70,13 +70,7 @@ for a = 1:numel(archs)
         MaxIter = maxiter_values(mi);
         fprintf('--- %s, MaxIterations=%d ---\n', arch.name, MaxIter);
 
-        Np1 = cfg.mpc.Np; Nc1 = cfg.mpc.Nc;
-        Np2 = cfg.mpc2.Np; Nc2 = cfg.mpc2.Nc;
-        if strcmp(arch.kind, 'tcn')
-            Np = Np2; Nc = Nc2;
-        else
-            Np = Np1; Nc = Nc1;
-        end
+        Np = cfg.mpc2.Np; Nc = cfg.mpc2.Nc;  %% unified protocol (item 2.5): Np=15, Nc=4 for all
 
         nlobj = nlmpc(2, 2, 1);
         switch arch.kind
