@@ -1,0 +1,33 @@
+name: Manifest digest reference
+
+on:
+  push:
+    paths:
+      - "common/digest_manifeste_reference.py"
+      - ".github/workflows/digest-reference.yml"
+  pull_request:
+    paths:
+      - "common/digest_manifeste_reference.py"
+      - ".github/workflows/digest-reference.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-reference:
+    name: Test Python digest reference
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      # This workflow validates only the Python implementation. MATLAB-side
+      # validation requires a MATLAB-enabled runner and is not covered here.
+      - name: Run digest convention test
+        run: python common/digest_manifeste_reference.py
