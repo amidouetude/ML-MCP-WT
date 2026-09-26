@@ -20,7 +20,7 @@ purpose: >
 
 # --- versions ---------------------------------------------------------
 protocol_version: PROTO-P2-BYPASS-v1
-code_version: À RELEVER          # = meta.code_sha1, recopié APRÈS la campagne
+code_version: 9c39eae28db30601ebe6f1accc96b955d31aa152   # = meta.code_sha1, recopié le 26/09
   # CORRECTION du 25/09. La procédure prévoyait : commiter la fiche, relever
   # git rev-parse HEAD, l'inscrire ici, puis re-commiter. C'est impossible : un
   # commit ne peut pas contenir son propre identifiant. La fiche re-commitée
@@ -32,6 +32,23 @@ code_version: À RELEVER          # = meta.code_sha1, recopié APRÈS la campagn
   # commit de la fiche, qui contient AUSSI tout le code — un seul identifiant
   # ancre les deux. Après la campagne, meta.code_sha1 est recopié ici, dans un
   # commit qui ne touche QUE cette fiche.
+  #
+  # RELEVÉ du 26/09, après la campagne. TROIS commits, trois rôles, jamais
+  # fusionnés dans un même champ :
+  #   code_version     9c39eae  code EXÉCUTÉ pendant l'acquisition
+  #                             (meta.code_sha1, identique sur les 36 bras)
+  #   protocol_commit  200fe22  cette fiche et le code de lancement
+  #                             (meta.fiche_commit)
+  #   analysis_commit  00e5451  le code qui transforme le brut en valeurs
+  #                             publiées (analyse_bypass + verifier_chaine, D13)
+  # code_version ≠ protocol_commit : le workflow CI a été commité en 9c39eae
+  # après la fiche et AVANT le lancement. La note de la condition 3 (« la
+  # fiche commitée EST le HEAD ») ne s'est donc pas vérifiée. Sans effet sur
+  # le code exécuté : git diff --name-only 200fe22 9c39eae ne liste que
+  # .github/workflows/digest-reference.yml, hors périmètre, et l'empreinte du
+  # périmètre est la même au smoke et au run (66b638b8).
+protocol_commit: 200fe22c925ee7a96bf33e3e5b6e7fe11691378a
+analysis_commit: 00e545121289558d9659a71d0a97e052e5fc7d86
 
 # --- IDENTITE DU CODE RÉELLEMENT EXÉCUTÉ -----------------------------------
 # Ajout du 23/09/2026. Le chemin d'un script ne l'identifie pas : le dépôt
@@ -174,7 +191,7 @@ colonnes_obligatoires_du_tableau_publie: >
 conformite:
   1_decisions_inscrites: OUI          # MATLAB, 30/300, LSTM 30x3 — arrêtées
   2_code_et_fiche_propres_au_demarrage: À FAIRE
-  3_commit_inscrit_dans_la_fiche: APRÈS LA CAMPAGNE   # champ code_version
+  3_commit_inscrit_dans_la_fiche: OUI   # 26/09 : code_version = meta.code_sha1 = 9c39eae
     # Relevé au lancement dans meta.code_sha1 par stamp_campaign, recopié ici
     # ensuite — voir le commentaire de code_version. Au lancement, l'ancrage est
     # meta.fiche_commit == meta.code_sha1 : la fiche commitée EST le HEAD.
