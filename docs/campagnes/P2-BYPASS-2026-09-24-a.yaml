@@ -61,11 +61,11 @@ analysis_commit: 00e545121289558d9659a71d0a97e052e5fc7d86
 # être recopiés ici après la campagne. Un commit ne suffit pas : git n'établit
 # pas qu'aucune modification locale n'a été faite puis annulée entre le run et
 # l'état actuel. Seule une empreinte prise PENDANT le run l'établit.
-script_path_effective: À RELEVER   # chemin ABSOLU du fichier exécuté
-script_sha256: À RELEVER           # empreinte de CE fichier, au moment du run
-script_commit: À RELEVER           # dernier commit le touchant, ou vide si non suivi
-working_directory: À RELEVER       # les chemins relatifs des scripts en dépendent
-code_manifeste_sha: À RELEVER      # empreinte de TOUT le code du périmètre
+script_path_effective: 'C:\Users\AMIDOU MAIGA\OneDrive - Institut 2IE\Desktop\ML-MPC-WIND TURBINE\ML-MPC-Wind Turbine\ML-MPC-WT-V3\piste_B_nominal_correction\run_bypass_2026_09_24.m'   # meta, recopié le 26/09
+script_sha256: 3c9fc8e226e1179b5d4c9122380e3a89898c2e2884ce39e08e24884e25e73667   # au moment du run
+script_commit: 200fe22c925ee7a96bf33e3e5b6e7fe11691378a   # dernier commit touchant le script au run
+working_directory: 'C:\Users\AMIDOU MAIGA\OneDrive - Institut 2IE\Desktop\ML-MPC-WIND TURBINE\ML-MPC-Wind Turbine\ML-MPC-WT-V3\piste_B_nominal_correction'
+code_manifeste_sha: 66b638b87e4bdf071e4b56ff3aebc20da0f6523c6a38d520a81ddec1c45a3a2d   # 134 fichiers (diagnostic)
   # Le manifeste complet est sauvé dans le .mat sous meta.code_manifeste : un
   # audit ultérieur peut alors dire QUEL fichier a changé, au lieu de constater
   # qu'un digest global diffère. Le NOMBRE de fichiers n'est pas un critère —
@@ -78,11 +78,11 @@ MATLAB_version: 24.1.0.2537033
   # d'isolement du mécanisme, et celle que le résumé annonce déjà.
   # La version complète est inscrite ici et doit être re-relevée au lancement :
   # si elle diffère, la campagne est bloquée.
-toolboxes:                       # À RELEVER au lancement, via stamp_campaign.m
-  - Optimization Toolbox:
-  - Model Predictive Control Toolbox:
-  - Deep Learning Toolbox:
-  - Statistics and Machine Learning Toolbox:
+toolboxes:                       # meta.toolboxes au lancement, recopié le 26/09 ; aucune manquante
+  - Optimization Toolbox: 24.1 (R2024a)
+  - Model Predictive Control Toolbox: 24.1 (R2024a)
+  - Deep Learning Toolbox: 24.1 (R2024a)
+  - Statistics and Machine Learning Toolbox: 24.1 (R2024a)
 
 # --- procédé ----------------------------------------------------------
 # CORRECTION du 25/09 (D11). Les deux modèles résiduels n'avaient pas de
@@ -99,7 +99,12 @@ model_version: >
   common/stage2_models_v2.mat (SW-MLP, PINN-v2, TCN, GP-v2) et
   common/stage2_models.mat (LSTM), plus stage2_residual_model.mat et
   stage2_gp_residual_model.mat, ces deux derniers À LA RACINE du dépôt.
-  Empreintes SHA-256 À RELEVER au lancement et comparées par le validateur.
+  Empreintes SHA-256 relevées au lancement dans meta.model_sha256 et
+  recalculées avant chaque chargement (D11), recopiées ici le 26/09 :
+  v2 5ae6245330c290bb033db68270592c7d2e768a844aede889517b5e10174d069d,
+  v1 0561a48ac9a0d331e3d82614973fd357983338cabb66c420b38991a2574c1ffe,
+  res c52fef022e39c242a0ea161c8539fe3309227ea2e9447f32e45321984afcafad,
+  gpres 218e22f928fa5032b628b169f267bda0d6311d9a75f6c880a326f3cedbb196a1.
   Réentraînés le 13/08 sous physique NREL.
 plant_parameters: >
   NREL référence, option A adoptée les 11-12/08 : Tg_rated = 43093.55 N.m
