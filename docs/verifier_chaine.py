@@ -27,7 +27,21 @@ en ECHEC, sans meme tenter le recalcul.
 
 `calcul` est une expression evaluee dans un espace restreint ou sont
 disponibles : les variables de premier niveau du .mat, plus les fonctions
-bras(nom), moy(x), med(x), nb(x), nb_sup(x, seuil), et n(x).
+bras(nom), moy(x), med(x), mx(x), n(x), nb_sup(x, seuil), nb_inf(x, seuil),
+cat(x1, x2, ...) et q(x, p).
+
+  med([med(a), med(b), med(c)])   mediane des medianes
+  q(cat(a, b, c), 0.25)           premier quartile de l'ensemble concatene,
+                                  convention type 7 = common/pct7.m
+  nb_inf(bras('x').exitflag, 0)   nombre de pas ou le solveur a echoue
+
+DEUX FORMATS DE BRUT sont lus (D13, 26/09/2026) :
+  . `results` : tableau de structs portant un champ `name` — series du 13/08 ;
+  . `RES`     : struct dont chaque champ est un bras, nomme par son arm_id —
+                format de run_bypass_2026_09_24 et des campagnes suivantes.
+Avant cette correction, seul le premier etait lu : les 24 lignes produites par
+l'analyse de P2-BYPASS-2026-09-24-a echouaient toutes sur « bras absent ». Un
+bras present dans les deux a la fois est une erreur, pas un choix.
 
 Une ligne dont `fichier_brut` est vide est declaree NON SOURCEE : c'est un
 echec, pas un avertissement. C'est le cas exact du tableau tab:predict_bypass
@@ -44,17 +58,37 @@ except ImportError:
 
 # ----------------------------------------------------------------- helpers
 def _arms(mat):
-    """Retourne {nom_du_bras: struct} pour un .mat qui contient `results`."""
+    """Retourne {nom_du_bras: struct}, pour les deux formats de brut."""
     out = {}
-    if "results" not in mat:
-        return out
-    R = np.atleast_1d(mat["results"])
-    for r in R.ravel():
-        try:
-            out[str(np.atleast_1d(r.name).ravel()[0])] = r
-        except Exception:
-            pass
+    if "results" in mat:                       # ancien format : .name
+        R = np.atleast_1d(mat["results"])
+        for r in R.ravel():
+            try:
+                out[str(np.atleast_1d(r.name).ravel()[0])] = r
+            except Exception:
+                pass
+    if "RES" in mat:                           # format RES : un champ par bras
+        R = mat["RES"]
+        for nom in (getattr(R, "_fieldnames", None) or []):
+            if nom in out:
+                raise ValueError(f"bras present dans les deux formats : {nom!r}")
+            out[nom] = getattr(R, nom)
     return out
+
+
+def _q7(x, p):
+    """Quantile type 7 (interpolation lineaire), ecrit explicitement.
+
+    C'est la definition de common/pct7.m. Elle est codee ici a la main plutot
+    que confiee a une option de bibliotheque : la convention est l'objet meme
+    du controle, elle ne doit pas dependre d'un defaut qui peut changer."""
+    v = np.sort(np.asarray(x, dtype=float).ravel())
+    if v.size == 0:
+        raise ValueError("quantile d'un vecteur vide")
+    h = (v.size - 1) * float(p)
+    lo = int(math.floor(h))
+    hi = min(lo + 1, v.size - 1)
+    return float(v[lo] + (h - lo) * (v[hi] - v[lo]))
 
 
 def _ns(path):
@@ -77,6 +111,9 @@ def _ns(path):
         "mx":  lambda x: float(np.max(_a(x))),
         "n":   lambda x: int(_a(x).size),
         "nb_sup": lambda x, s: int((_a(x) > s).sum()),
+        "nb_inf": lambda x, s: int((_a(x) < s).sum()),
+        "cat": lambda *xs: np.concatenate([_a(x) for x in xs]),
+        "q": lambda x, p: _q7(_a(x), p),
         "abs": abs, "min": min, "max": max, "len": len, "float": float, "int": int,
     }
     for k, v in mat.items():
@@ -94,6 +131,56 @@ def _sha(path):
 
 
 # ------------------------------------------------------------------- main
+def verifier_ligne(r, racine, cache):
+    """Verifie UNE ligne de registre. Renvoie (etat, texte).
+
+    etat vaut "OK", "ECHEC" ou "NON_SOURCEE". Isolee de main() pour que les
+    tests (docs/test_verifier_chaine.py) jugent chaque verdict directement,
+    sans analyser la sortie imprimee."""
+    ident = r["id"].strip()
+    brut = (r.get("fichier_brut") or "").strip()
+    pub_txt = (r.get("valeur_publiee") or "").strip().replace(",", ".")
+
+    if not brut:
+        return "NON_SOURCEE", f"{ident:26s} {pub_txt:>12s} {'—':>12s}  NON SOURCEE — regle 1 violee"
+
+    chemin = os.path.join(racine, brut)
+    if not os.path.isfile(chemin):
+        return "ECHEC", f"{ident:26s} {pub_txt:>12s} {'—':>12s}  BRUT INTROUVABLE : {brut}"
+
+    attendu = (r.get("sha256_brut") or "").strip().lower()
+    if attendu:
+        reel = _sha(chemin)
+        if reel != attendu:
+            return "ECHEC", (f"{ident:26s} {pub_txt:>12s} {'—':>12s}  "
+                             f"EMPREINTE DU BRUT DIFFERENTE\n"
+                             f"{'':26s} registre {attendu[:16]} / fichier {reel[:16]}")
+
+    if chemin not in cache:
+        try:
+            cache[chemin] = _ns(chemin)
+        except Exception as e:
+            return "ECHEC", f"{ident:26s} {pub_txt:>12s} {'—':>12s}  BRUT ILLISIBLE : {e}"
+    ns = cache[chemin]
+
+    try:
+        val = float(eval(r["calcul"], {"__builtins__": {}}, ns))  # noqa: S307
+    except Exception as e:
+        return "ECHEC", f"{ident:26s} {pub_txt:>12s} {'—':>12s}  CALCUL EN ERREUR : {e}"
+
+    try:
+        pub = float(pub_txt)
+    except ValueError:
+        return "ECHEC", f"{ident:26s} {pub_txt:>12s} {val:12.4g}  VALEUR PUBLIEE ILLISIBLE"
+
+    tol = float((r.get("tolerance") or "0.005").replace(",", "."))
+    ecart = abs(val - pub) / max(abs(pub), 1e-12)
+    if ecart <= tol:
+        return "OK", f"{ident:26s} {pub:12.4g} {val:12.4g}  OK  (ecart {ecart*100:.2f} %)"
+    return "ECHEC", f"{ident:26s} {pub:12.4g} {val:12.4g}  ECHEC (ecart {ecart*100:.1f} %)"
+
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--registre", default="registre_valeurs_publiees.csv")
@@ -114,61 +201,13 @@ def main() -> int:
     print("-" * 78)
 
     for r in lignes:
-        ident = r["id"].strip()
-        brut = (r.get("fichier_brut") or "").strip()
-        pub_txt = (r.get("valeur_publiee") or "").strip().replace(",", ".")
-
-        if not brut:
-            print(f"{ident:26s} {pub_txt:>12s} {'—':>12s}  NON SOURCEE — regle 1 violee")
-            non_source += 1
-            continue
-
-        chemin = os.path.join(a.racine, brut)
-        if not os.path.isfile(chemin):
-            print(f"{ident:26s} {pub_txt:>12s} {'—':>12s}  BRUT INTROUVABLE : {brut}")
-            ko += 1
-            continue
-
-        attendu = (r.get("sha256_brut") or "").strip().lower()
-        if attendu:
-            reel = _sha(chemin)
-            if reel != attendu:
-                print(f"{ident:26s} {pub_txt:>12s} {'—':>12s}  "
-                      f"EMPREINTE DU BRUT DIFFERENTE\n"
-                      f"{'':26s} registre {attendu[:16]} / fichier {reel[:16]}")
-                ko += 1
-                continue
-
-        if chemin not in cache:
-            try:
-                cache[chemin] = _ns(chemin)
-            except Exception as e:
-                print(f"{ident:26s} {pub_txt:>12s} {'—':>12s}  BRUT ILLISIBLE : {e}")
-                ko += 1
-                continue
-        ns = cache[chemin]
-
-        try:
-            val = float(eval(r["calcul"], {"__builtins__": {}}, ns))  # noqa: S307
-        except Exception as e:
-            print(f"{ident:26s} {pub_txt:>12s} {'—':>12s}  CALCUL EN ERREUR : {e}")
-            ko += 1
-            continue
-
-        try:
-            pub = float(pub_txt)
-        except ValueError:
-            print(f"{ident:26s} {pub_txt:>12s} {val:12.4g}  VALEUR PUBLIEE ILLISIBLE")
-            ko += 1
-            continue
-
-        tol = float((r.get("tolerance") or "0.005").replace(",", "."))
-        ecart = abs(val - pub) / max(abs(pub), 1e-12)
-        if ecart <= tol:
-            print(f"{ident:26s} {pub:12.4g} {val:12.4g}  OK  (ecart {ecart*100:.2f} %)")
+        etat, texte = verifier_ligne(r, a.racine, cache)
+        print(texte)
+        if etat == "OK":
             ok += 1
+        elif etat == "NON_SOURCEE":
+            non_source += 1
         else:
-            print(f"{ident:26s} {pub:12.4g} {val:12.4g}  ECHEC (ecart {ecart*100:.1f} %)")
             ko += 1
 
     print("-" * 78)
