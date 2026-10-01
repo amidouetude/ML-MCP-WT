@@ -11,7 +11,8 @@ function ok = verifier_lot_campagne(fres)
 %     1. chaque bras porte TOUS les champs de provenance obligatoires
 %     2. code_sha1 homogène ET égal à meta.code_sha1
 %     3. fiche_commit homogène ET égal à meta.fiche_commit
-%     4. aucun bras dupliqué, manquant, ni mal nommé
+%     4. aucun bras manquant, en trop, dupliqué, mal formé ni mal nommé,
+%        contrôlé contre une LISTE D'IDENTIFIANTS (D15)
 %     5. les vecteurs ont les tailles prescrites et statut = complete
 %     6. l'empreinte du CODE prise au run est structurellement cohérente
 %        (contrôle de structure, JAMAIS de comptage)
@@ -24,9 +25,28 @@ function ok = verifier_lot_campagne(fres)
 %   au run. Contrôle STRUCTUREL et non comptage : le nombre de fichiers du
 %   périmètre est un diagnostic ; un changement signale une évolution du
 %   périmètre, qui appelle une nouvelle fiche, et non un échec.
+%
+%   Révision du 01/10/2026 — D15, condition 4. La grille attendue était codée
+%   EN DUR (6 architectures x predict/manual x n_repetitions), celle du seul
+%   lot P2-BYPASS-2026-09-24-a ; un bras en trop n'était vu que par le compte.
+%   Toute autre campagne aurait été refusée à tort, ou acceptée par un compte
+%   juste avec des bras faux. Désormais :
+%     . un lot qui porte meta.expected_arm_ids est contrôlé contre CETTE liste
+%       fermée, écrite au lancement : liste valide (cellule non vide,
+%       identifiants <arch>_<mode>_r<k>, aucun doublon), taille égale à
+%       meta.expected_arms, aucun bras manquant, aucun bras en trop. Chaque bras
+%       doit en outre porter arch, mode, model_key et model_sha256, et
+%       model_sha256 doit égaler meta.model_sha256.(model_key) ;
+%     . un lot antérieur, sans ce champ, garde la grille historique, plus la
+%       détection explicite des bras en trop ;
+%     . pour TOUS les lots : nom bien formé, et, quand les champs existent,
+%       arch, mode et repetition égaux aux parties du nom, seed égal à
+%       meta.seed(repetition).
+%   La grille n'est jamais déduite du nombre de champs présents.
 
 Z = load(fres); meta = Z.meta; RES = Z.RES;
 noms = fieldnames(RES);
+nouveau = isfield(meta, 'expected_arm_ids');   % lot a liste fermee (D15)
 pb = {};        % problemes REELS de composition du lot
 pb_smoke = {};  % tenu a part : un lot smoke est refuse par nature, mais cela
                 % ne dit rien de la qualite de ses bras. C'est justement ce
@@ -47,6 +67,11 @@ end
 % ---- 1. champs de provenance obligatoires, bras par bras ----------------
 REQUIS = {'campaign_id','batch_id','arm_id','code_sha1','fiche_commit', ...
           'statut','cpu_ms','seed','repetition','n_steps_requested'};
+if nouveau
+    % D15 : un lot a liste fermee doit dire, bras par bras, quel modele il a
+    % charge et avec quelle empreinte. Champ absent = refus.
+    REQUIS = [REQUIS, {'arch','mode','model_key','model_sha256'}];
+end
 incomplets = {};
 for i = 1:numel(noms)
     r = RES.(noms{i});
@@ -96,26 +121,84 @@ if ~isempty(batches)
     fprintf('     tranches     : %s\n', mat2str(unique(batches)));
 end
 
-% ---- 4. doublons, manquants, mal nommes ---------------------------------
+% ---- 4. manquants, en trop, doublons, mal formes, mal nommes (D15) -------
+% La liste attendue vient du LOT (meta.expected_arm_ids, ecrite au lancement)
+% ou, pour un lot anterieur a D15, de la grille historique. Jamais du nombre
+% de champs presents.
 attendu = meta.expected_arms;
-fprintf('  4. bras          : %d present(s) sur %d attendu(s)\n', numel(noms), attendu);
-if numel(noms) ~= attendu
-    pb{end+1} = sprintf('%d bras sur %d — lot INCOMPLET', numel(noms), attendu);
-end
-manquants = {};
-for ir = 1:meta.n_repetitions
-  for a = {'mlpres','gpres','swmlp','pinn','tcn','lstm'}
-    for m = {'predict','manual'}
-      f = sprintf('%s_%s_r%d', a{1}, m{1}, ir);
-      if ~isfield(RES, f), manquants{end+1} = f; end %#ok<AGROW>
+if nouveau
+    [ids, diag_ids] = liste_identifiants(meta.expected_arm_ids);
+    if ~isempty(diag_ids)
+        pb{end+1} = sprintf('meta.expected_arm_ids INVALIDE : %s', diag_ids);
     end
-  end
+    origine = sprintf('liste fermee meta.expected_arm_ids (%d)', numel(ids));
+    if isempty(diag_ids) && numel(ids) ~= attendu
+        pb{end+1} = sprintf(['meta.expected_arms (%d) != nombre d''identifiants ' ...
+            'de meta.expected_arm_ids (%d)'], attendu, numel(ids));
+    end
+else
+    ids = grille_historique(meta.n_repetitions);
+    origine = 'grille historique, lot anterieur a D15';
 end
-if ~isempty(manquants)
-    pb{end+1} = sprintf('bras manquants : %s', strjoin(manquants, ', '));
+fprintf('  4. bras          : %d present(s) sur %d attendu(s) — %s\n', ...
+    numel(noms), attendu, origine);
+if numel(noms) ~= attendu
+    pb{end+1} = sprintf('%d bras presents sur %d attendus', numel(noms), attendu);
+end
+if ~isempty(ids)
+    manquants = setdiff(ids, noms(:)', 'stable');      % lignes : strjoin
+    en_trop   = setdiff(noms(:)', ids, 'stable');
+    if ~isempty(manquants)
+        pb{end+1} = sprintf('bras manquants : %s', strjoin(manquants, ', '));
+    end
+    if ~isempty(en_trop)
+        pb{end+1} = sprintf('bras EN TROP, absents de la liste attendue : %s', ...
+            strjoin(en_trop, ', '));
+    end
 end
 if ~isempty(mal_nommes)
     pb{end+1} = sprintf('arm_id incoherent : %s', strjoin(mal_nommes, ' | '));
+end
+
+% coherence du nom avec le contenu du bras
+incoh = {};
+for i = 1:numel(noms)
+    tok = regexp(noms{i}, '^([a-z0-9]+)_([a-z]+)_r([1-9]\d*)$', 'tokens', 'once');
+    if isempty(tok)
+        incoh{end+1} = sprintf('%s : nom mal forme', noms{i}); %#ok<AGROW>
+        continue
+    end
+    r = RES.(noms{i}); k = str2double(tok{3});
+    if isfield(r,'arch') && ~strcmp(r.arch, tok{1})
+        incoh{end+1} = sprintf('%s : arch=%s', noms{i}, r.arch); %#ok<AGROW>
+    end
+    if isfield(r,'mode') && ~strcmp(r.mode, tok{2})
+        incoh{end+1} = sprintf('%s : mode=%s', noms{i}, r.mode); %#ok<AGROW>
+    end
+    if isfield(r,'repetition') && ~isequal(r.repetition, k)
+        incoh{end+1} = sprintf('%s : repetition=%s', noms{i}, mat2str(r.repetition)); %#ok<AGROW>
+    end
+    if isfield(r,'seed')
+        if ~isfield(meta,'seed') || k > numel(meta.seed)
+            incoh{end+1} = sprintf('%s : repetition %d sans graine dans meta.seed', noms{i}, k); %#ok<AGROW>
+        elseif ~isequal(r.seed, meta.seed(k))
+            incoh{end+1} = sprintf('%s : seed=%s, meta.seed(%d)=%s', noms{i}, ...
+                mat2str(r.seed), k, mat2str(meta.seed(k))); %#ok<AGROW>
+        end
+    end
+    if nouveau && isfield(r,'model_key') && isfield(r,'model_sha256')
+        if ~isfield(meta,'model_sha256') || ~ischar(r.model_key) || ...
+                ~isfield(meta.model_sha256, r.model_key)
+            incoh{end+1} = sprintf('%s : model_key inconnu de meta.model_sha256', noms{i}); %#ok<AGROW>
+        elseif ~strcmp(r.model_sha256, meta.model_sha256.(r.model_key))
+            incoh{end+1} = sprintf('%s : empreinte du modele %s differente de meta', ...
+                noms{i}, r.model_key); %#ok<AGROW>
+        end
+    end
+end
+fprintf('     coherence    : %d incoherence(s) nom / contenu\n', numel(incoh));
+if ~isempty(incoh)
+    pb{end+1} = sprintf('incoherences nom / contenu : %s', strjoin(incoh, ' | '));
 end
 
 % ---- 5. tailles prescrites et statut ------------------------------------
@@ -274,6 +357,41 @@ end
 
 
 % =========================================================================
+function ids = grille_historique(n_rep)
+%GRILLE_HISTORIQUE  La grille de P2-BYPASS-2026-09-24-a, seul lot anterieur a
+%   D15 : 6 architectures x {predict, manual} x n_rep. Conservee a l'identique
+%   pour que ce lot se verifie comme avant.
+ids = {};
+for ir = 1:n_rep
+  for a = {'mlpres','gpres','swmlp','pinn','tcn','lstm'}
+    for m = {'predict','manual'}
+      ids{end+1} = sprintf('%s_%s_r%d', a{1}, m{1}, ir); %#ok<AGROW>
+    end
+  end
+end
+end
+
+function [ids, diag] = liste_identifiants(L)
+%LISTE_IDENTIFIANTS  Valide meta.expected_arm_ids. Une liste invalide n'est
+%   jamais reparee : elle est rapportee, et ids revient vide.
+diag = ''; ids = {};
+if isstring(L), L = cellstr(L); end
+if ~iscell(L) || isempty(L) || ~all(cellfun(@(s) ischar(s) && isrow(s), L))
+    diag = 'pas une cellule non vide de chaines'; return
+end
+L = L(:)';
+mal = L(cellfun(@isempty, regexp(L, '^[a-z0-9]+_[a-z]+_r[1-9]\d*$', 'once')));
+if ~isempty(mal)
+    diag = sprintf('identifiant(s) mal forme(s) : %s', strjoin(mal, ', ')); return
+end
+[u, ~, j] = unique(L);
+if numel(u) ~= numel(L)
+    n = accumarray(j(:), 1);
+    diag = sprintf('identifiant(s) en DOUBLE : %s', strjoin(u(n > 1), ', ')); return
+end
+ids = L;
+end
+
 function h = sha256_fichier(pth)
 try
     d = java.security.MessageDigest.getInstance('SHA-256');
