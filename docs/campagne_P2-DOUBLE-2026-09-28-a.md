@@ -173,7 +173,7 @@ doivent pas être présentés comme un surcoût de calcul pur.
 - **LSTM :** 30 pas par bras, avec peu d'échecs à résorber (6 à 10) et une
   dérive temporelle d'une répétition à l'autre.
 - **SW-MLP et TCN :** les trajectoires double et manuelle ne sont pas
-  conservées. La cause de cette sensibilité n'est pas établie.
+  équivalentes. La cause de cette sensibilité n'est pas établie.
 - **Conversion :** il s'agit de `predict()` sur une copie en double du
   réseau. Cela ne dit rien du coût de `predict()` en simple précision avec
   un solveur dont les dérivées seraient correctes.
