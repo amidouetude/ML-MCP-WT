@@ -22,7 +22,7 @@ under the same protocol.
 \label{subsubsec:llnfm}
 
 The LLNFM surrogate is implemented as two independent Sugeno-type
-ANFIS \citep{jang_anfis_1993} networks (one per output channel), each
+ANFIS \cite{jang_anfis_1993} networks (one per output channel), each
 with a grid-partitioned rule base
 of $2$ generalized bell membership functions (\texttt{gbellmf}) per input,
 giving $2^4=16$ fuzzy rules, $55$ network nodes, and $104$ total parameters
@@ -77,7 +77,7 @@ surrogate to underperform the linear reference.
 \subsubsection{Long Short-Term Memory (V1)}
 \label{subsubsec:lstm_v1}
 
-The LSTM \citep{hochreiter_lstm_1997} surrogate uses a sequence length of $10$ steps and two stacked
+The LSTM \cite{hochreiter_lstm_1997} surrogate uses a sequence length of $10$ steps and two stacked
 LSTM layers ($64$ and $32$ units) with $10\%$ dropout, trained for $60$
 epochs (Adam, learning rate $10^{-3}$, batch size $64$) on trajectory-
 respecting sequences ($16{,}240$ train / $3{,}480$ validation / $3{,}480$
@@ -114,7 +114,7 @@ $k(r) = \left(1 + \tfrac{\sqrt{5}r}{l} + \tfrac{5r^2}{3l^2}\right)
 \exp\!\left(-\tfrac{\sqrt{5}r}{l}\right)$, which assumes only twice
 differentiable sample paths rather than infinite smoothness  a weaker and
 more physically appropriate regularity assumption for a system subject to
-turbulent forcing \citep{rasmussen2006}. Second, hyperparameters
+turbulent forcing \cite{rasmussen2006}. Second, hyperparameters
 $(\sigma_f, l, \sigma_n)$ are tuned by Bayesian optimization (marginal
 likelihood objective, $20$ evaluations) rather than left at default values.
 An earlier training pass inadvertently let this same Bayesian search

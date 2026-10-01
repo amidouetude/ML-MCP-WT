@@ -1,7 +1,7 @@
 % ===========================================================================
 % MAIN FILE — ML-MPC Wind Turbine Paper
 % Amidou Maiga — Erciyes University
-% Compile on Overleaf: pdflatex → bibtex → pdflatex → pdflatex
+% Compile on Overleaf: pdflatex → bibtex → pdflatex → pdflatex (style IEEEtran)
 % ===========================================================================
 
 \documentclass[12pt, a4paper]{article}
@@ -25,11 +25,6 @@
 \usepackage[table]{xcolor}
 \usepackage{float}
 \usepackage{makecell}
-\usepackage{tabularx}
-\usepackage{booktabs}   %  \toprule, \midrule, \bottomrule
-\usepackage{siunitx}     %  \SI\usepackage{tabularx}
-\usepackage{booktabs}   %  \toprule, \midrule, \bottomrule
-\usepackage{siunitx}     %  \SI
 
 
 % ── Layout ──────────────────────────────────────────────────────────────────
@@ -50,6 +45,12 @@
 % ── Algorithm / pseudocode ───────────────────────────────────────────────────
 \usepackage[ruled, vlined, linesnumbered]{algorithm2e}
 
+% ── Citations (IEEE numeric : [1], [2]--[4]) ─────────────────────────────────
+% cite charge AVANT hyperref ; separateurs repris de IEEEtran.cls.
+\usepackage{cite}
+\renewcommand{\citepunct}{], [}
+\renewcommand{\citedash}{]--[}
+
 % ── Hyperlinks ──────────────────────────────────────────────────────────────
 \usepackage{hyperref}
 \hypersetup{
@@ -62,8 +63,7 @@
 }
 
 % ── Bibliography ────────────────────────────────────────────────────────────
-\usepackage{natbib}
-\bibliographystyle{unsrtnat}
+\bibliographystyle{IEEEtran}   % ordre de premiere citation
 
 % ── Table font size ─────────────────────────────────────────────────────────
 \usepackage{etoolbox}

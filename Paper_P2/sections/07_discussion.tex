@@ -31,13 +31,13 @@ near-elimination of real-time budget overruns
 literature would otherwise record as an architectural limitation of
 deep-learning surrogates as, instead, an implementation-specific cost
 that is both diagnosable and remediable within the same toolchain,
-consistent with \citet{salzmann_real-time_2022}'s independent report
+consistent with the independent report of Salzmann \emph{et al.}~\cite{salzmann_real-time_2022}
 that decoupling a neural network's evaluation from the surrounding
 solver's iteration loop is necessary  though not previously
 documented, to our knowledge, as arising specifically from
 \texttt{predict()}'s own per-call overhead in MATLAB's \texttt{nlmpc}.
 A structurally related, but architecturally distinct, finding is
-reported by \citet{witter_creating_2025}. Their setup contains no
+reported by Witter \emph{et al.}~\cite{witter_creating_2025}. Their setup contains no
 predictive controller at all: an LSTM/GRU/Transformer surrogate replaces
 a multibody-simulation (MBS) plant model, run in a loop with the
 turbine's own standard (non-MPC) controller, rather than serving as an
@@ -57,7 +57,7 @@ important for practitioners, since only the latter admits the kind of
 implementation-level remedy demonstrated here. Third,
 the Region~II/III torque switching correction
 (Section~\ref{subsec:torque_switching}) while standard practice in the
-classical wind turbine control literature \citep{bianchi2006,pao2009} was
+classical wind turbine control literature \cite{bianchi2006,pao2009} was
 in our case discovered only through long-horizon closed-loop simulation
 with an incorrect constant-torque assumption; the fact that a textbook
 modeling choice reproduces a documented irrecoverable failure mode
@@ -104,7 +104,7 @@ frozen-actuator artifact rather than genuine regulation.}
 \end{figure}
 
 Relative to the model-free reinforcement-learning alternative to
-surrogate-based MPC \citep{xie_data-driven_2023}, our approach retains
+surrogate-based MPC \cite{xie_data-driven_2023}, our approach retains
 MPC's explicit constraint handling and, via the manual bypass of
 Section~\ref{subsec:operational_feasibility}, its real-time feasibility
 argument grounded in measured per-step cost rather than only
@@ -117,7 +117,7 @@ the two paradigms on the same plant is left to future work.
 Several limitations qualify these findings. The plant model retains only
 two states ($\omegar,\beta$) and omits drivetrain torsion and tower
 fore-aft dynamics, both of which are standard in higher-fidelity wind
-turbine control models \citep{schlipf2013} and materially affect load-
+turbine control models \cite{schlipf2013} and materially affect load-
 relevant behavior; the reduced model is appropriate for a first
 systematic surrogate comparison but likely understates the wind
 turbine's dynamic order.
@@ -310,7 +310,7 @@ with the multi-objective load metrics noted above would clarify whether
 these are genuine architectural properties or artifacts of the specific
 training data distribution. Second, extending the plant to four states
 by adding drivetrain torsion and tower fore-aft dynamics
-\citep{schlipf2013} would let the comparison generalize to
+\cite{schlipf2013} would let the comparison generalize to
 load-relevant metrics, not only rotor-speed tracking, and would provide
 a further, independent test of whether the manual-bypass technique
 scales to a higher-order plant and correspondingly larger surrogates.
@@ -324,7 +324,7 @@ than only architecture-relative comparisons. Fourth, an explicit
 wind-speed forecasting or estimation layer an
 autoregressive predictor over the MPC horizon, or an Extended Kalman
 Filter estimating rotor-effective wind speed from standard turbine
-measurements \citep{soltani2013} would let the controller anticipate
+measurements \cite{soltani2013} would let the controller anticipate
 disturbances rather than react to the current measured $V$ alone, and
 is a natural complement to a repaired GP uncertainty-penalized cost
 formulation, should one be developed (see below).
@@ -338,13 +338,13 @@ supplying an analytical (rather than finite-difference) Jacobian for
 $N_c=1$ constraint identified as a contributing factor in the Stage~3
 Jacobian test, or reformulating the uncertainty term as a tightened
 constraint rather than a cost penalty (in the spirit of
-\citet{hewing2020}'s probabilistic reachable sets) is a prerequisite
+the probabilistic reachable sets of Hewing \emph{et al.}~\cite{hewing2020}) is a prerequisite
 for any future uncertainty-penalized GP-MPC cost on this plant, since
 the present formulation is withdrawn rather than merely unvalidated.
 A structurally different route to the same real-time
 feasibility goal, not explored in this paper, would replace the
 nonlinear surrogate entirely with a Koopman-operator-based linear
-approximation \citep{williams2015}, trading the accuracy of a
+approximation \cite{williams2015}, trading the accuracy of a
 nonlinear model for the computational simplicity of linear MPC.
 Coupling the corrected two-state
 model to a higher-fidelity aeroelastic code (e.g.\ OpenFAST) is a longer-

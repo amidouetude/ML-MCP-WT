@@ -10,7 +10,7 @@
 \label{subsec:nrel5mw}
 
 This study uses the NREL offshore 5-MW reference wind turbine
-\citep{jonkman2009} as the physical plant. This model is widely adopted as a
+\cite{jonkman2009} as the physical plant. This model is widely adopted as a
 benchmark in the wind energy control literature, which allows direct
 comparison with previously published MPC and ML-surrogate studies. The
 turbine has a rotor radius $R = \SI{63}{m}$, a combined drivetrain inertia
@@ -20,7 +20,7 @@ $\omegarated = \SI{12.1}{rpm}$, and a rated generator torque (high-speed
 shaft, HSS) $T_{g,\text{rated}} = (P_{\text{rated}}/\eta_{\text{gen}}) /
 (\omegarated N_{\text{gear}}) = \SI{43093.55}{N.m}$, using the
 reference generator efficiency $\eta_{\text{gen}}=94.4\%$
-\citep{jonkman2009}, so that rated electrical power
+\cite{jonkman2009}, so that rated electrical power
 $P_{\text{rated}}=\SI{5}{MW}$ corresponds to $\SI{5.2966}{MW}$ of
 rated mechanical power on the low-speed shaft. An earlier draft of
 this paper omitted this efficiency division, giving
@@ -34,7 +34,7 @@ Table~\ref{tab:turbine_params}.
 \begin{table}[H]
 \centering
 \caption{NREL 5-MW reference turbine parameters used in this study
-(source: \citet{jonkman2009}, with the drivetrain damping and torque
+(source: Jonkman \emph{et al.}~\cite{jonkman2009}, with the drivetrain damping and torque
 switching calibration choices documented in Section~\ref{subsec:torque_switching}).}
 \label{tab:turbine_params}
 \begin{tabular}{lcc}
@@ -67,7 +67,7 @@ Region II gain (LSS)        & $\Kopt$             & $2.128616\times10^{6}$~N.m.s
 \subsection{Two-State Model}
 \label{subsec:two_state_model}
 
-Following the modeling approach of \citet{klein2024}, the turbine is
+Following the modeling approach of Klein \emph{et al.}~\cite{klein2024}, the turbine is
 represented by a reduced two-state nonlinear model with state vector
 $x = [\omegar, \beta]^\top$, control input $u = \betacmd$ (pitch angle
 demand), and measured disturbance $V$ (rotor-effective wind speed). The
@@ -174,7 +174,7 @@ calibrated at the actual Jonkman operating point
 $\lambda_{\text{rated}} = R\,\omegarated / V_{\text{rated}} = 7.00$, rather
 than the theoretical aerodynamic optimum $\lambda^{*} = 8.11$ identified in
 Section~\ref{subsec:two_state_model}. This choice follows standard practice
-\citep[e.g.][]{jonkman2009}: Jonkman's rated operating point already
+(see, e.g.,~\cite{jonkman2009}): Jonkman's rated operating point already
 accounts for drivetrain and electrical losses, so it sits slightly off the
 pure-aerodynamic $\Cp$ peak; calibrating $\Kopt$ there prioritizes torque
 continuity at the switching boundary over exact aerodynamic optimality
@@ -233,7 +233,7 @@ after (Eq.~\eqref{eq:torque_switching}) correction.}
 \label{subsec:wind_model}
 
 Turbulent wind input is generated from the Kaimal spectrum defined in
-IEC~61400-1 \citep{iec61400} with turbulence intensity $I = 0.16$,
+IEC~61400-1 \cite{iec61400} with turbulence intensity $I = 0.16$,
 longitudinal turbulence length scale $L_1 = \SI{340.2}{m}$. We note that
 $I=0.16$ corresponds to IEC Turbulence Category~A (the more severe of
 the two standard categories at this hub height) rather than
@@ -272,5 +272,5 @@ The
 synthesized wind signal is subsequently passed through a second-order
 Butterworth low-pass filter with cutoff frequency $f_c = \SI{0.3}{Hz}$,
 consistent with the rotor-effective wind filtering approach of
-\citet{klein2024}, before being applied as the disturbance input $V$ to
+Klein \emph{et al.}~\cite{klein2024}, before being applied as the disturbance input $V$ to
 Eq.~\eqref{eq:rotor_ode}.

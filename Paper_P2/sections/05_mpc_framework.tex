@@ -47,7 +47,7 @@ function multiple times for cost and constraint gradients, this cost
 scales with surrogate inference latency — a recurring theme in the
 feasibility analysis of Section~\ref{subsec:operational_feasibility}. A
 real-time controller must have a bounded worst-case computation time
-\citep{richter2012,xi2013}, so a
+\cite{richter2012,xi2013}, so a
 feasible-but-possibly-suboptimal solution within budget is preferred over
 an unbounded search for the optimum.
 
@@ -436,7 +436,7 @@ LSTM                          & 24{,}693.2 & 50.3 & $491\times$ & 1/600 \\
 parameters: nominal plant model \texttt{wt\_step.m} plus a two-layer
 \SI{}{tanh} MLP learning a deliberately introduced unmodeled dynamics
 term, following the nominal-plus-learned-correction structure of
-\citet{aswani_provably_2013}), introduced specifically for this
+Aswani \emph{et al.}~\cite{aswani_provably_2013}), introduced specifically for this
 diagnostic to test whether network size alone explained the
 catastrophe; it did not (see Stage 4 discussion below).}
 \end{table}
@@ -469,7 +469,7 @@ surrogates (log scale); LSTM (largest speedup, $491\times$) highlighted.}
 Two results within Stage 4 are worth emphasizing. First, a
 deliberately tiny residual-correction network (130 parameters, following
 the nominal-plus-learned-correction structure of
-\citet{aswani_provably_2013}) showed the \emph{same} catastrophic
+Aswani \emph{et al.}~\cite{aswani_provably_2013}) showed the \emph{same} catastrophic
 \texttt{predict()}-based cost as the much larger TCN/GP/PINN-v2
 surrogates (mean $\SI{1303.9}{ms}$/step), directly refuting network
 size as the explanatory variable. Second, the initial manual
@@ -521,7 +521,7 @@ sequential cost rather than any remaining implementation inefficiency.
 real-time budget violation that had appeared, in Stage 2, to be an
 architectural incompatibility between deep-learning/GP surrogates and
 SQP-based \texttt{nlmpc}. This finding is consistent with, and extends,
-\citet{salzmann_real-time_2022}'s independent report that decoupling a
+the independent report of Salzmann \emph{et al.}~\cite{salzmann_real-time_2022} that decoupling a
 neural network's own evaluation from the surrounding MPC solver's
 iteration loop is necessary to embed large learned models in real-time
 optimal control  our diagnostic identifies \emph{why} this
