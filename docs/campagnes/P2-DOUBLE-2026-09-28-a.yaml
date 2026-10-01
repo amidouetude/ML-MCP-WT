@@ -1,0 +1,319 @@
+# =====================================================================
+# FICHE DE CAMPAGNE — boucle fermée avec predict() sur réseau en DOUBLE.
+#
+# ÉTAT : PROJET du 28/09/2026. Décisions de conception arrêtées le 28/09
+# (bras, périmètre, protocole). Les champs marqués À RELEVER ne peuvent
+# l'être qu'au lancement ; ils sont recopiés après la campagne dans un
+# commit qui ne touche QUE cette fiche.
+#
+# NON CONFORME tant que les conditions de la section CONFORMITÉ ne sont pas
+# toutes remplies. Commiter AVANT de lancer, smoke test compris.
+# =====================================================================
+
+campaign_id: P2-DOUBLE-2026-09-28-a
+date: 2026-09-28            # date de conception ; date d'exécution = meta.run_datetime
+purpose: >
+  Établir si la simple précision de predict() suffit à expliquer, en boucle
+  fermée, les échecs du solveur (ExitFlag < 0) observés pour SW-MLP, PINN-v2,
+  TCN et LSTM dans P2-BYPASS-2026-09-24-a. L'audit du 26/09 (64138a6) a
+  montré qu'en double, predict() et le calcul manuel sont la même fonction et
+  que les jacobiennes de nlmpc sont rétablies ; il ne disait rien de la boucle
+  fermée. Cette campagne remplace le réseau en simple par une copie en double,
+  tout le reste étant identique au 24/09.
+
+campagne_de_reference:
+  id: P2-BYPASS-2026-09-24-a
+  brut: results/P2-BYPASS-2026-09-24-a.mat
+  brut_sha256: 8fb2962c942937860b5d20680583dc4843caddd71e7730f34970a2e57047bd4e
+  code_version: 9c39eae28db30601ebe6f1accc96b955d31aa152
+  audits: 80779b1 (simple précision), 64138a6 (double précision)
+
+# --- versions ---------------------------------------------------------
+protocol_version: PROTO-P2-DOUBLE-v1
+code_version: À RELEVER          # = meta.code_sha1, recopié après la campagne
+protocol_commit: À RELEVER       # commit de cette fiche et du script (meta.fiche_commit)
+analysis_commit: À RELEVER       # commit du script d'analyse, APRÈS la campagne
+script_path_effective: À RELEVER
+script_sha256: À RELEVER
+script_commit: À RELEVER
+working_directory: À RELEVER
+code_manifeste_sha: À RELEVER
+MATLAB: R2024a
+MATLAB_version: 24.1.0.2537033   # re-relevée au lancement ; différente -> campagne bloquée
+toolboxes: À RELEVER             # meta.toolboxes ; aucune ne doit manquer
+
+# --- procédé et modèles : IDENTIQUES au 24/09 --------------------------
+model_version: >
+  Mêmes fichiers, mêmes chemins relatifs à la racine, mêmes empreintes que
+  P2-BYPASS-2026-09-24-a ; une empreinte différente BLOQUE le lancement :
+  v2    common/stage2_models_v2.mat   5ae6245330c290bb033db68270592c7d2e768a844aede889517b5e10174d069d
+  v1    common/stage2_models.mat      0561a48ac9a0d331e3d82614973fd357983338cabb66c420b38991a2574c1ffe
+  gpres stage2_gp_residual_model.mat  218e22f928fa5032b628b169f267bda0d6311d9a75f6c880a326f3cedbb196a1
+  Le modèle résiduel MLP (res) n'est pas chargé : il est hors périmètre.
+conversion_double: >
+  Pour les bras « double » UNIQUEMENT, une COPIE EN MÉMOIRE du dlnetwork est
+  convertie par dlupdate(@double, net) sur les paramètres appris et, s'il est
+  non vide, sur net.State. Aucun fichier de modèle n'est modifié ni réécrit.
+  La fonction d'état est la fonction ORIGINALE (sf_swmlp, sf_pinn, sf_tcn,
+  sf_lstm) : seul le type des paramètres change. Procédé identique à celui de
+  l'audit 64138a6, où il a donné des sorties `double` pour les quatre.
+  CONTRÔLE BLOQUANT par bras : avant le premier pas, la fonction d'état est
+  évaluée une fois ; si sa sortie n'est pas de classe `double`, le bras est
+  refusé (erreur), jamais mesuré. La classe est enregistrée dans le bras.
+plant_parameters: >
+  NREL référence, option A (11-12/08) : Tg_rated = 43093.55 N.m,
+  K_opt = 2.128616e6. Vérifiés dans le .mat produit (meta.plant_*).
+
+# --- contrôleur : IDENTIQUE au 24/09 ------------------------------------
+IsContinuousTime: false
+solver: sqp
+solver_tolerances:
+  ConstraintTolerance: 1.0e-4
+  OptimalityTolerance: 1.0e-4
+  StepTolerance: 1.0e-4
+MaxIterations: 30
+MaxFunctionEvaluations: 300
+Ts: 0.1
+Np: 15
+Nc: 4
+
+# --- excitation : IDENTIQUE au 24/09 ------------------------------------
+wind: Kaimal, V_moy = 14 m/s, T = 60 s, IEC classe A
+seed: [2025, 2026, 2027]         # une graine par répétition, même ordre
+sample_size:
+  defaut: 600
+  LSTM: 30                       # tous les bras LSTM, comme le 24/09
+
+# --- BRAS : 29, liste fermée ---------------------------------------------
+# Nom d'un bras : <architecture>_<mode>_r<répétition>.
+bras:
+  mesure:                        # 24 bras = 4 architectures x 2 modes x 3 graines
+    architectures: [swmlp, pinn, tcn, lstm]
+    modes:
+      double: predict() sur la copie en double du réseau
+      manual: calcul manuel (sf_*_manual), identique au 24/09
+    repetitions: [r1, r2, r3]
+  controle_continuite:           # 2 bras
+    role: >
+      Contrôles de continuité avec le 24/09 sur la voie predict() en SIMPLE,
+      réseau d'origine : la voie dont viennent les n_inf_simple de la
+      section B. Ils ne suffisent pas, seuls, à établir la reproductibilité
+      des bras simples non rejoués ; avec les 12 bras manuels, ils en
+      assurent une couverture raisonnable.
+    ids: [swmlp_predict_r1, tcn_predict_r1]
+  temoin_gp:                     # 3 bras, predict() du GP, déjà en double
+    role: >
+      Témoin de reproductibilité et de stabilité temporelle, sur une voie de
+      calcul distincte (GP, déjà en double, non convertie).
+    ids: [gpres_predict_r1, gpres_predict_r2, gpres_predict_r3]
+
+# LISTE FERMÉE. Inscrite telle quelle, dans cet ordre, dans
+# meta.expected_arm_ids (cellule de 29 identifiants) et meta.expected_arms = 29.
+# La vérification de lot contrôle CETTE liste (condition 13) : aucun bras
+# manquant, aucun bras en trop, aucun doublon, aucun identifiant mal formé,
+# arm_id de chaque bras égal à son nom, répétition et graine cohérentes avec
+# le suffixe r<k>, provenance homogène (campaign_id, code_sha1, fiche_commit),
+# même manifeste de code, et empreinte du modèle chargé, enregistrée DANS
+# chaque bras, égale à meta.model_sha256. La grille n'est jamais déduite du
+# nombre de champs présents.
+expected_arm_ids:
+  - swmlp_predict_r1
+  - tcn_predict_r1
+  - gpres_predict_r1
+  - gpres_predict_r2
+  - gpres_predict_r3
+  - swmlp_double_r1
+  - swmlp_manual_r1
+  - pinn_double_r1
+  - pinn_manual_r1
+  - tcn_double_r1
+  - tcn_manual_r1
+  - lstm_double_r1
+  - lstm_manual_r1
+  - swmlp_double_r2
+  - swmlp_manual_r2
+  - pinn_double_r2
+  - pinn_manual_r2
+  - tcn_double_r2
+  - tcn_manual_r2
+  - lstm_double_r2
+  - lstm_manual_r2
+  - swmlp_double_r3
+  - swmlp_manual_r3
+  - pinn_double_r3
+  - pinn_manual_r3
+  - tcn_double_r3
+  - tcn_manual_r3
+  - lstm_double_r3
+  - lstm_manual_r3
+ordre_d_execution: >
+  Contrôles et témoin d'abord (swmlp_predict_r1, tcn_predict_r1,
+  gpres_predict_r1..r3), pour savoir tôt si la comparaison au 24/09 est
+  permise. Puis, pour chaque graine dans l'ordre 2025, 2026, 2027, et pour
+  chaque architecture dans l'ordre swmlp, pinn, tcn, lstm : double puis manual.
+
+# --- exécution --------------------------------------------------------
+hardware: >
+  Intel Core i5-12450H (12e gén.), 16 Go. Machine AU REPOS : aucun processus
+  lourd, pas de navigateur, synchronisation OneDrive suspendue. À confirmer
+  explicitement au lancement.
+duree: >
+  Inconnue pour les bras double ; le smoke test (5 pas) en donne un ordre de
+  grandeur. Repères du 24/09 : contrôles simple SW-MLP r1 + TCN r1 ≈ 21 min,
+  GP predict x3 ≈ 4 min, manuel x12 ≈ 2 min. Le LSTM predict en simple avait
+  pris 5,7 h pour trois répétitions ; le LSTM double peut être du même ordre.
+  La durée n'est PAS une variable de décision : aucun bras n'est raccourci
+  ou retiré en cours de campagne.
+n_repetitions: 3
+
+# =====================================================================
+# ANALYSE PRÉ-ENREGISTRÉE — figée avant exécution
+# =====================================================================
+statistique_temps: >
+  Identique au 24/09 : médiane, Q1, Q3 (pct7), moyenne en complément.
+  Facteur = méd(double) / méd(manuel), même répétition, même campagne.
+
+# ---- A. Contrôle de reproductibilité (conditionne B) -----------------
+reproductibilite:
+  principe: >
+    nlmpcmove est déterministe à entrées égales ; les temps ne le sont pas.
+    Les ExitFlag et trajectoires de cette campagne ne sont comparables à ceux
+    du 24/09 que si des bras identiques redonnent des résultats identiques.
+  code_depuis_la_reference: >
+    Relevé le 28/09 : git diff --name-only 9c39eae HEAD ne liste que docs/,
+    registre_valeurs_publiees.csv et trois scripts d'analyse ou d'audit de
+    piste_B. Fonctions d'état, modèle wt_step, vent, configuration et
+    extracteurs de poids sont inchangés depuis le code exécuté le 24/09.
+  bras_controles: >
+    swmlp_predict_r1, tcn_predict_r1, gpres_predict_r1..r3, et les 12 bras
+    manual (même code, mêmes modèles, mêmes graines qu'au 24/09).
+  critere: >
+    Bras par bras et répétition par répétition, jamais après concaténation :
+    chacun des trois vecteurs exitflag, u_hist et omega_hist du bras est
+    comparé au vecteur du bras de MÊME NOM du 24/09.
+  definition_de_l_egalite: >
+    « Égal bit pour bit » signifie, pour chaque vecteur : (1) même classe ;
+    (2) même taille, orientation comprise (size identique, aucun
+    redimensionnement ni transposition avant comparaison) ; (3) même
+    représentation binaire, comparée octet par octet sur
+    typecast(x(:), 'uint8'). Cette règle traite les NaN par leur
+    représentation : deux NaN ne sont égaux que s'ils ont les mêmes octets,
+    et +0 diffère de -0. Aucune tolérance numérique. isequaln est calculé
+    en diagnostic complémentaire et rapporté, mais ne décide pas.
+  ordre: >
+    Ce contrôle est exécuté et son verdict enregistré AVANT tout calcul de
+    G_k. Un seul vecteur différent dans un seul bras suffit.
+  verdicts:
+    REPRODUCTIBLE: tous les bras contrôlés sont identiques
+    NON REPRODUCTIBLE: >
+      au moins un vecteur d'un bras diffère. Reproductibilité échouée :
+      toute comparaison double / simple est INTERDITE et la section B n'est
+      pas calculée. Seuls sont rapportés, par architecture, les écarts de
+      trajectoire et les ExitFlag double / manuel de CETTE campagne, et les
+      écarts constatés sur les bras contrôlés.
+
+# ---- B. Critère principal : échecs du solveur -------------------------
+critere_principal:
+  variable: >
+    n_inf = nombre de pas avec ExitFlag < 0, par bras.
+  fermeture_de_l_ecart: >
+    Pour chaque architecture et chaque répétition k :
+      G_k = (n_inf_simple_k - n_inf_double_k) / (n_inf_simple_k - n_inf_manuel_k)
+    où n_inf_simple_k est lu dans le brut du 24/09 (bras <arch>_predict_rk),
+    n_inf_double_k et n_inf_manuel_k dans CETTE campagne.
+  denominateur: >
+    Aucune division n'est faite sans contrôle préalable du dénominateur
+    D_k = n_inf_simple_k - n_inf_manuel_k :
+      D_k > 0  -> G_k est calculé ;
+      D_k = 0  -> G_k NON DÉFINI, répétition « NON DISCRIMINANTE — aucun
+                  écart d'échecs à résorber », que n_inf vaille 0 ou plus ;
+      D_k < 0  -> « ANOMALIE DE COMPARAISON » : le simple échoue moins que le
+                  manuel, la formule n'a pas de sens ; la comparaison est
+                  refusée pour cette architecture. Les bras ne sont ni
+                  supprimés ni modifiés : le brut reste intact.
+  verdicts_par_architecture:
+    ordre_d_application: >
+      Le premier cas qui s'applique l'emporte : ANOMALIE, puis NON
+      DISCRIMINANT, puis les trois verdicts ci-dessous.
+    ANOMALIE DE COMPARAISON: D_k < 0 pour au moins une répétition
+    NON DISCRIMINANT: D_k = 0 pour au moins une répétition
+    PRECISION SUFFISANTE: G_k >= 0.9 pour les trois répétitions
+    PRECISION SANS EFFET: G_k <= 0.1 pour les trois répétitions
+    EFFET PARTIEL: tous les autres cas ; les trois G_k sont rapportés
+  reperes_24_09: >
+    D_k au 24/09 (simple - manuel) : SW-MLP 502 / 522 / 513 ; PINN-v2
+    598 / 598 / 598 ; TCN 373 / 549 / 525 ; LSTM 7 / 6 / 10 (n = 30). Aucun
+    cas nul ou négatif n'est attendu si la reproductibilité est établie ; la
+    règle est posée quand même.
+  note_LSTM: >
+    n = 30 pas : un seul échec résiduel suffit à faire passer G_k sous 0,9
+    (écarts de 6 à 10 au 24/09). Règle maintenue telle quelle ; la
+    granularité est rapportée avec le verdict.
+
+# ---- C. Rapportés, sans verdict --------------------------------------
+descriptif:
+  trajectoires: >
+    double / manuel, par bras : max|Δu| (deg), max|Δω| (rpm), égalité exacte
+    des vecteurs exitflag.
+  temps: >
+    méd, Q1, Q3 des bras double et manuel ; facteur double/manuel ;
+    dépassements n/N (cpu_ms > 100 STRICTEMENT).
+  classe: classe de sortie de la fonction d'état, par bras.
+regle_d_interpretation_des_temps: >
+  Le facteur double/manuel ne peut être présenté comme le surcoût lié à
+  predict() QUE pour une architecture au verdict PRECISION SUFFISANTE, et
+  toujours sous la forme : « temps du pas de commande avec réseau converti en
+  double, comparé à l'implémentation manuelle ». La mesure porte sur le PAS
+  DE COMMANDE COMPLET (nlmpcmove : optimisation, jacobiennes, appels au
+  modèle), jamais sur l'appel réseau isolé. Pour les autres architectures, il
+  reste une mesure descriptive du pas de commande. Le facteur simple/manuel
+  du 24/09 n'est jamais réinterprété par cette campagne.
+ce_que_la_campagne_ne_dit_pas: >
+  Elle ne dit pas pourquoi le MLP résiduel et le GP échouent autant en
+  predict qu'en manuel, ni rien de la précision obtenue hors de ce point de
+  fonctionnement (14 m/s, 60 s).
+
+# --- sorties ----------------------------------------------------------
+raw_output_file: results/P2-DOUBLE-2026-09-28-a.mat
+campaign_script: piste_B_nominal_correction/run_double_2026_09_28.m
+analysis_script: piste_B_nominal_correction/analyse_double_2026_09_28.m   # écrit APRÈS, commit séparé
+published_tables:
+  - tab:predict_double_precision   # nom provisoire, défini à la réécriture
+
+# =====================================================================
+# CONFORMITÉ — conditions bloquantes
+# =====================================================================
+conformite:
+  1_decisions_inscrites: OUI          # 28/09 : bras, périmètre, protocole, analyse
+  2_code_et_fiche_propres_au_demarrage: À FAIRE
+  3_commit_inscrit_dans_la_fiche: À FAIRE   # après campagne, commit dédié
+  4_meta_enregistre_dans_chaque_mat: À FAIRE
+  5_vecteur_brut_complet_par_bras: À FAIRE  # cpu_ms, u_hist, omega_hist, exitflag
+  6_empreintes_des_modeles_verifiees: À FAIRE
+  7_IsContinuousTime_false_verifie: À FAIRE # dans les 29 constructions nlmpc
+  8_analyse_gelee_avant_execution: OUI      # sections A, B, C ci-dessus
+  9_aucun_homonyme_dans_le_depot: À FAIRE
+  10_empreinte_du_perimetre_relevee_au_run: À FAIRE
+  11_identite_du_script_verifiee_au_run: À FAIRE
+  12_fins_de_ligne_normalisees: À FAIRE     # .gitattributes en place depuis 63edb10
+  13_liste_des_bras_controlee: À FAIRE
+    # DÉFAUT D15 : verifier_lot_campagne.m code EN DUR la grille du 24/09
+    # (6 architectures x predict/manual x 3) et ne détecte un bras en trop que
+    # par le compte. Il refuserait ce lot à tort. Correctif dans un commit
+    # SÉPARÉ, AVANT celui du script : contrôler meta.expected_arm_ids quand il
+    # existe (voir la liste fermée ci-dessus), garder la grille actuelle pour
+    # les lots antérieurs, sans jamais déduire la grille du nombre de champs.
+    # Tests de non-régression sur COPIES temporaires : P2-BYPASS-2026-09-24-a
+    # accepté à l'identique ; bras manquant, en trop, dupliqué dans la liste,
+    # mal formé, mal nommé, répétition incohérente, empreinte de modèle
+    # absente ou différente : tous refusés.
+  14_classe_double_verifiee_par_bras: À FAIRE
+
+controles_post_execution:
+  - meta.code_dirty doit valoir false
+  - meta.matlab_version doit valoir 24.1.0.2537033
+  - les 29 constructions portent IsContinuousTime = false
+  - les empreintes des modèles correspondent à model_version
+  - les 12 bras double portent classe_sortie = double
+  - verifier_lot_campagne accepte le lot (29 bras)
+  - le verdict de reproductibilité est établi AVANT tout calcul de G_k
