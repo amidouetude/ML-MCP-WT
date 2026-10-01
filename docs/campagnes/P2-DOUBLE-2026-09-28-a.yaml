@@ -30,17 +30,24 @@ campagne_de_reference:
 
 # --- versions ---------------------------------------------------------
 protocol_version: PROTO-P2-DOUBLE-v1
-code_version: À RELEVER          # = meta.code_sha1, recopié après la campagne
-protocol_commit: À RELEVER       # commit de cette fiche et du script (meta.fiche_commit)
-analysis_commit: À RELEVER       # commit du script d'analyse, APRÈS la campagne
-script_path_effective: À RELEVER
-script_sha256: À RELEVER
-script_commit: À RELEVER
-working_directory: À RELEVER
-code_manifeste_sha: À RELEVER
+code_version: 8cb0555d5ee4f1cab0d7bfbf310b13a6f154b4fb   # = meta.code_sha1, recopié le 01/10
+  # Relevé du 01/10, après la campagne. Ici code_version = protocol_commit :
+  # aucun commit entre la fiche et le lancement (meta.code_sha1 =
+  # meta.fiche_commit, identiques sur les 29 bras et les 9 tranches).
+protocol_commit: 8cb0555d5ee4f1cab0d7bfbf310b13a6f154b4fb   # meta.fiche_commit
+analysis_commit: e82520b4d6be65e3c9887d2810080acca6f9742a   # analyse_double_2026_09_28.m, commité avant exécution
+script_path_effective: 'C:\Users\AMIDOU MAIGA\OneDrive - Institut 2IE\Desktop\ML-MPC-WIND TURBINE\ML-MPC-Wind Turbine\ML-MPC-WT-V3\piste_B_nominal_correction\run_double_2026_09_28.m'   # meta
+script_sha256: 98ca2b5980f011c0d7ecae98355bd8db5d3c99bec9066cb3c47985d1bbc18dd8   # au moment du run
+script_commit: 8cb0555d5ee4f1cab0d7bfbf310b13a6f154b4fb
+working_directory: 'C:\Users\AMIDOU MAIGA\OneDrive - Institut 2IE\Desktop\ML-MPC-WIND TURBINE\ML-MPC-Wind Turbine\ML-MPC-WT-V3'
+code_manifeste_sha: 46c02c91e2d59044a5fccf07e7c8d372c9c9c5c4eb79dac490d9e1f4a6171a16   # 139 fichiers (diagnostic)
 MATLAB: R2024a
 MATLAB_version: 24.1.0.2537033   # re-relevée au lancement ; différente -> campagne bloquée
-toolboxes: À RELEVER             # meta.toolboxes ; aucune ne doit manquer
+toolboxes:                       # meta.toolboxes au lancement, recopié le 01/10 ; aucune manquante
+  - Optimization Toolbox: 24.1 (R2024a)
+  - Model Predictive Control Toolbox: 24.1 (R2024a)
+  - Deep Learning Toolbox: 24.1 (R2024a)
+  - Statistics and Machine Learning Toolbox: 24.1 (R2024a)
 
 # --- procédé et modèles : IDENTIQUES au 24/09 --------------------------
 model_version: >
@@ -275,6 +282,8 @@ ce_que_la_campagne_ne_dit_pas: >
 
 # --- sorties ----------------------------------------------------------
 raw_output_file: results/P2-DOUBLE-2026-09-28-a.mat
+  # sha256 d416c2e94f1e78cdb5ed7a2d0d4b479995d2bd252524159eef1eb0aea110a1d8,
+  # écrite par verifier_lot_campagne sur le lot ACCEPTÉ le 01/10 (9 tranches).
 campaign_script: piste_B_nominal_correction/run_double_2026_09_28.m
 analysis_script: piste_B_nominal_correction/analyse_double_2026_09_28.m   # écrit APRÈS, commit séparé
 published_tables:
@@ -286,7 +295,7 @@ published_tables:
 conformite:
   1_decisions_inscrites: OUI          # 28/09 : bras, périmètre, protocole, analyse
   2_code_et_fiche_propres_au_demarrage: À FAIRE
-  3_commit_inscrit_dans_la_fiche: À FAIRE   # après campagne, commit dédié
+  3_commit_inscrit_dans_la_fiche: OUI   # 01/10 : code_version = protocol_commit = 8cb0555, commit dédié
   4_meta_enregistre_dans_chaque_mat: À FAIRE
   5_vecteur_brut_complet_par_bras: À FAIRE  # cpu_ms, u_hist, omega_hist, exitflag
   6_empreintes_des_modeles_verifiees: À FAIRE
