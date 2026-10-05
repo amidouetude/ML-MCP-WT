@@ -31,6 +31,11 @@ __pycache__/
 *.asv
 *.autosave
 
+# ---- hors depot (05/10/2026) --------------------------------------------
+# PDF d'articles sous droit d'auteur : jamais dans GitHub.
+Paper_P2/Articles/
+# Consignes de supervision, mises a jour presque chaque jour.
+/CLAUDE.md
 # ---- EXCEPTIONS : ces fichiers DOIVENT etre versionnes ------------------
 # Les fiches de campagne sont du protocole, pas du resultat.
 !docs/campagnes/*.yaml
