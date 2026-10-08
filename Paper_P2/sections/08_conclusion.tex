@@ -81,11 +81,12 @@ uncertainty-aware MPC cost introduced in this work.
 
 \subsection*{Data and Code Availability}
 
-All turbine parameter values (Table~\ref{tab:turbine_params}) are sourced
-from Jonkman \emph{et al.}~\cite{jonkman2009}; the specific numerical implementation, drivetrain
-damping coefficient, and torque-switching calibration choices documented
-in Section~\ref{subsec:torque_switching} are encoded in
-\texttt{get\_wt\_params.m} and \texttt{stage0\_config.m}. All simulation,
+{\color{auditP2}The turbine parameter values in Table~\ref{tab:turbine_params} are based
+on Jonkman \emph{et al.}~\cite{jonkman2009}, combined with modeling choices of this study (in
+particular the drivetrain damping coefficient and the torque-switching
+calibration documented in Section~\ref{subsec:torque_switching}); the
+specific numerical implementation and these choices are encoded in
+\texttt{get\_wt\_params.m} and \texttt{stage0\_config.m}.} All simulation,
 training, and analysis scripts (dataset generation, surrogate training,
 closed-loop controllers, manual-bypass state functions, and sensitivity
 checks) referenced throughout this paper and its Appendix are available in

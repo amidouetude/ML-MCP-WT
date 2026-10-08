@@ -31,38 +31,44 @@ near-elimination of real-time budget overruns
 literature would otherwise record as an architectural limitation of
 deep-learning surrogates as, instead, an implementation-specific cost
 that is both diagnosable and remediable within the same toolchain,
-consistent with the independent report of Salzmann \emph{et al.}~\cite{salzmann_real-time_2022}
-that decoupling a neural network's evaluation from the surrounding
-solver's iteration loop is necessary  though not previously
-documented, to our knowledge, as arising specifically from
-\texttt{predict()}'s own per-call overhead in MATLAB's \texttt{nlmpc}.
+{\color{auditP2}consistent with the independent report of Salzmann \emph{et al.}~\cite{salzmann_real-time_2022}
+that separating the computationally heavy learned model from the MPC
+optimization allows larger learned models to be used in MPC, the cost
+they identify being the repeated evaluation and differentiation of the
+network when generating the QP. To our knowledge, this cost has not
+previously been documented as arising specifically from
+\texttt{predict()}'s own per-call overhead in MATLAB's \texttt{nlmpc}.}
 A structurally related, but architecturally distinct, finding is
 reported by Witter \emph{et al.}~\cite{witter_creating_2025}. Their setup contains no
 predictive controller at all: an LSTM/GRU/Transformer surrogate replaces
 a multibody-simulation (MBS) plant model, run in a loop with the
 turbine's own standard (non-MPC) controller, rather than serving as an
-MPC's internal predictive model as in this paper. Within that setup,
-their LSTM/GRU surrogates 'diverge from the expected results' (their
-wording) for a \emph{predictive-accuracy} reason (the learned dynamics
-themselves behave differently once embedded in the feedback loop), whereas
+MPC's internal predictive model as in this paper. {\color{auditP2}Within that setup,
+they report that some models `diverge from the expected results' (their
+wording) when run in the surrogate environment; the divergence case they
+describe concerns a model with derivative outputs reaching operating
+points outside its training data, while their LSTM and GRU surrogates
+are reported to perform poorly compared with window-based architectures.
+By contrast,
 our LSTM's closed-loop difficulty was, before the bypass,
 \emph{computational} (excessive per-step latency causing the solver to
 operate on a stale or default control action) rather than a divergence of
-the learned dynamics  the extended Monte Carlo evaluation
+the learned dynamics}  the extended Monte Carlo evaluation
 (Section~\ref{subsec:monte_carlo}) shows LSTM achieving competitive, and
 at some wind speeds the best, tracking accuracy once the computational
 bottleneck is removed. Distinguishing these two failure modes 
 functional divergence versus computational infeasibility  is
 important for practitioners, since only the latter admits the kind of
-implementation-level remedy demonstrated here. Third,
+implementation-level remedy demonstrated here. {\color{auditP2}Third,
 the Region~II/III torque switching correction
-(Section~\ref{subsec:torque_switching}) while standard practice in the
-classical wind turbine control literature \cite{bianchi2006,pao2009} was
-in our case discovered only through long-horizon closed-loop simulation
-with an incorrect constant-torque assumption; the fact that a textbook
-modeling choice reproduces a documented irrecoverable failure mode
-underscores that this detail cannot be treated as a minor implementation
-nicety when generating training data or evaluating closed-loop MPC.
+(Section~\ref{subsec:torque_switching}), which addresses the transition between
+the below-rated and above-rated control regions described, together with its
+drawbacks, in the wind turbine control literature \cite{bianchi2006,pao2009},
+was in our case discovered only through long-horizon closed-loop simulation
+with an incorrect constant-torque assumption; the fact that this simplifying
+modeling choice led to an irrecoverable operating trap underscores that this
+detail cannot be treated as a minor implementation nicety when generating
+training data or evaluating closed-loop MPC.}
 \label{subsec:gp_frozen_actuator_finding}
 Fourth, applying the same diagnostic standard established by Finding 2
  explicit per-step actuator command and solver exit-flag logging,
@@ -103,24 +109,36 @@ frozen-actuator artifact rather than genuine regulation.}
 \label{fig:gp_frozen_actuator}
 \end{figure}
 
-Relative to the model-free reinforcement-learning alternative to
-surrogate-based MPC \cite{xie_data-driven_2023}, our approach retains
-MPC's explicit constraint handling and, via the manual bypass of
-Section~\ref{subsec:operational_feasibility}, its real-time feasibility
-argument grounded in measured per-step cost rather than only
-asymptotic policy performance; a direct empirical comparison between
-the two paradigms on the same plant is left to future work.
+{\color{auditP2}The model-based reinforcement-learning wind turbine controller of
+Xie \emph{et al.}~\cite{xie_data-driven_2023} also addresses state and input constraints, but does not report
+measured per-step computation times; the present study complements it
+with per-step computation times measured on a single machine, via the
+manual bypass of Section~\ref{subsec:operational_feasibility}. A direct
+empirical comparison between the two approaches on the same plant is
+left to future work.}
 
 \subsection{Limitations}
 \label{subsec:limitations}
 
-Several limitations qualify these findings. The plant model retains only
+Several limitations qualify these findings. {\color{auditP2}The plant model retains only
 two states ($\omegar,\beta$) and omits drivetrain torsion and tower
-fore-aft dynamics, both of which are standard in higher-fidelity wind
-turbine control models \cite{schlipf2013} and materially affect load-
-relevant behavior; the reduced model is appropriate for a first
-systematic surrogate comparison but likely understates the wind
-turbine's dynamic order.
+fore-aft dynamics, both of which materially affect load-relevant
+behavior; tower fore-aft dynamics are, for instance, included in the
+reduced control model of \cite{schlipf2013}, and drivetrain flexibility
+in its aeroelastic simulation model. The reduced model is appropriate
+for a first systematic surrogate comparison but likely understates the
+wind turbine's dynamic order. In addition, several parameters of the reduced model depart from the
+reference turbine (Table~\ref{tab:turbine_params}): $J$ is the rotor inertia
+alone (neglecting the generator inertia underestimates the drivetrain inertia
+by about $11.5\%$); the $\Cp(\lambda,\beta)$ surface is an empirical
+approximation whose peak ($0.480$ at $\lambda=8.10$) is displaced from the
+reference peak ($0.482$ at $\lambda=7.55$~\cite{jonkman2009}); the pitch range
+is restricted to $[0,\,25]\deg$, the validity domain adopted for that
+approximation, instead of the reference $0\deg$ to $90\deg$; the pitch
+actuator is modeled as a first-order lag with $\tau_\beta=\SI{0.1}{s}$; and a
+small viscous rotor damping replaces the reference drive-shaft torsional
+damping. Aligning these choices with the reference turbine is left to future
+work in which the controllers are coupled with OpenFAST.}
 The wind input is spatially uniform (Section~\ref{subsec:wind_model}):
 no rotational sampling or tower shadow effect is modeled, both of which
 introduce periodic loading components a real turbine controller must
@@ -308,9 +326,9 @@ Baseline/GP/residual-MLP/SW-MLP and PINN-v2/TCN
  extending the wind-speed sweep beyond three points and pairing it
 with the multi-objective load metrics noted above would clarify whether
 these are genuine architectural properties or artifacts of the specific
-training data distribution. Second, extending the plant to four states
-by adding drivetrain torsion and tower fore-aft dynamics
-\cite{schlipf2013} would let the comparison generalize to
+training data distribution. {\color{auditP2}Second, extending the plant to four states
+by adding drivetrain torsion and tower fore-aft dynamics (the latter as
+in the reduced model of \cite{schlipf2013})} would let the comparison generalize to
 load-relevant metrics, not only rotor-speed tracking, and would provide
 a further, independent test of whether the manual-bypass technique
 scales to a higher-order plant and correspondingly larger surrogates.
@@ -341,11 +359,10 @@ constraint rather than a cost penalty (in the spirit of
 the probabilistic reachable sets of Hewing \emph{et al.}~\cite{hewing2020}) is a prerequisite
 for any future uncertainty-penalized GP-MPC cost on this plant, since
 the present formulation is withdrawn rather than merely unvalidated.
-A structurally different route to the same real-time
-feasibility goal, not explored in this paper, would replace the
-nonlinear surrogate entirely with a Koopman-operator-based linear
-approximation \cite{williams2015}, trading the accuracy of a
-nonlinear model for the computational simplicity of linear MPC.
+{\color{auditP2}A structurally different route to reducing the per-step
+computational cost, not explored in this paper, would replace the
+nonlinear surrogate entirely with a data-driven linear approximation of the Koopman operator \cite{williams2015} (whose authors mention controller design only as a possible application), used within a linear MPC, trading the accuracy of a
+nonlinear model for the computational simplicity of linear MPC.}
 Coupling the corrected two-state
 model to a higher-fidelity aeroelastic code (e.g.\ OpenFAST) is a longer-
 term validation step once these nearer-term extensions are in place.

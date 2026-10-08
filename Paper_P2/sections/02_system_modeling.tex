@@ -12,17 +12,21 @@
 This study uses the NREL offshore 5-MW reference wind turbine
 \cite{jonkman2009} as the physical plant. This model is widely adopted as a
 benchmark in the wind energy control literature, which allows direct
-comparison with previously published MPC and ML-surrogate studies. The
-turbine has a rotor radius $R = \SI{63}{m}$, a combined drivetrain inertia
-$J = 3.876 \times 10^{7}~\text{kg}\cdot\text{m}^2$ (referred to the
-low-speed shaft, LSS), a $97{:}1$ gearbox ratio, a rated rotor speed
+comparison with previously published MPC and ML-surrogate studies. {\color{auditP2}The
+turbine has a rotor radius $R = \SI{63}{m}$, a $97{:}1$ gearbox ratio, a rated rotor speed
 $\omegarated = \SI{12.1}{rpm}$, and a rated generator torque (high-speed
 shaft, HSS) $T_{g,\text{rated}} = (P_{\text{rated}}/\eta_{\text{gen}}) /
 (\omegarated N_{\text{gear}}) = \SI{43093.55}{N.m}$, using the
 reference generator efficiency $\eta_{\text{gen}}=94.4\%$
 \cite{jonkman2009}, so that rated electrical power
 $P_{\text{rated}}=\SI{5}{MW}$ corresponds to $\SI{5.2966}{MW}$ of
-rated mechanical power on the low-speed shaft. An earlier draft of
+rated mechanical power on the low-speed shaft. The inertia used in the
+two-state model, $J = 3.876 \times 10^{7}~\text{kg}\cdot\text{m}^2$
+(referred to the low-speed shaft, LSS), is the rotor inertia obtained from
+the blade and hub properties of~\cite{jonkman2009}; the generator inertia
+($N_{\text{gear}}^{2} I_{\text{gen}} \approx 5.03\times10^{6}~\text{kg}\cdot\text{m}^2$)
+is neglected, so that $J$ underestimates the full drivetrain inertia by
+about $11.5\%$.} An earlier draft of
 this paper omitted this efficiency division, giving
 $\SI{40680}{N.m}$ ($5.6\%$ low); this has been corrected to adopt the
 reference value directly, propagated through the Region~II gain
@@ -33,9 +37,21 @@ Table~\ref{tab:turbine_params}.
 
 \begin{table}[H]
 \centering
-\caption{NREL 5-MW reference turbine parameters used in this study
-(source: Jonkman \emph{et al.}~\cite{jonkman2009}, with the drivetrain damping and torque
-switching calibration choices documented in Section~\ref{subsec:torque_switching}).}
+\caption{{\color{auditP2}Turbine parameters of the two-state model used in this study.
+Rotor radius, number of blades, air density, gear ratio, maximum pitch rate,
+rated rotor speed, rated power, rated, cut-in and cut-out wind speeds and
+rated generator torque are those of the NREL 5-MW reference turbine
+(Jonkman \emph{et al.}~\cite{jonkman2009}); $\lambda_{\text{rated}}$ is
+computed from the reference $R$, $\omegarated$ and $V_{\text{rated}}$, and
+$\Kopt$ is the reference generator-side Region~2 gain
+(\SI{0.0255764}{N.m/rpm^2}) referred to the low-speed shaft. $J$ is the rotor
+inertia obtained from the reference blade and hub properties (generator
+inertia neglected). The viscous rotor damping $B_r$, pitch actuator time
+constant $\tau_\beta$, pitch bounds, minimum rotor speed and overspeed limit
+are modeling choices of this study and are not taken from~\cite{jonkman2009},
+which specifies pitch settings of $0\deg$ to $90\deg$, a minimum rotor speed
+of \SI{6.9}{rpm} and a drive-shaft torsional damping rather than a viscous
+rotor damping.}}
 \label{tab:turbine_params}
 \begin{tabular}{lcc}
 \toprule
@@ -44,14 +60,14 @@ Parameter & Symbol & Value \\
 Rotor radius              & $R$                 & \SI{63}{m} \\
 Number of blades          & $B$                 & 3 \\
 Air density                & $\rho$              & \SI{1.225}{kg/m^3} \\
-Drivetrain inertia (LSS)   & $J$                 & $3.876\times10^{7}$ kg$\cdot$m$^2$ \\
-Drivetrain damping         & $B_r$               & \SI{6215.5}{N.m.s/rad} \\
+{\color{auditP2}Rotor inertia (LSS)}        & {\color{auditP2}$J$}                 & $3.876\times10^{7}$ kg$\cdot$m$^2$ \\
+{\color{auditP2}Viscous rotor damping}      & {\color{auditP2}$B_r$}               & \SI{6215.5}{N.m.s/rad} \\
 Gear ratio                 & $N_{\text{gear}}$   & 97 \\
 Pitch actuator time constant & $\tau_\beta$      & \SI{0.1}{s} \\
 Pitch bounds                & $\beta$             & $[0,\ 25]\deg$ \\
 Maximum pitch rate          & $\dot\beta_{\max}$  & \SI{8.0}{deg/s} \\
 Rated rotor speed          & $\omegarated$       & \SI{12.1}{rpm} \\
-Physical min.\ rotor speed & $\omega_{\min}$     & \SI{4.77}{rpm} \\
+{\color{auditP2}Min.\ rotor speed (numerical guard)} & {\color{auditP2}$\omega_{\min}$}     & \SI{4.77}{rpm} \\
 Overspeed limit (+10\%)    & $\omega_{\max}$     & \SI{13.31}{rpm} \\
 Rated tip-speed ratio       & $\lambda_{\text{rated}}$ & 7.00 \\
 Rated power                & $P_{\text{rated}}$  & \SI{5}{MW} \\
@@ -67,10 +83,14 @@ Region II gain (LSS)        & $\Kopt$             & $2.128616\times10^{6}$~N.m.s
 \subsection{Two-State Model}
 \label{subsec:two_state_model}
 
-Following the modeling approach of Klein \emph{et al.}~\cite{klein2024}, the turbine is
+{\color{auditP2}The turbine is
 represented by a reduced two-state nonlinear model with state vector
 $x = [\omegar, \beta]^\top$, control input $u = \betacmd$ (pitch angle
-demand), and measured disturbance $V$ (rotor-effective wind speed). The
+demand), and measured disturbance $V$ (rotor-effective wind speed). By
+comparison, the control-oriented model of Klein \emph{et al.}~\cite{klein2024}
+has eight states, among which the rotor speed and the mean pitch angle, two
+inputs (pitch and generator-torque demands), and treats the rotor-effective
+wind speed as an estimated disturbance state rather than a measurement.} The
 rotor dynamics are governed by the aerodynamic torque balance
 
 \begin{equation}
@@ -84,8 +104,9 @@ low-speed shaft (Section~\ref{subsec:torque_switching}), $B_r =
 (Table~\ref{tab:turbine_params}), and the
 aerodynamic torque is
 $\Ta = \tfrac{1}{2}\rho \pi R^2 V^3 \Cp(\lambda,\beta) / \omegar$, with tip-speed
-ratio $\lambda = \omegar R / V$ and power coefficient surface
-$\Cp(\lambda,\beta)$ evaluated with the Jonkman polynomial. The pitch
+ratio $\lambda = \omegar R / V$ and {\color{auditP2}power coefficient surface
+$\Cp(\lambda,\beta)$ evaluated with the six-coefficient empirical approximation
+given below.} The pitch
 actuator is modeled as a first-order lag,
 
 \begin{equation}
@@ -97,25 +118,21 @@ with $\tau_\beta = \SI{0.1}{s}$. Equations~\eqref{eq:rotor_ode}--\eqref{eq:pitch
 are integrated with explicit Euler discretization at $\Delta t = \SI{0.1}{s}$,
 matching the control sampling time $T_s$ used by the nonlinear MPC in
 Section~\ref{sec:mpc_framework}. The $\Cp(\lambda,\beta)$ surface is
-evaluated strictly within its calibration domain $\beta \in [0\deg, 25\deg]$;
-This paper uses Jonkman et al.'s (2009) standard six-coefficient
-analytical approximation of the $C_p(\lambda,\beta)$ surface ($c_1, \ldots, c_6 = 0.5176, 116, 0.4, 5, 21, 0.0068$, following the widely-used form $C_p = c_1(c_2/\lambda_i - c_3\beta - c_4)e^{-c_5/\lambda_i} + c_6/\lambda$).
+{\color{auditP2}evaluated within the domain $\beta \in [0\deg, 25\deg]$,
+$\lambda \in [2, 13]$ adopted in this study; this paper uses a widely used
+six-coefficient empirical approximation of the $C_p(\lambda,\beta)$ surface,
+$C_p = c_1(c_2/\lambda_i - c_3\beta - c_4)e^{-c_5/\lambda_i} + c_6\lambda$,
+with $1/\lambda_i = 1/(\lambda + 0.08\beta) - 0.035/(\beta^{3}+1)$ and
+$c_1, \ldots, c_6 = 0.5176, 116, 0.4, 5, 21, 0.0068$, clipped to
+$[0,\,16/27]$.}
 
 Stage=0 validation confirmed a maximum power coefficient $C_{p,\max} = 0.480$ at $\lambda^* = 8.11$, $\beta^* = 0^\circ$, safely below the Betz limit ($C_{p,\text{Betz}} = 0.5926$), correcting an earlier non-physical evaluation of the polynomial outside its calibrated range that had produced $C_{p,\max} = 0.706 > C_{p,\text{Betz}}$. This peak value agrees closely with the reference-reported peak of $0.482$ \cite{jonkman2009} (within $0.4\%$), but at a different tip-speed
 ratio: the reference reports its peak at $\lambda=7.55$, whereas this
 exact polynomial, evaluated numerically over a fine grid, peaks at
-$\lambda=8.10$--$8.11$. We attribute this to the six-coefficient form
-being an analytical \emph{fit} to the true $\Cp$ surface (itself
-derived from blade-element-momentum or FAST rotor-performance
-tables) rather than an exact reproduction of it: such fits commonly
-reproduce the peak coefficient value closely while displacing its
-argmax slightly, since the fit minimizes error over the full
-calibration domain rather than matching the true surface's peak
-location exactly. This displacement matters beyond Section~2.2 itself:
-it is the reason $\lambda_{\text{rated}}=7.00$ (Jonkman's actual
-reference operating point) rather than this polynomial's own
-$\lambda^{*}=8.11$ is used to calibrate $\Kopt$
-(Section~\ref{subsec:torque_switching}), as discussed there.
+$\lambda=8.10$--$8.11$. {\color{auditP2}This displacement matters beyond Section~2.2 itself:
+the Region~II gain used in this paper is the reference gain, derived at the
+reference peak ($\lambda=7.55$), and is therefore not tuned to the peak of
+this paper's own $\Cp$ surface (Section~\ref{subsec:torque_switching}).}
 
 \subsection{Region II/III Generator Torque Switching}
 \label{subsec:torque_switching}
@@ -150,36 +167,27 @@ R^3 / \lambda_{\text{rated}}^3 \approx 2.51\times10^{6}~\text{N.m.s}^2$ using
 this paper's own $\Cp(\lambda,\beta)$ surface (Section~\ref{subsec:two_state_model});
 the value actually used throughout this paper
 (Table~\ref{tab:turbine_params}), $\Kopt=2.128616\times10^{6}~\text{N.m.s}^2$,
-instead adopts Jonkman's directly-published generator-side gain
-$K_{\text{gen}}=\SI{0.0255764}{N.m/rpm^2}$ referred to the low-speed
+{\color{auditP2}instead adopts the generator-side Region~2 gain published by
+Jonkman \emph{et al.}~\cite{jonkman2009},
+$K_{\text{gen}}=\SI{0.0255764}{N.m/rpm^2}$, referred to the low-speed
 shaft ($\Kopt=K_{\text{gen}}N_{\text{gear}}^3$, with the appropriate
-rpm-to-rad/s unit conversion), consistent with the rated-torque
-correction above and $17.9\%$ lower than this paper's own
+rpm-to-rad/s unit conversion), $15.2\%$ lower than this paper's own
 aerodynamic-formula estimate.\\ 
-\textbf{Root cause of the deviation}:
-the aerodynamic formula above is a pure rotor-aerodynamic quantity
-and omits generator/drivetrain efficiency entirely, whereas
-Jonkman's reference $K_{\text{gen}}$ is derived from the actual
-generator design and implicitly reflects the electrical/mechanical
-efficiency already accounted for in the rated-torque correction
-above -- the two are not the same physical quantity computed two
-ways, but two related quantities (aerodynamic-optimum gain vs.
-efficiency-inclusive generator-referred gain) that happen to be
-calibrated at the same operating point ($\lambda=7.00$). The
-reference, efficiency-inclusive value is used throughout this paper
-for the same reason as the rated-torque correction: it does not
-depend on this paper's own approximate $\Cp$ surface, and is
-consistent with the generator efficiency already adopted above. Both are
-calibrated at the actual Jonkman operating point
-$\lambda_{\text{rated}} = R\,\omegarated / V_{\text{rated}} = 7.00$, rather
-than the theoretical aerodynamic optimum $\lambda^{*} = 8.11$ identified in
-Section~\ref{subsec:two_state_model}. This choice follows standard practice
-(see, e.g.,~\cite{jonkman2009}): Jonkman's rated operating point already
-accounts for drivetrain and electrical losses, so it sits slightly off the
-pure-aerodynamic $\Cp$ peak; calibrating $\Kopt$ there prioritizes torque
-continuity at the switching boundary over exact aerodynamic optimality
-(calibrating instead at $\lambda^{*}=8.11$ would produce a $30\%$
-discontinuity, versus $2.26\%$ at $\lambda_{\text{rated}}=7.00$). The
+\textbf{Origin of the deviation}:
+the two values are not calibrated at the same operating point.
+Jonkman \emph{et al.}~\cite{jonkman2009} derive $K_{\text{gen}}$ from the
+peak power coefficient of the reference rotor ($0.482$ at a tip-speed
+ratio of $7.55$ and $0\deg$ pitch) and the $97{:}1$ gearbox ratio, whereas
+the estimate above evaluates this paper's own $\Cp(\lambda,\beta)$ surface
+at $\lambda_{\text{rated}}=7.00$.} {\color{auditP2}The
+reference value is used throughout this paper because it does not
+depend on this paper's own approximate $\Cp$ surface. The aerodynamic-formula
+estimate above is evaluated at the rated operating point
+$\lambda_{\text{rated}} = R\,\omegarated / V_{\text{rated}} = 7.00$, computed
+from the reference values of~\cite{jonkman2009}, rather than at the
+theoretical aerodynamic optimum $\lambda^{*} = 8.11$ of
+Section~\ref{subsec:two_state_model}; it is given for comparison only, since
+$\Kopt$ itself is not recalibrated in this study.} The
 resulting continuity ratio, computed using the corrected
 $T_{g,\text{rated}}=\SI{43093.55}{N.m}$ (HSS, item 3.1) and
 $\Kopt=2.128616\times10^6$ (item 3.2) together -- an earlier draft
@@ -232,14 +240,17 @@ after (Eq.~\eqref{eq:torque_switching}) correction.}
 \subsection{Wind Model}
 \label{subsec:wind_model}
 
-Turbulent wind input is generated from the Kaimal spectrum defined in
-IEC~61400-1 \cite{iec61400} with turbulence intensity $I = 0.16$,
-longitudinal turbulence length scale $L_1 = \SI{340.2}{m}$. We note that
-$I=0.16$ corresponds to IEC Turbulence Category~A (the more severe of
-the two standard categories at this hub height) rather than
-Category~B ($I=0.14$) as an earlier draft of this work mislabeled it;
-the simulated turbulence is therefore somewhat more severe than a
-Category-B label would imply, not less. Time series are
+{\color{auditP2}Turbulent wind input is generated from the Kaimal spectral model given in
+the informative Annex~B of IEC~61400-1 \cite{iec61400}, with a constant
+turbulence intensity $I = 0.16$, equal to the reference value
+$I_{\text{ref}}$ of turbulence category~A, and longitudinal turbulence length
+scale $L_1 = \SI{340.2}{m}$ ($L_1 = 8.1\,\Lambda_1$ with $\Lambda_1 = \SI{42}{m}$
+for hub heights of \SI{60}{m} and above).} {\color{auditP2}We note that
+$I=0.16$ is the reference turbulence intensity of IEC turbulence
+category~A (categories A, B and C have $I_{\text{ref}} = 0.16$, $0.14$ and
+$0.12$) rather than category~B ($I=0.14$) as an earlier draft of this work
+mislabeled it; the simulated turbulence is therefore somewhat more severe
+than a Category-B label would imply, not less.} Time series are
 synthesized via inverse FFT of the discretized Kaimal power spectral
 density, with the amplitude spectrum deterministically rescaled before
 phase randomization so that the achieved standard deviation
@@ -268,9 +279,8 @@ main text.}
 \label{fig:kaimal_psd}
 \end{figure}
 
-The
+{\color{auditP2}The
 synthesized wind signal is subsequently passed through a second-order
-Butterworth low-pass filter with cutoff frequency $f_c = \SI{0.3}{Hz}$,
-consistent with the rotor-effective wind filtering approach of
-Klein \emph{et al.}~\cite{klein2024}, before being applied as the disturbance input $V$ to
-Eq.~\eqref{eq:rotor_ode}.
+Butterworth low-pass filter with cutoff frequency $f_c = \SI{0.3}{Hz}$
+before being applied as the disturbance input $V$ to
+Eq.~\eqref{eq:rotor_ode}.}

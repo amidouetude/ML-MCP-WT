@@ -12,14 +12,14 @@ turbine control systems \cite{pao2009}. Above the rated wind speed
 (Region~III), a variable-speed, variable-pitch wind turbine must regulate
 rotor speed to its rated value by actuating blade pitch, while the
 generator torque is held at (or switched into) its rated value
-\cite{bianchi2006}. This regulation problem is nonlinear, subject to
+\cite{bianchi2006}. {\color{auditP2}This regulation problem is nonlinear, subject to
 actuator rate and range constraints, and driven by a highly stochastic
 disturbance (turbulent wind); Model Predictive Control (MPC) is
-well-suited to it precisely because it handles input and state
-constraints explicitly and can anticipate disturbance effects over a
-prediction horizon \cite{rawlings2017}, in contrast to classical
-gain-scheduled PI pitch
-controllers \cite{bianchi2006,pao2009,laks2009}. Realizing these
+well-suited to it because it handles input and state constraints
+explicitly \cite{rawlings2017} and predicts the system's behavior with a
+model over a prediction horizon, in contrast to classical gain-scheduled
+pitch controllers \cite{bianchi2006,pao2009}, typically based on PID
+control \cite{laks2009}.} Realizing these
 specific advantages in closed loop requires exercising them --
 multiple simultaneously active constraints, or genuine disturbance
 preview -- neither of which the single-constraint, no-preview
@@ -28,12 +28,12 @@ reference is included in Section~\ref{sec:closed_loop_results}
 accordingly, and this paper's central comparison is instead among
 surrogate architectures' fidelity to the true-model MPC they replace,
 not a claim that MPC outperforms classical control under this
-specific protocol. The practical obstacle to
+specific protocol. {\color{auditP2}The practical obstacle to
 nonlinear MPC (NMPC) for this problem is computational: at every control
 step, the solver must repeatedly evaluate the internal plant model and,
 for gradient-based solvers, its Jacobian which is expensive when that
 model is the full nonlinear aerodynamic and structural dynamics of the
-turbine \cite{schlipf2013,evans2022}.
+turbine \cite{schlipf2013}.}
 
 \subsection{ML-MPC: State of the Art}
 \label{subsec:soa}
@@ -45,30 +45,29 @@ surrogate that is cheaper to evaluate. Klein \emph{et al.}~\cite{klein2024} demo
 Extended Kalman Filter state estimator (not an MPC internal predictor),
 validated in simulation only  the direct reference and starting point
 for the LLNFM implementation adopted in this work
-(Section~\ref{sec:system_modeling}). A related paper from the same
-research group, Klein \emph{et al.}~\cite{klein2025}, separately reports the first
-full-scale experimental validation of MPC on an operating 3\,MW turbine
+(Section~\ref{sec:system_modeling}). {\color{auditP2}A related paper from the same
+research group, Klein \emph{et al.}~\cite{klein2025}, separately reports what its
+authors describe as the first reliable, experimentally validated MPC
+approach on an operating full-scale 3\,MW turbine
 (3~hours of continuous field operation)  but using a robust
 linear-time-varying MPC combined with an Extended Kalman filter, with no
-learned surrogate of any kind. We cite both papers as motivation and
+learned surrogate of any kind.} We cite both papers as motivation and
 precedent for, respectively, the LLNFM architecture and the field-testing
 standard this line of work aspires to, without implying either paper
-combines both properties simultaneously. Beyond neuro-fuzzy
+combines both properties simultaneously. {\color{auditP2}Beyond neuro-fuzzy
 surrogates, Gaussian Process (GP) regression has an established track
-record as an MPC-internal model precisely because it returns a calibrated
+record as an MPC-internal model precisely because it returns a
 predictive uncertainty alongside its point prediction, enabling cautious
 or uncertainty-aware control formulations \cite{kocijan2004,hewing2020} —
 a property we exploit directly in the GP-based cost of
-Section~\ref{subsec:gp_uncertainty_cost}. Within wind energy specifically,
+Section~\ref{subsec:gp_uncertainty_cost}.} Within wind energy specifically,
 Liu \emph{et al.}~\cite{liu_wind_2018} use a Mat\'ern-kernel GP to predict short-term wind
 speed for preview-based load mitigation, but  unlike the present
 work  as an external disturbance forecast feeding the controller
-rather than as the MPC's internal dynamics model. Data-driven
+rather than as the MPC's internal dynamics model. {\color{auditP2}Data-driven
 reinforcement learning has separately been applied to wind turbine
-torque/pitch control \cite{xie_data-driven_2023}, offering a
-model-free alternative to the surrogate-based MPC approach studied
-here; we return to this comparison in
-Section~\ref{sec:discussion}. Physics-Informed Neural Networks
+torque/pitch control \cite{xie_data-driven_2023}, an approach that its authors classify as model-based reinforcement learning; we return to this comparison in
+Section~\ref{sec:discussion}.} Physics-Informed Neural Networks
 (PINNs), which embed a governing differential equation as a soft
 constraint on the training loss, have become a general framework for
 combining data-driven flexibility with physical consistency
@@ -78,15 +77,15 @@ recurrent architectures for generic sequence modeling tasks
 \cite{bai2018}. Each of these four paradigms neuro-fuzzy, GP, PINN,
 and convolutional/recurrent sequence models has therefore been
 independently validated as a plausible MPC surrogate architecture in some
-application domain. Beyond ML surrogates specifically, the broader
+application domain. {\color{auditP2}Beyond ML surrogates specifically, the broader
 engineering practice of MPC continues to evolve rapidly
-\cite{schwenzer2021}, and linear-quadratic-optimal alternatives to
-nonlinear MPC for wind turbine power tracking, without a learned
+\cite{schwenzer2021}, and linear-quadratic-optimal controllers
+for wind turbine power tracking, without a learned
 internal model, have also recently been proposed and validated in
 OpenFAST \cite{grapentin2022,grapentin2024}  a useful point of
 comparison for the computational-cost trade-offs discussed in
 Section~\ref{sec:mpc_framework}, though outside this paper's
-ML-surrogate scope.
+ML-surrogate scope.}
 
 What is missing, to our knowledge, is a systematic comparison of these
 paradigms \emph{within a single closed-loop MPC framework, on the same
@@ -167,53 +166,53 @@ now-retracted claim
 		Closed-loop? & Cost reported? & Comparison scope \\
 		\midrule
 		
-		Witter \emph{et al.}~\cite{witter_creating_2025}
-		& LSTM, GRU, CNN, Transformer
-		& MBS wind turbine
-		& Turbine's own controller (no MPC)
-		& Yes
-		& No
-		& Single turbine, one plant surrogate role \\
+		{\color{auditP2}Witter \emph{et al.}~\cite{witter_creating_2025}}
+		& {\color{auditP2}LSTM, GRU, CNN, Transformer}
+		& {\color{auditP2}MBS wind turbine}
+		& {\color{auditP2}Turbine's own controller (no MPC)}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}Single turbine, one plant surrogate role} \\
 		
-		Salzmann \emph{et al.}~\cite{salzmann_real-time_2022}
-		& MLP (various sizes)
-		& Quadrotor
-		& SQP (acados)
-		& Yes
-		& Yes
-		& Robotics, not wind \\
+		{\color{auditP2}Salzmann \emph{et al.}~\cite{salzmann_real-time_2022}}
+		& {\color{auditP2}MLP (various sizes), CNN, GP}
+		& {\color{auditP2}Quadrotor}
+		& {\color{auditP2}SQP (acados)}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}Robotics, not wind} \\
 		
-		Klein \emph{et al.}~\cite{klein2024}
-		& LLNFM
-		& NREL 5-MW (sim.)
-		& EKF (not MPC)
-		& N/A
-		& No
-		& Load estimation only \\
+		{\color{auditP2}Klein \emph{et al.}~\cite{klein2024}}
+		& {\color{auditP2}LLNFM}
+		& {\color{auditP2}2.05\,MW turbine (sim.)}
+		& {\color{auditP2}EKF (not MPC)}
+		& {\color{auditP2}N/A}
+		& {\color{auditP2}No}
+		& {\color{auditP2}Load estimation only} \\
 		
-		Klein \emph{et al.}~\cite{klein2025}
-		& None (robust LTV)
-		& 3\,MW field turbine
-		& LTV MPC
-		& Yes
-		& No
-		& Field validation, no surrogate \\
+		{\color{auditP2}Klein \emph{et al.}~\cite{klein2025}}
+		& {\color{auditP2}None (robust LTV)}
+		& {\color{auditP2}3\,MW field turbine}
+		& {\color{auditP2}LTV MPC}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}Yes (CPU load)}
+		& {\color{auditP2}Field validation, no surrogate} \\
 		
-		Fu \emph{et al.}~\cite{fu_gaussian_2025}
-		& GP
-		& NREL 5-MW (floating)
-		& MPC
-		& Yes
-		& Not confirmed
-		& Individual pitch, uncertainty-aware cost \\
+		{\color{auditP2}Fu \emph{et al.}~\cite{fu_gaussian_2025}}
+		& {\color{auditP2}GP (NN as comparison)}
+		& {\color{auditP2}NREL 5-MW (floating)}
+		& {\color{auditP2}MPC}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}Individual pitch} \\
 		
-		Liu \emph{et al.}~\cite{liu_wind_2018}
-		& GP (wind forecast)
-		& Generic turbine
-		& MPC
-		& Yes
-		& No
-		& GP for disturbance forecast, not dynamics \\
+		{\color{auditP2}Liu \emph{et al.}~\cite{liu_wind_2018}}
+		& {\color{auditP2}GP (wind forecast)}
+		& {\color{auditP2}NREL 5-MW (FAST, sim.)}
+		& {\color{auditP2}MPC}
+		& {\color{auditP2}Yes}
+		& {\color{auditP2}No}
+		& {\color{auditP2}GP for disturbance forecast, not dynamics} \\
 		
 		\textbf{This paper}
 		& LLNFM, LSTM, GP, PINN, TCN, SW-MLP (6)

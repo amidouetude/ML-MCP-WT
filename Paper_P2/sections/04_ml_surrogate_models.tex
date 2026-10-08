@@ -108,13 +108,13 @@ GP and PINN surrogates are upgraded as described below.
 \subsubsection{GP-v2 (Matérn 5/2 + Optimized Hyperparameters)}
 \label{subsubsec:gp_v2}
 
-Two changes are introduced relative to the V1 GP. First, the kernel is
+Two changes are introduced relative to the V1 GP. {\color{auditP2}First, the kernel is
 changed from Squared-Exponential to Matérn~5/2,
 $k(r) = \left(1 + \tfrac{\sqrt{5}r}{l} + \tfrac{5r^2}{3l^2}\right)
-\exp\!\left(-\tfrac{\sqrt{5}r}{l}\right)$, which assumes only twice
-differentiable sample paths rather than infinite smoothness  a weaker and
-more physically appropriate regularity assumption for a system subject to
-turbulent forcing \cite{rasmussen2006}. Second, hyperparameters
+\exp\!\left(-\tfrac{\sqrt{5}r}{l}\right)$, which corresponds to a process that
+is twice mean-square differentiable rather than infinitely smooth
+\cite{rasmussen2006}; we consider this weaker regularity assumption more
+appropriate for a system subject to turbulent forcing.} Second, hyperparameters
 $(\sigma_f, l, \sigma_n)$ are tuned by Bayesian optimization (marginal
 likelihood objective, $20$ evaluations) rather than left at default values.
 An earlier training pass inadvertently let this same Bayesian search
