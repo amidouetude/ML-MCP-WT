@@ -1,0 +1,176 @@
+# Fiche de campagne E1 - surface aerodynamique de la NREL 5 MW terrestre
+# Redigee AVANT toute execution (action E1-1). Les criteres et tolerances ci-dessous
+# ne peuvent plus etre modifies apres l'execution (regle d'echec : on rend compte, on decide).
+
+campagne:
+  identifiant: Q1-E1-AEROMAP-2026-10-08-a
+  etape: E1
+  objet: >
+    Verifier que le modele NREL 5 MW terrestre sous OpenFAST v4.2.1 reproduit les valeurs
+    publiees par Jonkman et al. (2009), puis produire la surface Cp(lambda, beta) destinee a E2.
+  directive: "Criteres de l'etape E1, version amendee du 08/10/2026 (superviseur), adoptee par l'auteur le 08/10/2026"
+  regle_C3_adoptee: "beta sature a 0 deg (option retenue par l'auteur le 08/10/2026)"
+
+environnement:
+  inventaire: openfast_q1/docs/E0_environnement.md
+  openfast:
+    executable: C:\dev\openfast-bin\openfast_x64.exe
+    version: OpenFAST-v4.2.1 (commit 2daa99a0f), precision simple
+    sha256: dbae80560269c00f4a1f3529b5bb3ffcd111faa6d6791f4cce6dcf321679d924
+    mode: "-steadystate (AeroMap)"
+  modele:
+    commit_depot: 7232a48
+    dossier: openfast_q1/model/
+    empreintes: openfast_q1/model/EMPREINTES_modele.sha256
+    fichier_complementaire:
+      chemin_dans_r_test: glue-codes/openfast/5MW_Baseline/Wind/90m_12mps_twr.bts
+      raison: >
+        Reference par NRELOffshrBsline5MW_InflowWind_12mps.dat (WindType = 3). Binaire de 8,3 Mo,
+        exclu du commit E0. Copie depuis r-test (commit 6fda1b18) dans le dossier de la campagne,
+        apres controle de son identifiant d'objet Git (git hash-object --no-filters = blob de HEAD).
+        Il n'est peut-etre pas lu en mode stationnaire ; il est fourni pour ne pas faire dependre
+        l'execution de cette question.
+  lecture_des_sorties: C:\dev\matlab-toolbox\Utilities\ReadFASTbinary.m (commit 66256c2)
+  matlab: R2024a (24.1.0.2537033)
+
+reglages_releves:   # modele commite 7232a48, dossier 5MW_Land_AeroMap ; AUCUN n'est modifie
+  fst:
+    AirDens: 1.225
+    KinVisc: 1.464e-05
+    CompElast: 1        # ElastoDyn
+    CompAero: 2         # AeroDyn
+    CompInflow: 1
+    CompServo: 1
+  aerodyn:
+    Wake_Mod: 1         # BEMT
+    BEM_Mod: 1
+    Skew_Mod: 1
+    TipLoss: true
+    HubLoss: true
+    TanInd: true
+    AIDrag: false
+    TIDrag: false
+    DBEMT_Mod: 0
+    UA_Mod: 3
+    TwrPotent: 1
+    TwrShadow: 0
+  elastodyn:
+    FlapDOF1: true
+    FlapDOF2: true
+    EdgeDOF: true
+    DrTrDOF: true
+    GenDOF: true
+    TwFADOF1: true
+    TwSSDOF1: true
+    TipRad: 63.0
+    HubRad: 1.5
+    PreCone: -2.5       # deg, convention ElastoDyn (cone vers l'amont)
+    ShftTilt: -5.0      # deg, convention ElastoDyn
+  drv_conserves:        # repris tels quels du .drv de r-test
+    Toler: 1.0e-4
+    MaxIter: 50
+    N_SSJac: 1
+    SSJacSclFact: 1.0e+5
+
+balayages:
+  B1:
+    objet: pic de Cp selon le protocole de Jonkman (vent fixe a 8 m/s, vitesse du rotor variable)
+    WindSpeedOrTSR: 1   # vitesse de vent imposee
+    vent_m_s: 8.0
+    lambda_vise: {debut: 6.0, fin: 9.0, pas: 0.05}      # 61 valeurs
+    beta_deg: {debut: -1.0, fin: 2.0, pas: 0.25}        # 13 valeurs
+    vitesse_rotor_rpm: "lambda_vise * 8 / R_eff * 30/pi, avec R_eff = TipRad * cos(2,5 deg) = 62,9401 m"
+    nombre_de_cas: 793
+    note: "lambda effectif lu dans la colonne TSR de la sortie, pas recalcule"
+  B2:
+    objet: tableau 7-1 (rotor fixe a 12,1 tr/min, vent variable)
+    WindSpeedOrTSR: 1
+    vitesse_rotor_rpm: 12.1
+    vents_m_s: [11.4, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+    beta_deg: {debut: 0.0, fin: 25.0, pas: 0.1}         # 251 valeurs
+    nombre_de_cas: 3765
+  B3:
+    objet: surface pour E2 (convention declaree - rotor a 12,1 tr/min, V = R_eff * Omega / lambda)
+    WindSpeedOrTSR: 2   # TSR impose
+    vitesse_rotor_rpm: 12.1
+    lambda: {debut: 2.0, fin: 13.0, pas: 0.25}          # 45 valeurs
+    beta_deg: {debut: 0.0, fin: 30.0, pas: 0.5}         # 61 valeurs
+    nombre_de_cas: 2745
+
+references_jonkman_2009:
+  source: "Jonkman et al. (2009), NREL/TP-500-38060 ; PDF sha256 045bd1f626958e1c3cf33450b4ddd3d1ebe6c75f4d0c6f4c8360e335c4852f7b"
+  tableau_7_2: {Cp_max: 0.482, lambda_opt: 7.55, beta_opt_deg: 0.0, page_pdf: 30}
+  puissance_mecanique_nominale_W: 5296610
+  tableau_7_1:   # page PDF 34 ; rotor a 12,1 tr/min ; derivee obtenue par linearisation a sillage fige
+    vent_m_s:   [11.4, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+    pas_deg:    [0.00, 3.83, 6.60, 8.70, 10.45, 12.06, 13.54, 14.92, 16.23, 17.47, 18.70, 19.94, 21.18, 22.35, 23.47]
+    dP_dtheta_W_par_rad: [-28.24e6, -43.73e6, -51.66e6, -58.44e6, -64.44e6, -70.46e6, -76.53e6, -83.94e6, -90.67e6, -94.71e6, -99.04e6, -105.90e6, -114.30e6, -120.20e6, -125.30e6]
+
+definitions:
+  convergence: >
+    Un cas est NON CONVERGE si Iterations >= MaxIter (50), ou AvgError > Toler (1e-4), ou si une
+    sortie utilisee (RtAeroCp, RtAeroPwr, TSR, WindSpeed, RotorSpeed, Pitch) n'est pas finie.
+  cas_manquant: "nombre de lignes de la sortie different du nombre de cas du .drv"
+
+criteres:
+  C1:
+    statut: acceptation
+    donnees: B1, cas converges
+    calcul: "Cp* = max de RtAeroCp sur la grille (sans interpolation ni lissage)"
+    tolerance: "|Cp* - 0,482| <= 0,010"
+  C2:
+    statut: acceptation
+    donnees: B1, cas converges, ligne du maximum de C1
+    calcul: "lambda* = colonne TSR de cette ligne ; beta* = colonne Pitch"
+    tolerance: "lambda* dans [7,30 ; 7,80] ET beta* dans [-0,5 ; 0,5] deg"
+  C3:
+    statut: acceptation
+    donnees: B2, pour chacun des 15 vents
+    calcul: >
+      P(beta) = RtAeroPwr. Si P(0) <= 5 296 610 W, beta_eq = 0 deg (saturation a 0, regle adoptee).
+      Sinon, beta_eq = premier croisement de P = 5 296 610 W en partant de beta = 0, par
+      interpolation lineaire en beta entre les deux points de grille qui l'encadrent.
+      Si aucun croisement sur [0 ; 25] deg alors que P(0) > 5 296 610 W : beta_eq non defini,
+      ce qui est un ECHEC de C3 pour ce vent.
+    tolerance: "|beta_eq - pas du tableau 7-1| <= 1,0 deg pour CHACUN des 15 vents"
+  C4:
+    statut: indicatif (sans seuil)
+    donnees: B2
+    calcul: >
+      dP/dbeta par differences centrees entre equilibres voisins (pas 0,1 deg ; difference avant
+      au bord beta = 0), convertie en W/rad, interpolee lineairement en beta_eq.
+      Rapporte par vent : valeur, valeur du tableau 7-1 et rapport.
+    mention: "dP/dtheta compared indicatively; the reference values were obtained by frozen-wake linearization"
+  C5:
+    statut: acceptation
+    donnees: B1, B2, B3
+    tolerance: >
+      (a) RtAeroCp <= 16/27 pour tous les cas ou il est fini ;
+      (b) aucun cas manquant dans B1, B2, B3 ;
+      (c) aucun cas non converge dans la zone utile : B2 entier, et B3 pour lambda dans [3 ; 10]
+          et beta dans [0 ; 25] deg. Hors zone utile (reste de B3, et B1), les cas non converges
+          sont comptes et rapportes, sans faire echouer C5.
+  C6:
+    statut: indicatif
+    donnees: B1 et B3 a beta = 0 deg
+    calcul: >
+      Cp de B1 (colonne TSR, beta = 0) interpole lineairement aux lambda de B3 compris dans le
+      domaine de B1 ; ecart B3 - B1 rapporte (maximum absolu et valeur a lambda = 7,5).
+
+verdict:
+  regle: "ACCEPTEE si C1, C2, C3 et C5 sont satisfaits ; sinon NON ACCEPTEE, avec la liste des criteres en echec"
+  interdit: "retoucher la surface, la grille ou une tolerance apres l'execution"
+
+sorties_prevues:   # toutes sous results/ (hors Git)
+  dossier: results/Q1-E1-AEROMAP-2026-10-08-a/
+  contenu:
+    - model/ : copie du modele commite, empreintes verifiees, et le .bts
+    - model/5MW_Land_AeroMap/E1_B1.drv, E1_B2.drv, E1_B3.drv
+    - model/5MW_Land_AeroMap/E1_B1.outb, E1_B2.outb, E1_B3.outb (produits en E1-2)
+    - manifeste_E1.txt : commit du depot, empreintes du modele, du .bts, des .drv et de l'executable
+    - analyse/verdict_E1.txt et analyse/C3_C4_par_vent.csv (produits en E1-3)
+
+scripts:
+  generation: openfast_q1/E1/generer_drv_E1.m
+  analyse: openfast_q1/E1/analyse_E1.m
+  execution: "a definir dans l'autorisation E1-2 (commande openfast_x64.exe -steadystate <drv>, estampille)"
