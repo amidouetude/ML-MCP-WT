@@ -1,0 +1,170 @@
+% ===========================================================================
+% MAIN FILE - single OpenFAST article (Q1)
+% Amidou Maiga - Erciyes University
+% Compile: pdflatex -> bibtex -> pdflatex -> pdflatex (IEEEtran style)
+% Skeleton created after supervisor action 4 (09/10/2026): preamble taken from
+% Paper_P2/main.tex, bibliography copied from Paper_P2/references.bib (entries
+% verified in phase 2). Sections are written step by step (E0 to E9); no number
+% enters a section without a line in registre_valeurs_publiees.csv.
+% ===========================================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% ── Encoding & language ─────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+% ── Mathematics ─────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb}
+
+% ── Graphics & tables ───────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[table]{xcolor}
+\definecolor{revQ1}{RGB}{0,70,200} % text revised during review; set to {0,0,0} for the final version
+\usepackage{float}
+\usepackage{makecell}
+
+
+% ── Layout ──────────────────────────────────────────────────────────────────
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+\setlength{\parindent}{1cm}
+
+% ── Lists ───────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+
+% ── Units ───────────────────────────────────────────────────────────────────
+\usepackage{siunitx}
+\sisetup{separate-uncertainty=true}
+
+% ── Algorithm / pseudocode ───────────────────────────────────────────────────
+\usepackage[ruled, vlined, linesnumbered]{algorithm2e}
+
+% ── Citations (IEEE numeric : [1], [2]--[4]) ─────────────────────────────────
+% cite is loaded BEFORE hyperref; separators taken from IEEEtran.cls.
+\usepackage{cite}
+\renewcommand{\citepunct}{], [}
+\renewcommand{\citedash}{]--[}
+
+% ── Hyperlinks ──────────────────────────────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks = true,
+    linkcolor  = blue,
+    citecolor  = blue,
+    urlcolor   = blue,
+    pdftitle   = {TODO: working title},
+    pdfauthor  = {Amidou Maiga},
+}
+
+% ── Bibliography ────────────────────────────────────────────────────────────
+\bibliographystyle{IEEEtran}   % order of first citation
+
+% ── Table font size ─────────────────────────────────────────────────────────
+\usepackage{etoolbox}
+\AtBeginEnvironment{table}{\small}
+
+% ── Custom commands (shared across all sections) ─────────────────────────────
+\newcommand{\omegar}{\omega_r}
+\newcommand{\omegarated}{\omega_{\text{rated}}}
+\newcommand{\Tg}{T_g}
+\newcommand{\Ta}{T_a}
+\newcommand{\Kopt}{K_{\text{opt}}}
+\newcommand{\Cp}{C_p}
+\newcommand{\betacmd}{\beta_{\text{cmd}}}
+\newcommand{\RMSE}{\text{RMSE}}
+%\newcommand{\deg}{^{\circ}}
+
+% ===========================================================================
+% TITLE PAGE
+% ===========================================================================
+\title{
+    \Large\textbf{TODO: working title}
+}
+
+\author{
+	\textbf{Amidou Maiga},
+	\textbf{Mustafa Serdar GENÇ},
+	\textbf{Gamze GENÇ},\\
+	\textbf{Ahmet AKSÖZ},
+	\textbf{Dongran Song},   
+}
+
+%\author{
+%	\textbf{Amidou Maiga}\\[0.4em]
+%	\small Department of Energy Systems Engineering\\
+%	\textbf{Mustafa Serdar GENÇ}\\[0.4em]
+%	\small Department of Energy Systems Engineering\\
+%	\small Erciyes University, Kayseri, Turkey\\[0.5em]
+%	\textbf{Gamze GENÇ}\\[0.4em]
+%	\small Department of Energy Systems Engineering\\
+%	\small Erciyes University, Kayseri, Turkey\\   [0.5em]
+%	\textbf{Ahmet AKSÖZ}\\[0.4em]
+%	\small Department of Electrical-Electronic Engineering\\
+%	\small Kayseri University, Kayseri, Turkey\\ [0.5em]
+%	\textbf{Dongran Song}\\[0.4em]
+%	\small Department of Electrical-Electronic Engineering\\
+%	\small Central South University, Changsha, China\\   
+%}
+
+\date{}
+
+% ===========================================================================
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+% -- Abstract
+\input{sections/00_abstract}
+\newpage
+
+% -- Table of contents
+\tableofcontents
+\newpage
+
+% -- Sections
+\input{sections/01_introduction}
+\newpage
+
+\input{sections/02_methods}
+\newpage
+
+\input{sections/03_reference_controller}
+\newpage
+
+\input{sections/04_data_generation}
+\newpage
+
+\input{sections/05_learned_models}
+\newpage
+
+\input{sections/06_nmpc_formulation}
+\newpage
+
+\input{sections/07_closed_loop_results}
+\newpage
+
+\input{sections/08_computational_cost}
+\newpage
+
+\input{sections/09_discussion}
+\newpage
+
+\input{sections/10_conclusion}
+\newpage
+
+% -- Bibliography
+\bibliography{references}
+
+\end{document}
