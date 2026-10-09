@@ -36,6 +36,18 @@ __pycache__/
 Paper_P2/Articles/
 # Consignes de supervision, mises a jour presque chaque jour.
 /CLAUDE.md
+# ---- Q1 (09/10/2026) ---------------------------------------------------
+# LaTeX build products of the Q1 manuscript
+Paper_Q1/*.aux
+Paper_Q1/*.log
+Paper_Q1/*.out
+Paper_Q1/*.pdf
+Paper_Q1/*.synctex.gz
+Paper_Q1/*.toc
+Paper_Q1/*.bbl
+Paper_Q1/*.blg
+# Author's personal notes
+openfast_q1/courses/
 # ---- EXCEPTIONS : ces fichiers DOIVENT etre versionnes ------------------
 # Les fiches de campagne sont du protocole, pas du resultat.
 !docs/campagnes/*.yaml
