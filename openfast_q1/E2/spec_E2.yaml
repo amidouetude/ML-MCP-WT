@@ -2,6 +2,7 @@
 # STATUS: ADOPTED by the author on 15/10/2026, with two corrections (generator_torque, V2_derivatives)
 # AMENDMENT 15/10/2026: forbidden_wordings items 1 and 3 enclosed in single quotes to make the file valid YAML; wording unchanged.
 # AMENDMENT 2, 15/10/2026 (V0 result): OpenFAST normalizes RtAeroCp and TSR with rmax (deflection-dependent, 62.12-62.98 m in B3) and V_dot_x; Cp table rebuilt from power with fixed R; wind variant selected in V3 by a pre-registered rule.
+# AMENDMENT 3, 15/10/2026: J corrected to the ElastoDyn rotor inertia of the model (previous value 43,788,060 came from Jonkman's continuous blade properties, -0.195 % mismatch); V1 uses wind variant (i); V2b transition jumps reported without threshold.
 # Rule: this spec, the model code and the verification/validation scripts are committed
 # BEFORE any execution. Thresholds below cannot be changed after results are seen;
 # an error is corrected by a dated amendment in a separate commit.
@@ -56,7 +57,7 @@ model:
     rho:   {value: 1.225, unit: kg/m3, source: "5MW_Land .fst AirDens (model commit 7232a48)"}
     R:     {value: 62.9401, unit: m, source: "E1 convention R_eff = TipRad*cos(2.5 deg); fixed reference radius for Cp and lambda (amendment 2)"}
     A:     {value: "pi*R^2", source: "fixed reference area pi*R^2; OpenFAST uses pi*rmax^2 with deflection-dependent rmax (AeroDyn_IO.f90:313), hence the rebuilt table (amendment 2)"}
-    J:     {value: 43788060, unit: kg m2, source: "rotor 38,762,562 (ElastoDyn blade + HubIner 115,926) + 97^2 * GenIner 534.116; computation script committed with this spec"}
+    J:     {value: 43702557, unit: kg m2, source: "rotor inertia 38,677,060 kg m2 computed by ElastoDyn v4.2.1 for this model (BldNodes 17, AdjBlMs 1.04536, PreCone -2.5 deg, HubIner 115,926), read in results/Q1-E3-DISCON-BUILD-2026-10-09-a/test/5MW_Land_DLL_WTurb/5MW_Land_DLL_WTurb.ED.sum (sha256 9a886ece45329588ba7a25dc9d0934e3c65b51123d12853796f33f65ab6459dc) + 97^2 * GenIner 534.116; compute_inertia_E2.m reproduces the ElastoDyn method and stops if the deviation exceeds 0.1 % (amendment 3)"}
     N:     {value: 97, source: "ElastoDyn GBRatio"}
     Cp:    {source: "E1_B3.outb (12.1 rpm, lambda 2:0.25:13, beta 0:0.5:30); Cp = RtAeroPwr / (0.5*rho*pi*R^2*WindSpeed^3), lambda = (RotorSpeed*pi/30)*R/WindSpeed (RotorSpeed in rpm), R = 62.9401 m fixed; RtAeroCp and TSR columns not used (amendment 2)"}
   cp_interpolant:
@@ -87,6 +88,7 @@ verification:   # no OpenFAST run needed
       at the 15 E1 wind speeds, omega_r = 12.1 rpm, beta = E1 beta_eq (C3_C4_par_vent.csv):
       residual torque |Q_aero - N*Q_g| / Q_rated_LSS
     pass: "<= 1 % at each of the 14 non-saturated speeds  # adopted 15/10/2026"
+    variant: "(i) - E1 equilibria come from AeroMap, where V_dot_x = WindSpeed (V0 result) (amendment 3)"
   V2_derivatives:
     check: >
       Jacobian of the discrete model w.r.t. x and beta on the 15 equilibria: forward finite
@@ -96,7 +98,7 @@ verification:   # no OpenFAST run needed
     pass: >
       relative error <= 1e-5 at the nlmpc default step where interpolant and torque law are
       smooth; points at region transitions and saturations reported separately
-  V2b_units_signs: "unit tests: signs of dQ_aero/dbeta (< 0 above rated), dQ_aero/dV (> 0), torque-law continuity at transitions"
+  V2b_units_signs: "unit tests: signs of dQ_aero/dbeta (< 0 above rated) and dQ_aero/dV (> 0) - SATISFIED / NOT SATISFIED; torque-law jumps at region transitions, including the switch to region 3 at beta >= 1 deg - REPORTED, no threshold (amendment 3)"
 
 validation:     # against OpenFAST + qualified DISCON
   V3_pitch_steps:
