@@ -1,0 +1,124 @@
+# E2 campaign spec - reduced-order physics model of the land-based NREL 5-MW
+# STATUS: ADOPTED by the author on 15/10/2026, with two corrections (generator_torque, V2_derivatives)
+# Rule: this spec, the model code and the verification/validation scripts are committed
+# BEFORE any execution. Thresholds below cannot be changed after results are seen;
+# an error is corrected by a dated amendment in a separate commit.
+
+campaign:
+  id: Q1-E2-ROM-<execution date>-a
+  step: E2
+  purpose: >
+    Build and qualify the reduced-order physics model used as internal model of the
+    physics-based NMPC (arm B), and as the common structure (states, inputs, sample time)
+    that the six learned families must reproduce in E5.
+  depends_on:
+    E1: "Q1-E1-AEROMAP-2026-10-08-a, accepted; B3 table E1_B3.outb sha256 398a8918..."
+    E3_DISCON: "DISCON.dll sha256 b9229079..., accepted on r-test case (means); region-3 qualification pending"
+  adopted_choices: "author's decisions of 15/10/2026 (7 choices) - listed in 'model' and 'nmpc_interface'"
+
+model:
+  states:
+    omega_r: "low-speed-shaft rotor speed (rad/s); compared with OpenFAST channel RotSpeed"
+    omega_f: >
+      filtered generator speed (rad/s, high-speed side), first-order low-pass with corner
+      frequency 0.25 Hz, as in the baseline controller (Jonkman 2009, sec. 7.1; DISCON.F90 at
+      r-test 6fda1b18). Continuous form: d(omega_f)/dt = 2*pi*0.25 * (N*omega_r - omega_f).
+  inputs:
+    beta: >
+      collective pitch angle (deg), manipulated variable. No actuator state: ServoDyn
+      (PCMode 4 or 5, BPCutoff 9999.9 Hz) applies the commanded pitch without dynamics.
+      Bounds and rate are NMPC constraints (see nmpc_interface), not model states.
+  disturbance:
+    V: "hub-height longitudinal wind speed (m/s), OpenFAST channel Wind1VelX"
+  equations:
+    drivetrain: "J * d(omega_r)/dt = Q_aero - N * Q_g      (single rigid mass)"
+    aerodynamics: "Q_aero = 0.5 * rho * A * R * V^2 * Cp(lambda, beta) / lambda,  lambda = omega_r * R / V"
+    generator_torque: >
+      Jonkman baseline torque law, constants and branch tests read from DISCON.F90 (r-test
+      6fda1b18; lines 88-101, 174-180, 384 onward), evaluated on omega_f and on the pitch
+      command beta: region 1 if omega_f <= VS_CtInSp (70.16224 rad/s, 670 rpm HSS): Q_g = 0;
+      region 1 1/2 below VS_Rgn2Sp (91.21091 rad/s, 871 rpm): linear ramp; region 2 below
+      VS_TrGnSp (computed as in DISCON.F90 line 180): Q_g = VS_Rgn2K * omega_f^2 with
+      VS_Rgn2K = 2.332287 N m/(rad/s)^2; region 2 1/2: linear, slip VS_SlPc = 10 %;
+      region 3 if omega_f >= VS_RtGnSp (121.6805 rad/s, 1161.963 rpm) OR beta >= VS_Rgn3MP
+      (1 deg): Q_g = VS_RtPwr / omega_f, VS_RtPwr = 5,296,610 W; saturated at
+      VS_MaxTq = 47,402.91 N m. A unit test compares every constant with DISCON.F90.
+    electrical_power: "P_e = 0.944 * Q_g * omega_g  (output only; GenEff 94.4 %, GBoxEff 100 %)"
+  simplifications_declared:
+    - "rigid drivetrain (OpenFAST: DrTrDOF and GenDOF true, first torsion mode 0.6205 Hz)"
+    - "no mechanical loss term (GBoxEff = 100 % in ElastoDyn; the only loss is electrical)"
+    - "no torque-rate limit (15,000 N m/s in DISCON), adopted 15/10/2026; effect checked in V3 and V4"
+    - "quasi-steady aerodynamics (Cp table from steady BEM; OpenFAST runs UA_Mod 3)"
+    - "hub-height wind used as rotor-effective wind"
+  parameters:
+    rho:   {value: 1.225, unit: kg/m3, source: "5MW_Land .fst AirDens (model commit 7232a48)"}
+    R:     {value: 62.9401, unit: m, source: "E1 convention R_eff = TipRad*cos(2.5 deg); V0 check below"}
+    A:     {value: "pi*R^2", source: "same convention as OpenFAST RtAeroCp; V0 check below"}
+    J:     {value: 43788060, unit: kg m2, source: "rotor 38,762,562 (ElastoDyn blade + HubIner 115,926) + 97^2 * GenIner 534.116; computation script committed with this spec"}
+    N:     {value: 97, source: "ElastoDyn GBRatio"}
+    Cp:    {source: "E1_B3.outb (12.1 rpm, lambda 2:0.25:13, beta 0:0.5:30), 2745 converged points"}
+  cp_interpolant:
+    method: "griddedInterpolant 'makima' (C1, no overshoot)  # adopted 15/10/2026"
+    out_of_domain: "no extrapolation, no clipping of Cp at 0 or at Betz; a domain flag is raised and counted"
+    numerical_guard: "lambda computed with V >= 0.1 m/s; named 'numerical guard', reported if active"
+  discretization:
+    form: "discrete-time model supplied to nlmpc (IsContinuousTime = false)"
+    integrator: "RK4, 4 sub-steps per Ts  # adopted 15/10/2026"
+    precision: "double throughout"
+
+nmpc_interface:   # what E6 will use; fixed here so that B and C1..C6 share it
+  Ts: {main: 0.05, sensitivity: [0.025, 0.1], unit: s, note: "integer multiples of OpenFAST DT = 0.00625 s"}
+  horizon: "T_H >= 1.5 s (Np = 30 at Ts = 0.05 s); confirmed against the rotor time constant measured in V3"
+  cost: "speed tracking (omega_r - omega_rated)^2 + pitch increments; NO electrical-power term"
+  power_reference: "P_ref = 5 MW electrical, used as an outcome metric only"
+  constraints: "beta in [0, 30] deg, |d beta/dt| <= 8 deg/s (Jonkman), as MV bounds and MV rate bounds"  # B3 table domain; fraction of time DISCON exceeds 30 deg measured in E3
+  wind_assumption: "main arms: V measured at hub at time k, held constant over the horizon; separate arm with perfect preview (E7)"
+  coupling: "Simulink S-function FAST_SFunc (PCMode = 4, VSContrl = 4) for NMPC arms"
+
+verification:   # no OpenFAST run needed
+  V0_conventions:
+    check: "R and A used by OpenFAST for RtAeroCp and TSR (AeroDyn source v4.2.1, file and line quoted)"
+    pass: "identical to the parameters above; otherwise stop and amend before coding"
+  V1_equilibrium:
+    check: >
+      at the 15 E1 wind speeds, omega_r = 12.1 rpm, beta = E1 beta_eq (C3_C4_par_vent.csv):
+      residual torque |Q_aero - N*Q_g| / Q_rated_LSS
+    pass: "<= 1 % at each of the 14 non-saturated speeds  # adopted 15/10/2026"
+  V2_derivatives:
+    check: >
+      Jacobian of the discrete model w.r.t. x and beta on the 15 equilibria: forward finite
+      differences as used by nlmpc vs central differences; relative step swept from 1e-2 to
+      1e-10; reference = plateau of the central differences. Complex step not applicable
+      (griddedInterpolant, min/max do not propagate the imaginary part).
+    pass: >
+      relative error <= 1e-5 at the nlmpc default step where interpolant and torque law are
+      smooth; points at region transitions and saturations reported separately
+  V2b_units_signs: "unit tests: signs of dQ_aero/dbeta (< 0 above rated), dQ_aero/dV (> 0), torque-law continuity at transitions"
+
+validation:     # against OpenFAST + qualified DISCON
+  V3_pitch_steps:
+    plant: "openfast_x64.exe + DISCON b9229079, steady wind 14, 18, 22 m/s; pitch override (TPitManS, PitManRat 8 deg/s) of +1 deg and -1 deg"
+    compare: "omega_r over 10 s after the step, model driven by the recorded BldPitch1 and Wind1VelX"
+    pass: "e_max(omega_r) over the first 1.5 s <= 2 % of rated rotor speed  # adopted 15/10/2026; 10-s window reported only"
+  V4_turbulent_segments:
+    data: "E3 region-3 DISCON runs (TurbSim NTM cat. A; seeds disjoint from E4 training seeds)"
+    protocol: >
+      segments of length T_H re-initialized every T_H on the OpenFAST state
+      (omega_r from RotSpeed, omega_f rebuilt from GenSpeed with the same filter);
+      inputs replayed: recorded BldPitch1; wind either (a) recorded trajectory, or (b) held at k.
+      (a) measures model error, (b) adds the wind-assumption error.
+    metrics: "RMSE, MAE, e_max, bias of omega_r, per wind speed; median and P95 over segments"
+    pass: "(a) median e_max <= 2 % and P95 e_max <= 5 % of rated rotor speed  # adopted 15/10/2026; (b) reported only"
+  exit_decision: "GO if V0-V4 pass; GO WITH CONDITIONS if V4 fails only at listed speeds (domain restricted, stated in paper); NO-GO otherwise"
+
+order_of_work:
+  1: "adopt this spec; commit spec + model code + verification scripts (before execution)"
+  2: "run V0-V2 (no OpenFAST)"
+  3: "exploratory Simulink feasibility test (separate short spec; no publishable value)"
+  4: "E3: plant-equivalence test (exe+DISCON vs S-function replay) and region-3 qualification of DISCON"
+  5: "run V3-V4; exit decision"
+
+forbidden_wordings:
+  - "validated" for the model before V3 and V4 pass
+  - "real time"
+  - "the pitch regulates power" (region 3: power is held by the torque law)
