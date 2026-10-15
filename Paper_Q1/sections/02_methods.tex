@@ -3,5 +3,25 @@
 \label{sec:methods}
 
 % TODO: Step E0: frozen environment (OpenFAST v4.2.1, r-test, binaries, MATLAB R2024a, machine); single-precision OpenFAST build to be declared.
-% TODO: Step E1: aerodynamic surface Cp(lambda, beta) from OpenFAST steady-state analysis; validation against Jonkman et al. (2009).
+\subsection{Aerodynamic model and its verification}
+\label{subsec:aero_verification}
+{\color{revQ1}
+The plant is the land-based NREL 5-MW reference wind turbine~\cite{jonkman2009}, simulated with OpenFAST v4.2.1 (ElastoDyn structural model, AeroDyn blade-element momentum aerodynamics, ServoDyn control interface) using the input files of the OpenFAST regression-test suite. Before any controller is designed, the aerodynamic model is checked against the values published by Jonkman \emph{et al.}~\cite{jonkman2009}, with acceptance criteria fixed before the computations. Three steady-state sweeps were computed with the OpenFAST aerodynamic-map solver: (i) at a fixed wind speed of 8~m/s, varying rotor speed and collective pitch, as in~\cite{jonkman2009}; (ii) at the rated rotor speed of 12.1~rpm, for the fifteen wind speeds of~\cite[Table~7-1]{jonkman2009}; (iii) on a tip-speed-ratio and pitch grid at 12.1~rpm, which provides the $C_p(\lambda,\beta)$ table used by the physics-based internal model.
+
+Figure~\ref{fig:E1_peak} shows the power coefficient computed near its maximum at a fixed wind speed of 8~m/s, for collective pitch angles around zero, together with the peak reported in~\cite{jonkman2009}. The computed peak is 0.4825 at $\lambda = 7.50$ and $\beta = -0.25^\circ$ (grid values), against 0.482 at $\lambda = 7.55$ and $\beta = 0^\circ$ reported in~\cite{jonkman2009}. Figure~\ref{fig:E1_beq} compares, above rated wind speed, the equilibrium pitch angles that hold the aerodynamic power at the rated mechanical power of 5.296610~MW~\cite{jonkman2009} with the values of~\cite[Table~7-1]{jonkman2009} (top panel), and shows their difference (bottom panel); over the fifteen wind speeds from 11.4 to 25~m/s, the maximum deviation is $0.33^\circ$ (at 25~m/s). The pitch sensitivities $\partial P/\partial\theta$ obtained from these steady-state equilibria are between 0.11 (at 11.4~m/s, where the equilibrium pitch is saturated at $0^\circ$) and 0.87 times the published values; since the latter were obtained by a frozen-wake linearization~\cite{jonkman2009}, the two quantities are compared indicatively only.
+}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{figures/E1_fig3_Cp_peak_region.pdf}
+\caption{{\color{revQ1}Power coefficient near its maximum at a fixed wind speed of 8~m/s, for collective pitch angles around zero (OpenFAST aerodynamic-map solver, converged points only). Filled circle: computed grid maximum; star: value reported in~\cite{jonkman2009}.}}
+\label{fig:E1_peak}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\linewidth]{figures/E1_fig2_equilibrium_pitch_vs_wind.pdf}
+\caption{{\color{revQ1}Top: equilibrium collective pitch at the rated rotor speed and rated mechanical power, computed with OpenFAST (circles) and reported in~\cite[Table~7-1]{jonkman2009} (squares). Bottom: difference between the two (this work minus Table~7-1).}}
+\label{fig:E1_beq}
+\end{figure}
 % TODO: Step E2: reduced-order physical model aligned with the NREL 5-MW (internal model of the physics-based NMPC).
