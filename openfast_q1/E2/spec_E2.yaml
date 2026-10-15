@@ -1,5 +1,6 @@
 # E2 campaign spec - reduced-order physics model of the land-based NREL 5-MW
 # STATUS: ADOPTED by the author on 15/10/2026, with two corrections (generator_torque, V2_derivatives)
+# AMENDMENT 15/10/2026: forbidden_wordings items 1 and 3 enclosed in single quotes to make the file valid YAML; wording unchanged.
 # Rule: this spec, the model code and the verification/validation scripts are committed
 # BEFORE any execution. Thresholds below cannot be changed after results are seen;
 # an error is corrected by a dated amendment in a separate commit.
@@ -119,6 +120,6 @@ order_of_work:
   5: "run V3-V4; exit decision"
 
 forbidden_wordings:
-  - "validated" for the model before V3 and V4 pass
+  - '"validated" for the model before V3 and V4 pass'
   - "real time"
-  - "the pitch regulates power" (region 3: power is held by the torque law)
+  - '"the pitch regulates power" (region 3: power is held by the torque law)'
