@@ -59,3 +59,5 @@ openfast_q1/courses/
 # lisent la racine. Deux registres de valeurs publiees, c'est la regle 2 violee.
 !docs/registre_campagnes.csv
 !docs/classement_P2.csv
+# Q1 manuscript figures (15/10/2026): produced by stamped scripts, copied unchanged from results/
+!Paper_Q1/figures/*.pdf
