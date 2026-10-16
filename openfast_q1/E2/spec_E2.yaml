@@ -3,6 +3,7 @@
 # AMENDMENT 15/10/2026: forbidden_wordings items 1 and 3 enclosed in single quotes to make the file valid YAML; wording unchanged.
 # AMENDMENT 2, 15/10/2026 (V0 result): OpenFAST normalizes RtAeroCp and TSR with rmax (deflection-dependent, 62.12-62.98 m in B3) and V_dot_x; Cp table rebuilt from power with fixed R; wind variant selected in V3 by a pre-registered rule.
 # AMENDMENT 3, 15/10/2026: J corrected to the ElastoDyn rotor inertia of the model (previous value 43,788,060 came from Jonkman's continuous blade properties, -0.195 % mismatch); V1 uses wind variant (i); V2b transition jumps reported without threshold.
+# AMENDMENT 4, 15/10/2026: R corrected from 62.9401 to 63*cos(2.5 deg) = 62.940038 m (rounding error carried from fiche_E1.yaml l.82; generer_drv_E1.m and the AeroMap driver use the exact value); no other change.
 # Rule: this spec, the model code and the verification/validation scripts are committed
 # BEFORE any execution. Thresholds below cannot be changed after results are seen;
 # an error is corrected by a dated amendment in a separate commit.
@@ -55,11 +56,11 @@ model:
     - "hub-height wind used as rotor-effective wind (variant i) or corrected for shaft tilt only (variant ii); disk averaging and blade elastic velocity not modelled"
   parameters:
     rho:   {value: 1.225, unit: kg/m3, source: "5MW_Land .fst AirDens (model commit 7232a48)"}
-    R:     {value: 62.9401, unit: m, source: "E1 convention R_eff = TipRad*cos(2.5 deg); fixed reference radius for Cp and lambda (amendment 2)"}
+    R:     {value: 62.940038, unit: m, source: "R = TipRad*cos(PreCone) = 63*cos(2.5 deg), computed in code; equals rTipFixMax, the radius used by the AeroMap driver to set WindSpeed from TSR in B3 (FAST_SS_Subs.f90:216; AeroDyn.f90:4664-4675); fixed reference radius for Cp and lambda (amendments 2 and 4)"}
     A:     {value: "pi*R^2", source: "fixed reference area pi*R^2; OpenFAST uses pi*rmax^2 with deflection-dependent rmax (AeroDyn_IO.f90:313), hence the rebuilt table (amendment 2)"}
     J:     {value: 43702557, unit: kg m2, source: "rotor inertia 38,677,060 kg m2 computed by ElastoDyn v4.2.1 for this model (BldNodes 17, AdjBlMs 1.04536, PreCone -2.5 deg, HubIner 115,926), read in results/Q1-E3-DISCON-BUILD-2026-10-09-a/test/5MW_Land_DLL_WTurb/5MW_Land_DLL_WTurb.ED.sum (sha256 9a886ece45329588ba7a25dc9d0934e3c65b51123d12853796f33f65ab6459dc) + 97^2 * GenIner 534.116; compute_inertia_E2.m reproduces the ElastoDyn method and stops if the deviation exceeds 0.1 % (amendment 3)"}
     N:     {value: 97, source: "ElastoDyn GBRatio"}
-    Cp:    {source: "E1_B3.outb (12.1 rpm, lambda 2:0.25:13, beta 0:0.5:30); Cp = RtAeroPwr / (0.5*rho*pi*R^2*WindSpeed^3), lambda = (RotorSpeed*pi/30)*R/WindSpeed (RotorSpeed in rpm), R = 62.9401 m fixed; RtAeroCp and TSR columns not used (amendment 2)"}
+    Cp:    {source: "E1_B3.outb (12.1 rpm, lambda 2:0.25:13, beta 0:0.5:30); Cp = RtAeroPwr / (0.5*rho*pi*R^2*WindSpeed^3), lambda = (RotorSpeed*pi/30)*R/WindSpeed (RotorSpeed in rpm), R = 63*cos(2.5 deg) m fixed (amendment 4); RtAeroCp and TSR columns not used (amendment 2)"}
   cp_interpolant:
     method: "griddedInterpolant 'makima' (C1, no overshoot)  # adopted 15/10/2026"
     out_of_domain: "no extrapolation, no clipping of Cp at 0 or at Betz; a domain flag is raised and counted"
