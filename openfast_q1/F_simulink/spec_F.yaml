@@ -1,5 +1,6 @@
 # Feasibility spec - NMPC in the loop with OpenFAST through the Simulink S-function
 # STATUS: ADOPTED by the author on 16/10/2026 (supervisor proposal of 16/10/2026).
+# AMENDMENT 1, 16/10/2026: S-function electrical-power input and pitch units added; per-call timing by offline replay (the Nonlinear MPC block gives no per-call time).
 # EXPLORATORY: no value from this test enters the registry, the manuscript or any comparison.
 # Its only use is the architecture decision for E6 (spec E2 order_of_work item 3).
 # Rule: this spec and the test code are committed BEFORE execution; criteria cannot be
@@ -30,6 +31,8 @@ controller:
     Jonkman torque law of the E2 model (rom_torque_law.m, model.equations.generator_torque),
     driven by a discrete first-order filter of GenSpeed (CornerFreq of DISCON.F90), evaluated
     at the OpenFAST step DT; output GenTq to the S-function
+  electrical_power: 'S-function input 2 (VSContrl = 4): P_e = 0.944 * Q_g * omega_g, as in E2 model.equations.electrical_power (amendment 1)'
+  pitch_units: 'S-function inputs 5-7 are blade pitch commands in rad (FAST_Library.h l.72-83); the NMPC MV is in deg (E2 model.inputs.beta); the collective command is converted deg to rad and sent to the three blades (amendment 1)'
   pitch: >
     Nonlinear MPC Controller block, sample time nmpc_interface.Ts (0.05 s), prediction horizon
     30 steps (1.5 s, nmpc_interface.horizon), control horizon 5 (provisional, feasibility only),
@@ -48,6 +51,7 @@ cases:
       runs to TMax without error; outputs finite; RotSpeed in [0.8, 1.2] x 12.1 rpm over the
       last 15 s (loop closed, not a performance criterion)
     record: "solver exit flag of every call; wall time per NMPC call (median, P95, P99, max); total wall time"
+    timing_method: 'The block gives no per-call time (R2024a nmpcblock_MaskInitFcn.m l.38, nmpcblock_interface.m l.1). In the loop: ExitFlag of every call (nlp.status output) and total wall time. Per-call time: the block inputs are logged at every Ts (state, last MV, measured disturbance) and the same calls are replayed once each, in the same order and with the same warm-start chain, by nlmpcmove on the same nlmpc object, each timed by tic/toc. Replay fidelity reported as max |MV_replay - MV_block|. Limitation written in the verdict: Simulink overhead not included (amendment 1)'
   F3_nmpc_dlnetwork:
     what: >
       same as F2 for 5 s, with a state function built on an UNTRAINED dlnetwork (fixed
@@ -55,6 +59,7 @@ cases:
       tests only that the block can call predict() and its cost
     pass: "runs 5 s without error"
     record: "same timing as F2; precision of predict() output (single or double)"
+    timing_method: 'as F2 (amendment 1)'
   execution_modes: "interpreted simulation; MEX acceleration of the block attempted once per case and reported (success or error message), never required"
 
 outputs:
