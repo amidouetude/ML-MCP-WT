@@ -1,0 +1,60 @@
+# E3 campaign spec - plant equivalence (exe vs S-function) and region-3 qualification of DISCON
+# STATUS: ADOPTED by the author on 16/10/2026 (supervisor proposal of 16/10/2026, corrected for IECturbc, UsableTime, PLExp).
+# Rule: spec, code and analysis are committed BEFORE execution; criteria cannot be changed after
+# results are seen; corrections by dated amendment in a separate commit. Long runs are launched
+# by the author from a launch block given by the executor (author rule of 16/10/2026).
+# Code cites this spec by key path, not by line number (author rule of 16/10/2026).
+
+campaign:
+  ids: 'Q1-E3-PLANTEQ-<date>-a (E3a) and Q1-E3-QUAL-<date>-a (E3b)'
+  step: 'E3'
+  depends_on:
+    discon: 'results/Q1-E3-DISCON-BUILD-2026-10-09-a/build/DISCON.dll, sha256 b922907959c41a8f1fc9db8e68b43e189ce93eabff4fa0fc2da1b83d18c8671e (accepted on the r-test case)'
+    model: 'openfast_q1/model/5MW_Land_DLL_WTurb, model commit 7232a48'
+    exe: 'C:/dev/openfast-bin/openfast_x64.exe, sha256 dbae80560269c00f4a1f3529b5bb3ffcd111faa6d6791f4cce6dcf321679d924'
+    sfunction: 'C:/dev/openfast-bin/FAST_SFunc.mexw64 16b628c4..., OpenFAST-Simulink_x64.dll 2d61ae5e... (spec_F campaign.depends_on.binaries)'
+    turbsim: 'C:/dev/openfast-bin/TurbSim_x64.exe, sha256 5f70b3e2d50cbe09ad37d98569443a7d6f1b7a97c214bf21bbd9533cf2f29df2'
+  controller_rule: 'DISCON gains and constants are those of DISCON.F90 (Jonkman 2009, Table 7-2); they are never changed, whatever the result'
+
+channels:
+  rule: 'every output channel name is checked, before the code is committed, against the valid-parameter list of its module in the OpenFAST v4.2.1 sources (file and line quoted); a name absent from that list stops the act'
+  required: 'Wind1VelX, RotSpeed, GenSpeed, BldPitch1, BlPitchC1, GenTq, GenPwr, TwrBsMyt, RootMyc1, RtVAvgxh, RtAeroPwr'
+  output_format: 'OutFileFmt as in the model (uncompressed binary), DT_Out = default (every DT = 0.00625 s)'
+
+E3a_plant_equivalence:
+  wind: 'the r-test turbulent field results/Q1-E3-DISCON-BUILD-2026-10-09-a/test/5MW_Baseline/Wind/90m_12mps_twr.bts (sha256 0a368181d3dce9bdb9bb8501e395c1a943aed933098ac914334dcfcc0507d4c1), TMax 60 s'
+  run_1_exe: 'openfast_x64.exe + DISCON.dll (PCMode 5, VSContrl 5), channels of channels.required'
+  run_2_sfunction: 'FAST_SFunc with PCMode 4, VSContrl 4; inputs replayed from run 1 at every DT: GenTq, GenPwr, and BlPitchC1 to BlPitchC3 in rad; no other change'
+  lag_rule: 'the replay is evaluated with lag 0 and with lag 1 DT (commands of step k applied at step k+1); the retained lag is the one with the lower RMS difference of RotSpeed; both are reported'
+  compared: 'RotSpeed, GenPwr, BldPitch1, TwrBsMyt, RootMyc1 over 10 to 60 s'
+  metrics: 'per channel: max |diff| / (max - min of run 1), and mean |diff| / mean |run 1|'
+  pass: 'for each compared channel, max |diff| / range <= 1e-2 and mean |diff| / mean |run 1| <= 1e-3, at the retained lag'
+  wording: 'pass is written CONCORDANT AT EPSILON, never identical (two different binaries)'
+
+E3b_region3_qualification:
+  wind_generation: 'TurbSim from the template openfast_q1/model/5MW_Baseline/Wind/90m_12mps_twr.inp, kept as is for TurbModel IECKAI, IECstandard 1-ed3, IEC_WindType NTM, WindProfileType PL, HubHt and RefHt 90 m. Changes in the copy only: URef = mean speed; RandSeed1 = seed; IECturbc B to A (turbulence category A, I_ref 0.16, choice of the project); UsableTime 60 to 660 (TurbSim then raises AnalysisTime to UsableTime + GridWidth/URef); PLExp default to 0.2 written explicitly (exponent of the IEC normal wind profile, reference to be checked when IEC 61400-1 enters the corpus). Nothing else changes.'
+  mean_speeds: '12, 14, 16, 18, 20, 22, 24 m/s'
+  seeds: 'RandSeed1 in {31001, 31002, 31003} for every speed; this set is reserved for E3 and V4 and excluded from E4'
+  duration: '660 s simulated, the first 60 s excluded from every statistic'
+  runs: '21 (7 speeds x 3 seeds), openfast_x64.exe + DISCON.dll, model unchanged except the InflowWind file (WindType 3, generated .bts) and TMax = 660 s'
+  repeatability: 'the run 18 m/s seed 31001 is executed twice; Q5 passes if the two .outb files have the same SHA-256'
+  criteria:
+    Q1_integrity: 'SHA-256 of every input (model copy, .bts, DLL, binaries) written before each run and unchanged after'
+    Q2_execution: 'every run reaches TMax, all outputs finite'
+    Q3_power: 'for mean speeds >= 14 m/s, mean GenPwr within 5 MW +/- 2 %, per run'
+    Q4_overspeed: 'max RotSpeed <= 1.2 x 12.1 rpm, per run'
+    Q5_repeatability: 'see repeatability'
+    reported_only: 'fraction of time in region 3 (BldPitch1 >= 1 deg or GenSpeed >= 1161.963 rpm), fraction of time with BldPitch1 > 30 deg (E2 nmpc_interface.constraints), mean and std of RotSpeed, number of solver warnings, wall time per run'
+  domain_rule: 'a mean speed belongs to the region-3 core of the paper if its fraction of time in region 3 is >= 0.90 for every seed; the others are reported as transition speeds'
+  verdict: 'QUALIFIED if Q1 to Q5 pass for all runs; QUALIFIED WITH LIMITS if Q3 or Q4 fail only at listed speeds; NOT QUALIFIED otherwise'
+
+outputs:
+  folders: 'results/Q1-E3-PLANTEQ-<date>-a/ and results/Q1-E3-QUAL-<date>-a/'
+  files: 'meta, verdict, case manifests, .bts and .outb of every run, summary CSV per run, console log next to each folder'
+  registry: 'no value enters the values registry from E3 until a manuscript sentence needs it (rule b)'
+
+forbidden_wordings:
+  - 'the two plants are identical'
+  - 'DISCON was validated'
+  - 'real time'
+  - 'the region-3 domain is 12-24 m/s, before domain_rule is applied'
