@@ -1,6 +1,7 @@
 # Feasibility spec - NMPC in the loop with OpenFAST through the Simulink S-function
 # STATUS: ADOPTED by the author on 16/10/2026 (supervisor proposal of 16/10/2026).
 # AMENDMENT 1, 16/10/2026: S-function electrical-power input and pitch units added; per-call timing by offline replay (the Nonlinear MPC block gives no per-call time).
+# AMENDMENT 2, 16/10/2026: in attempt Q1-F-SIMULINK-2026-10-16-b the in-run replay failed (logged x of size [2 1 N]); the per-call timing is obtained by a separate analysis of the logs of that attempt (no new simulation), with replay-fidelity classes fixed before execution.
 # EXPLORATORY: no value from this test enters the registry, the manuscript or any comparison.
 # Its only use is the architecture decision for E6 (spec E2 order_of_work item 3).
 # Rule: this spec and the test code are committed BEFORE execution; criteria cannot be
@@ -52,6 +53,8 @@ cases:
       last 15 s (loop closed, not a performance criterion)
     record: "solver exit flag of every call; wall time per NMPC call (median, P95, P99, max); total wall time"
     timing_method: 'The block gives no per-call time (R2024a nmpcblock_MaskInitFcn.m l.38, nmpcblock_interface.m l.1). In the loop: ExitFlag of every call (nlp.status output) and total wall time. Per-call time: the block inputs are logged at every Ts (state, last MV, measured disturbance) and the same calls are replayed once each, in the same order and with the same warm-start chain, by nlmpcmove on the same nlmpc object, each timed by tic/toc. Replay fidelity reported as max |MV_replay - MV_block|. Limitation written in the verdict: Simulink overhead not included (amendment 1)'
+    offline_replay: 'Analysis script replay_from_logs_F.m on results/Q1-F-SIMULINK-2026-10-16-b/F2/logs.mat and F3/logs.mat (sha256 checked); state reshaped from [2 1 N] to [N 2] before replay_timing_F.m (unchanged); nlmpc object rebuilt by make_nlobj.m, textually identical to make_nlobj of run_F.m at commit d472f58; statistics over all calls and without the first call (amendment 2)'
+    fidelity_classes: 'REPRODUCED if MV_replay equals MV_block bit for bit at every call; CONSISTENT if max |MV_replay - MV_block| <= 1e-6 deg; NOT REPRODUCED otherwise, in which case the times describe nlmpcmove alone and not the block (amendment 2)'
   F3_nmpc_dlnetwork:
     what: >
       same as F2 for 5 s, with a state function built on an UNTRAINED dlnetwork (fixed
