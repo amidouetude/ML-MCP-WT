@@ -4,6 +4,7 @@
 # AMENDMENT 2, 15/10/2026 (V0 result): OpenFAST normalizes RtAeroCp and TSR with rmax (deflection-dependent, 62.12-62.98 m in B3) and V_dot_x; Cp table rebuilt from power with fixed R; wind variant selected in V3 by a pre-registered rule.
 # AMENDMENT 3, 15/10/2026: J corrected to the ElastoDyn rotor inertia of the model (previous value 43,788,060 came from Jonkman's continuous blade properties, -0.195 % mismatch); V1 uses wind variant (i); V2b transition jumps reported without threshold.
 # AMENDMENT 4, 15/10/2026: R corrected from 62.9401 to 63*cos(2.5 deg) = 62.940038 m (rounding error carried from fiche_E1.yaml l.82; generer_drv_E1.m and the AeroMap driver use the exact value); no other change.
+# AMENDMENT 5, 16/10/2026: grid-assignment tolerances of the Cp table written in the spec (1e-4). The executor-chosen 1e-6 of build_cp_table_E2.m was below the single-precision resolution of the OpenFAST outputs and stopped attempt Q1-E2-ROM-2026-10-16-a at step C2 (kept as record). The new value was set after that failure, from the grid spacing and the output precision, not from the observed deviations.
 # Rule: this spec, the model code and the verification/validation scripts are committed
 # BEFORE any execution. Thresholds below cannot be changed after results are seen;
 # an error is corrected by a dated amendment in a separate commit.
@@ -65,6 +66,7 @@ model:
     method: "griddedInterpolant 'makima' (C1, no overshoot)  # adopted 15/10/2026"
     out_of_domain: "no extrapolation, no clipping of Cp at 0 or at Betz; a domain flag is raised and counted"
     numerical_guard: "lambda computed with V >= 0.1 m/s; named 'numerical guard', reported if active"
+    grid_assignment: "each B3 case is assigned to its (lambda, beta) node if |lambda/node - 1| <= 1e-4 and |beta - node| <= 1e-4 deg (amendment 5); node spacing 0.25 in lambda (relative half-spacing >= 9.6e-3) and 0.5 deg in beta; OpenFAST outputs are single precision (1 ulp = 1.9e-6 deg between 16 and 32 deg)"
   discretization:
     form: "discrete-time model supplied to nlmpc (IsContinuousTime = false)"
     integrator: "RK4, 4 sub-steps per Ts  # adopted 15/10/2026"
