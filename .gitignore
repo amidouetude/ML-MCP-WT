@@ -61,3 +61,4 @@ openfast_q1/courses/
 !docs/classement_P2.csv
 # Q1 manuscript figures (15/10/2026): produced by stamped scripts, copied unchanged from results/
 !Paper_Q1/figures/*.pdf
+Claude outputs/
