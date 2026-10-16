@@ -27,7 +27,7 @@ function run_E3a()
 %   Writes in results/Q1-E3-PLANTEQ-<date>-a/: meta_E3a.txt, verdict_E3a.txt, the case copies with
 %   their manifests and .outb, replay_inputs.mat, the Simulink models (spec_E3 outputs.files).
 
-SPEC_SHA  = '6d115e86e9b705e8873deebfafad6261a4fe9cb472c092c7b6a7a4cc87794447';
+SPEC_SHA  = 'd750c987efd895cdfff8cb79e9b033e7acfe69333aebb652e40ce43b865a61c7';
 BIN_DIR   = 'C:\dev\openfast-bin';
 BIN_SHA   = {'openfast_x64.exe',          'dbae80560269c00f4a1f3529b5bb3ffcd111faa6d6791f4cce6dcf321679d924';   % campaign.depends_on.exe
              'FAST_SFunc.mexw64',         '16b628c493baf4b716cfe2373f320f72f5859b38718b2dc3da455befb3112297';   % campaign.depends_on.sfunction

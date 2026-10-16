@@ -13,7 +13,8 @@ function analyse_E3b(OUT, R, W)
 %   Q3 power         mean speeds >= 14 m/s: mean of GenTq x 1000 x GenSpeed x pi/30 within
 %                    VS_RtPwr +/- 2 % (criteria.Q3_power)
 %   Q4 overspeed     max RotSpeed <= 1.2 x 12.1 rpm (criteria.Q4_overspeed)
-%   Q5 repeatability the two .outb of 18 m/s seed 31001 have the same SHA-256 (repeatability)
+%   Q5 repeatability the channel names, units and data (class double, typecast to uint8) of the two
+%                    .outb of 18 m/s seed 31001 are identical; file SHA-256 reported only (repeatability)
 %   reported_only    region-3 fraction (reconstruction below), fraction with BldPitch1 > 30 deg,
 %                    mean and std of RotSpeed, mean GenPwr, wall time (criteria.reported_only)
 %   domain_rule      a speed is region-3 core if its region-3 fraction is >= 0.90 for every seed
@@ -84,7 +85,18 @@ writetable(S, fullfile(OUT, 'summary_E3b.csv'), 'Delimiter', ';');
 % --- Q5 -----------------------------------------------------------------------------------------
 i1 = find(S.speed == REPEAT(1) & S.seed == REPEAT(2) & S.rep == 1);
 i2 = find(S.speed == REPEAT(1) & S.seed == REPEAT(2) & S.rep == 2);
-q5 = isscalar(i1) && isscalar(i2) && strlength(S.outb_sha256(i1)) == 64 && S.outb_sha256(i1) == S.outb_sha256(i2);
+q5 = false;  q5txt = 'not evaluated (run missing or not read)';
+if isscalar(i1) && isscalar(i2) && S.status(i1) == "read" && S.status(i2) == "read"
+    [Da, Na, Ua] = ReadFASTbinary(R(i1).outb);
+    [Db, Nb, Ub] = ReadFASTbinary(R(i2).outb);
+    same_n = isequal(strtrim(Na(:)), strtrim(Nb(:)));
+    same_u = isequal(strtrim(Ua(:)), strtrim(Ub(:)));
+    same_d = isa(Da, 'double') && isa(Db, 'double') && isequal(size(Da), size(Db)) && ...
+             isequal(typecast(Da(:), 'uint8'), typecast(Db(:), 'uint8'));       % byte for byte
+    q5 = same_n && same_u && same_d;
+    q5txt = sprintf('names %d, units %d, data byte for byte %d; file SHA-256 %s / %s (reported only)', ...
+                    same_n, same_u, same_d, S.outb_sha256(i1), S.outb_sha256(i2));
+end
 
 % --- report -------------------------------------------------------------------------------------
 for k = 1:n
@@ -94,7 +106,7 @@ for k = 1:n
         S.max_RotSpeed_rpm(k), S.frac_region3(k), S.frac_pitch_gt30(k), S.mean_RotSpeed_rpm(k), ...
         S.std_RotSpeed_rpm(k), S.mean_GenPwr_kW(k), S.wall_s(k)); %#ok<AGROW>
 end
-V{end+1} = sprintf('Q5 repeatability (%d m/s seed %d): %s', REPEAT, pf(q5));
+V{end+1} = sprintf('Q5 repeatability (%d m/s seed %d): %s (%s)', REPEAT, pf(q5), q5txt);
 
 % --- domain rule (the 21 runs, not the repetition) ----------------------------------------------
 P1 = S(S.rep == 1, :);
