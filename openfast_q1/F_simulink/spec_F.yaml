@@ -1,0 +1,69 @@
+# Feasibility spec - NMPC in the loop with OpenFAST through the Simulink S-function
+# STATUS: ADOPTED by the author on 16/10/2026 (supervisor proposal of 16/10/2026).
+# EXPLORATORY: no value from this test enters the registry, the manuscript or any comparison.
+# Its only use is the architecture decision for E6 (spec E2 order_of_work item 3).
+# Rule: this spec and the test code are committed BEFORE execution; criteria cannot be
+# changed after results are seen; corrections by dated amendment in a separate commit.
+
+campaign:
+  id: Q1-F-SIMULINK-<execution date>-a
+  step: F (feasibility, between E2 verification and E3)
+  purpose: >
+    Establish whether OpenFAST v4.2.1 (FAST_SFunc, single precision) can be driven in closed
+    loop by the MATLAB R2024a Nonlinear MPC Controller block, first with the E2 physics model,
+    then with a dlnetwork-based state function, and record the computational cost per call.
+  depends_on:
+    E2: "spec openfast_q1/E2/spec_E2.yaml sha256 3acfba38...; verification Q1-E2-ROM-2026-10-16-b SATISFIED (V0-V2)"
+    binaries: "C:/dev/openfast-bin: FAST_SFunc.mexw64 sha256 16b628c4..., OpenFAST-Simulink_x64.dll sha256 2d61ae5e..."
+
+plant:
+  base_case: "openfast_q1/model/5MW_Land_DLL_WTurb (model commit 7232a48), copied into the results folder"
+  changes_in_copy_only:
+    - "ServoDyn: PCMode = 4, VSContrl = 4 (commands from Simulink); nothing else"
+    - "InflowWind: steady wind, HWindSpeed = 18 m/s, power-law exponent as in the r-test steady files"
+    - "fst: TMax = 30 s; DT unchanged (0.00625 s)"
+    - "AeroDyn OutList: add RtVAvgxh, RtAeroPwr, RtAeroCp (output channels only)"
+  fingerprints: "SHA-256 of every file of the copied case recorded before the run"
+
+controller:
+  torque: >
+    Jonkman torque law of the E2 model (rom_torque_law.m, model.equations.generator_torque),
+    driven by a discrete first-order filter of GenSpeed (CornerFreq of DISCON.F90), evaluated
+    at the OpenFAST step DT; output GenTq to the S-function
+  pitch: >
+    Nonlinear MPC Controller block, sample time nmpc_interface.Ts (0.05 s), prediction horizon
+    30 steps (1.5 s, nmpc_interface.horizon), control horizon 5 (provisional, feasibility only),
+    MV beta with bounds and rate of nmpc_interface.constraints, output = collective BlPitchCom
+  wind_to_controller: "Wind1VelX at time k held over the horizon (nmpc_interface.wind_assumption)"
+  weights: "provisional, written in the test code with the comment 'feasibility only, not tuned'"
+  state_estimate: "measured RotSpeed (rad/s) and the filtered GenSpeed; no estimator"
+
+cases:
+  F1_openloop_sfunction:
+    what: "S-function with constant BlPitchCom = 15 deg and the torque law above, 30 s"
+    pass: "runs to TMax without error; outputs finite"
+  F2_nmpc_physics:
+    what: "closed loop, NMPC with a lean wrapper of rom_step (no diagnostic structures), 30 s"
+    pass: >
+      runs to TMax without error; outputs finite; RotSpeed in [0.8, 1.2] x 12.1 rpm over the
+      last 15 s (loop closed, not a performance criterion)
+    record: "solver exit flag of every call; wall time per NMPC call (median, P95, P99, max); total wall time"
+  F3_nmpc_dlnetwork:
+    what: >
+      same as F2 for 5 s, with a state function built on an UNTRAINED dlnetwork (fixed
+      architecture: 3 inputs, 2 hidden layers of 32 tanh units, 2 outputs; weights from rng(1));
+      tests only that the block can call predict() and its cost
+    pass: "runs 5 s without error"
+    record: "same timing as F2; precision of predict() output (single or double)"
+  execution_modes: "interpreted simulation; MEX acceleration of the block attempted once per case and reported (success or error message), never required"
+
+outputs:
+  folder: "results/Q1-F-SIMULINK-<date>-a/"
+  files: "meta_F.txt (commit, script and input SHA-256, binaries, MATLAB version, machine), verdict_F.txt, .outb of each case, timing CSV"
+  verdict_values: "PASS / FAIL per case, plus the recorded quantities; overall FEASIBLE / NOT FEASIBLE / FEASIBLE WITH LIMITS"
+
+forbidden_wordings:
+  - "real time"
+  - '"the NMPC performs better / worse" (no performance comparison in this test)'
+  - '"validated"'
+  - "any timing figure presented as representative of E8"
