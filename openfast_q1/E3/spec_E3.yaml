@@ -1,6 +1,7 @@
 # E3 campaign spec - plant equivalence (exe vs S-function) and region-3 qualification of DISCON
 # STATUS: ADOPTED by the author on 16/10/2026 (supervisor proposal of 16/10/2026, corrected for IECturbc, UsableTime, PLExp).
 # AMENDMENT 1, 16/10/2026: commit 31742b7 held the first draft with three replacements instead of the source-verified text of the same day; the whole text is replaced by the verified version (channels and units, S-function input conversions, Q3 on mechanical power, project-choice labels, full binary hashes, DLL placement). No code had been written and nothing had been executed.
+# AMENDMENT 2, 16/10/2026: Q5 compared the file SHA-256 of two .outb, which differ by construction because the .outb header records the generation date and time; Q5 now compares channel names, units and data byte for byte. A note on the informative channels of E3a is added. Nothing had been executed.
 # Rule: spec, code and analysis are committed BEFORE execution; criteria cannot be changed after
 # results are seen; corrections by dated amendment in a separate commit. Long runs are launched
 # by the author from a launch block given by the executor (author rule of 16/10/2026).
@@ -33,6 +34,7 @@ E3a_plant_equivalence:
   metrics: 'per channel: max |diff| / (max - min of run 1), and mean |diff| / mean |run 1|'
   pass: 'for each compared channel, max |diff| / range <= 1e-2 and mean |diff| / mean |run 1| <= 1e-3, at the retained lag (project choice, no external source)'
   wording: 'pass is written CONCORDANT AT EPSILON, never identical (two different binaries)'
+  note_inputs: 'GenPwr follows replayed input 2 and BldPitch1 follows replayed inputs 5-7 (no pitch actuator); the channels that test the equivalence of the two plants are RotSpeed, TwrBsMyt and RootMyc1; all five are still judged as written in pass'
 
 E3b_region3_qualification:
   wind_generation: 'TurbSim from the template openfast_q1/model/5MW_Baseline/Wind/90m_12mps_twr.inp, kept as is for TurbModel IECKAI, IECstandard 1-ed3, IEC_WindType NTM, WindProfileType PL, HubHt and RefHt 90 m, GridHeight and GridWidth 145 m, TimeStep 0.05 s, RandSeed2 RanLux. Changes in the copy only: URef = mean speed; RandSeed1 = seed; IECturbc B to A (category A, choice of the project); UsableTime 60 to 660 (TurbSim then raises AnalysisTime to UsableTime + GridWidth/URef, per the template comment); PLExp default to 0.2 written explicitly (same value as PLExp in NRELOffshrBsline5MW_InflowWind_12mps.dat, the InflowWind file of the case). Nothing else changes.'
@@ -40,7 +42,7 @@ E3b_region3_qualification:
   seeds: 'RandSeed1 in {31001, 31002, 31003} for every speed (project choice, no external source); this set is reserved for E3 and E2 V4 and excluded from E4'
   duration: '660 s simulated, the first 60 s excluded from every statistic'
   runs: '21 (7 speeds x 3 seeds), openfast_x64.exe + DISCON.dll, model unchanged except the InflowWind file (WindType 3, generated .bts) and TMax = 660 s'
-  repeatability: 'the run 18 m/s seed 31001 is executed twice; Q5 passes if the two .outb files have the same SHA-256'
+  repeatability: 'the run 18 m/s seed 31001 is executed twice; Q5 passes if the channel names, the units and the channel data returned by ReadFASTbinary (class double, compared byte for byte with typecast to uint8) are identical; the file SHA-256 differs by construction because the .outb header records the generation date and time (Predictions were generated on ... at ..., read on the .outb of Q1-E3-DISCON-BUILD-2026-10-09-a and Q1-F-SIMULINK-2026-10-16-b) and is reported only'
   criteria:
     Q1_integrity: 'SHA-256 of every input (model copy, .inp, .bts, DLL, binaries) written before each run and unchanged after'
     Q2_execution: 'every run reaches TMax, all outputs finite'
