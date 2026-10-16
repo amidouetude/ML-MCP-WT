@@ -91,7 +91,7 @@ ch = [{'Time'}; outlist(fullfile(B, ifw_name)); outlist(fullfile(T, 'NRELOffshrB
       outlist(ad); outlist(srv)];
 write_lines(fullfile(case_dir, 'channels.txt'), ch);
 idx = struct('Wind1VelX', find(strcmp(ch, 'Wind1VelX')), 'RotSpeed', find(strcmp(ch, 'RotSpeed')), ...
-             'GenSpeed', find(strcmp(ch, 'GenSpeed')), 'BlPitch1', find(strcmp(ch, 'BlPitch1')));
+             'GenSpeed', find(strcmp(ch, 'GenSpeed')), 'BldPitch1', find(strcmp(ch, 'BldPitch1')));
 fn = fieldnames(idx);
 for k = 1:numel(fn)
     if ~isscalar(idx.(fn{k})), error('prepare_case_F:channel', 'Channel %s not found once.', fn{k}); end

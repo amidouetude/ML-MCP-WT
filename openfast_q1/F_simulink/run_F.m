@@ -63,14 +63,14 @@ end
 if ~strcmp(sha256_file(abs_(CP_REL)), CP_SHA), error('run_F:cp', 'E2 Cp table SHA-256 differs from %s.', CP_SHA); end
 [~, tb] = system(sprintf('git -C "%s" rev-parse HEAD', TB_DIR));
 if ~strcmp(strtrim(tb), TB_COMMIT), error('run_F:toolbox', 'matlab-toolbox is not at %s.', TB_COMMIT); end
-ID  = ['Q1-F-SIMULINK-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-a'];
+ID  = ['Q1-F-SIMULINK-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-b'];   % attempt -a (2026-10-16) stopped at case preparation: output channel BlPitch1 -> BldPitch1
 OUT = fullfile(ROOT, 'results', ID);
 if exist(OUT, 'dir'), error('run_F:exists', 'Campaign folder already exists: %s', OUT); end
 mkdir(OUT);
 
 % --- meta (start) -----------------------------------------------------------------------------
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));
-M = {sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
+M = {'previous_attempt: results/Q1-F-SIMULINK-2026-10-16-a (stopped at case preparation, channel name)', sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
      sprintf('start: %s', stamp()), sprintf('spec: openfast_q1/F_simulink/spec_F.yaml %s', SPEC_SHA)};
 for k = 1:numel(CODE), M{end+1} = sprintf('code: openfast_q1/F_simulink/%s %s', CODE{k}, sha256_file(fullfile(FD, CODE{k}))); end %#ok<AGROW>
 for k = 1:numel(E2CODE), M{end+1} = sprintf('code: openfast_q1/E2/%s %s', E2CODE{k}, sha256_file(fullfile(E2D, E2CODE{k}))); end %#ok<AGROW>
