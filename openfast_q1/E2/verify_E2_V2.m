@@ -1,28 +1,28 @@
 function [pass, R] = verify_E2_V2(root, p)
-%VERIFY_E2_V2  V2 - derivatives of the discrete E2 model, and V2b unit tests (spec l.93-102).
+%VERIFY_E2_V2  V2 - derivatives of the discrete E2 model, and V2b unit tests (spec l.95-104).
 %
 %   [pass, R] = verify_E2_V2(root, p)      p: rom_params(cp_table_file)
 %   pass = [pass_V2, pass_V2b]
 %
-%   V2 (spec l.93-101). Points: the 15 E1 equilibria, z = [omega_r; omega_f; beta] with
+%   V2 (spec l.95-103). Points: the 15 E1 equilibria, z = [omega_r; omega_f; beta] with
 %   omega_r = 12.1 rpm, omega_f = N*omega_r, beta = beta_eq_deg; wind variant (i); discrete
 %   model f(z) = rom_step(z(1:2), z(3), V, 'i', p, p.Ts).
 %   - Forward differences as used by nlmpc (MATLAB R2024a, toolbox/mpc/mpcutils/+mpc/+internal/
 %     +nlmpc/computeJacobianState.m l.19-29 and l.33-38): step h = 1e-6*max(|z_j|, 1).
-%   - Central differences, relative step dv = 1e-2, 1e-3, ..., 1e-10 (spec l.96-97),
-%     h = dv*max(|z_j|, 1). Reference (spec l.97, declared rule): for each column, the pair of
+%   - Central differences, relative step dv = 1e-2, 1e-3, ..., 1e-10 (spec l.98-99),
+%     h = dv*max(|z_j|, 1). Reference (spec l.99, declared rule): for each column, the pair of
 %     consecutive steps whose central estimates differ least (relative 2-norm) defines the
 %     plateau; the reference is the mean of that pair.
 %   - Error (declared definition): column-wise relative 2-norm
 %     e_j = ||J_fwd(:,j) - J_ref(:,j)|| / ||J_ref(:,j)||.
-%   - Smoothness (spec l.100-101, declared test): a column is SMOOTH if every evaluation used
+%   - Smoothness (spec l.102-103, declared test): a column is SMOOTH if every evaluation used
 %     (base, forward stencil, the two plateau central stencils) visits the same sequence of
 %     torque-law regions and saturation count as the base point, with no Cp-domain flag and no
 %     guard. Other columns are reported separately (TRANSITION or DOMAIN), with their errors.
-%   - Pass (spec l.100): e_j <= 1e-5 for every SMOOTH column, and at least one SMOOTH column.
+%   - Pass (spec l.102): e_j <= 1e-5 for every SMOOTH column, and at least one SMOOTH column.
 %   The forward-difference error for every step of the sweep is also reported (information).
 %
-%   V2b (spec l.102).
+%   V2b (spec l.104).
 %   - signs: dQ_aero/dbeta < 0 at the 14 non-saturated equilibria (above rated); dQ_aero/dV > 0
 %     at the 15 equilibria. Central difference on Q_aero of rom_rhs, step 1e-4*max(|.|, 1)
 %     (declared; sign only). At 11.4 m/s beta_eq = 0 and beta - h leaves the table: not
@@ -31,9 +31,9 @@ function [pass, R] = verify_E2_V2(root, p)
 %     (beta = 0, omega_f*(1 -/+ 1e-9)), and at the switch to region 3 at beta = VS_Rgn3MP
 %     (beta*(1 -/+ 1e-9)) for omega_f at mid-region 2 and mid-region 2 1/2.
 
-THRESHOLD = 1e-5;               % spec l.100
+THRESHOLD = 1e-5;               % spec l.102
 DV_NLMPC  = 1e-6;               % computeJacobianState.m l.19 (R2024a)
-DV_SWEEP  = 10.^(-2:-1:-10);    % spec l.96-97
+DV_SWEEP  = 10.^(-2:-1:-10);    % spec l.98-99
 DV_SIGN   = 1e-4;               % V2b, declared
 DV_JUMP   = 1e-9;               % V2b, declared
 CSV_REL = 'results/Q1-E1-AEROMAP-2026-10-08-a/analyse/C3_C4_par_vent.csv';

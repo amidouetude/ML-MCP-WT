@@ -3,17 +3,17 @@ function [Qg, region, sat] = rom_torque_law(omega_f, beta_deg, p)
 %
 %   [Qg, region, sat] = rom_torque_law(omega_f, beta_deg, p)
 %
-%   omega_f   filtered generator speed (rad/s, HSS)                    spec l.26-29
-%   beta_deg  collective pitch command (deg)                           spec l.31-34
+%   omega_f   filtered generator speed (rad/s, HSS)                    spec l.27-30
+%   beta_deg  collective pitch command (deg)                           spec l.32-35
 %   p         parameters from rom_params.m
 %   Qg        generator torque (N m, HSS side), before any rate limit (no rate limit is
-%             modelled, spec l.54)
+%             modelled, spec l.55)
 %   region    1, 1.5, 2, 2.5 or 3 (branch taken, DISCON.F90 l.384-394)
 %   sat       true if the VS_MaxTq saturation is active (DISCON.F90 l.399)
 %
 %   Branch tests and order copied from DISCON.F90 (r-test 6fda1b18, git blob c37070c7)
-%   l.384-399, as required by spec l.40-49. DISCON compares PitCom(1) (rad) with VS_Rgn3MP
-%   (rad); the pitch command of the model is in degrees (spec l.31), hence the conversion.
+%   l.384-399, as required by spec l.41-50. DISCON compares PitCom(1) (rad) with VS_Rgn3MP
+%   (rad); the pitch command of the model is in degrees (spec l.32), hence the conversion.
 
 if (omega_f >= p.VS_RtGnSp) || (beta_deg*pi/180 >= p.VS_Rgn3MP)   % DISCON.F90 l.384
     Qg = p.VS_RtPwr/omega_f;                                         % l.385 (region 3)

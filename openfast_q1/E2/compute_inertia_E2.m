@@ -1,9 +1,9 @@
 function [pass, out] = compute_inertia_E2(root, p)
-%COMPUTE_INERTIA_E2  Reproduce the ElastoDyn rotor inertia and check J of spec l.61.
+%COMPUTE_INERTIA_E2  Reproduce the ElastoDyn rotor inertia and check J of spec l.62.
 %
 %   [pass, out] = compute_inertia_E2(root, p)
 %
-%   Spec l.61 (amendment 3): J = 43,702,557 kg m2 = rotor inertia 38,677,060 kg m2 computed by
+%   Spec l.62 (amendment 3): J = 43,702,557 kg m2 = rotor inertia 38,677,060 kg m2 computed by
 %   ElastoDyn v4.2.1 for this model (read in the ED.sum of the E3 test run) + 97^2*GenIner;
 %   "compute_inertia_E2.m reproduces the ElastoDyn method and stops if the deviation exceeds
 %   0.1 %".
@@ -17,20 +17,20 @@ function [pass, out] = compute_inertia_E2(root, p)
 %                  about the root (TipMass = 0 in this model);
 %     l.4694, 4763 RotIner = HubIner + sum over blades of
 %                  (SecondMom + BldMass*HubRad*(2*BldCG + HubRad))*cos(PreCone)^2.
-%   J = RotIner + GBRatio^2*GenIner (rigid drivetrain seen from the LSS, spec l.38).
+%   J = RotIner + GBRatio^2*GenIner (rigid drivetrain seen from the LSS, spec l.39).
 %
 %   Inputs read: the ElastoDyn input of the model and its blade file (git blobs checked),
-%   and the ED.sum of the E3 test run, identified by its SHA-256 (spec l.61).
+%   and the ED.sum of the E3 test run, identified by its SHA-256 (spec l.62).
 %   pass = true if both |J_reproduced/p.J - 1| and |J_EDsum/p.J - 1| are <= 0.1 %,
 %   and the reproduced blade mass matches the ED.sum blade mass within 0.1 %.
 
-TOL      = 1e-3;     % 0.1 %, spec l.61
+TOL      = 1e-3;     % 0.1 %, spec l.62
 ED_REL   = 'openfast_q1/model/5MW_Land_DLL_WTurb/NRELOffshrBsline5MW_Onshore_ElastoDyn.dat';
 ED_BLOB  = 'e8670710c3dfaeb43c0d6cc44fe0cd21c194a223';
 BLD_REL  = 'openfast_q1/model/5MW_Baseline/NRELOffshrBsline5MW_Blade.dat';
 BLD_BLOB = 'af2cb59b7ae4d4395c8dfe8d617ce6b47655f204';
 SUM_REL  = 'results/Q1-E3-DISCON-BUILD-2026-10-09-a/test/5MW_Land_DLL_WTurb/5MW_Land_DLL_WTurb.ED.sum';
-SUM_SHA  = '9a886ece45329588ba7a25dc9d0934e3c65b51123d12853796f33f65ab6459dc';   % spec l.61
+SUM_SHA  = '9a886ece45329588ba7a25dc9d0934e3c65b51123d12853796f33f65ab6459dc';   % spec l.62
 abs_ = @(rel) fullfile(root, strrep(rel, '/', filesep));
 
 % --- input files and fingerprints -------------------------------------------------------------
@@ -38,7 +38,7 @@ check_blob(root, ED_REL, ED_BLOB);
 check_blob(root, BLD_REL, BLD_BLOB);
 sha = sha256_file(abs_(SUM_REL));
 if ~strcmp(sha, SUM_SHA)
-    error('compute_inertia_E2:sum', 'SHA-256 of the ED.sum (%s) differs from spec l.61.', sha);
+    error('compute_inertia_E2:sum', 'SHA-256 of the ED.sum (%s) differs from spec l.62.', sha);
 end
 
 E = splitlines(fileread(abs_(ED_REL)));

@@ -4,16 +4,16 @@ function [pass, T] = test_rom_constants(root, p)
 %   [pass, T] = test_rom_constants(root, p)
 %
 %   root  repository root;  p  output of rom_params()
-%   Required by spec l.49 ("A unit test compares every constant with DISCON.F90").
+%   Required by spec l.50 ("A unit test compares every constant with DISCON.F90").
 %
 %   1. DISCON.F90 must be the r-test 6fda1b18 file: git blob c37070c7ea80fde19006501b9b617f9a4aa2cec4
 %      (git hash-object), unchanged in the working tree.
 %   2. Each 'REAL(4), PARAMETER :: NAME = value' line is parsed; the parsed value must be
 %      EXACTLY equal to the value in rom_params.m (both are the same decimal literal read in
 %      double), and must sit on the DISCON.F90 line cited in rom_params.m.
-%   3. The ElastoDyn input of the model must give GBRatio = p.N (spec l.62).
+%   3. The ElastoDyn input of the model must give GBRatio = p.N (spec l.63).
 %   4. The ElastoDyn input must give TipRad = p.TipRad and |PreCone(k)| = p.PreCone, k = 1..3, the two
-%      inputs of R = TipRad*cos(PreCone) (spec l.59, amendment 4).
+%      inputs of R = TipRad*cos(PreCone) (spec l.60, amendment 4).
 %   T: one row per check (name, expected line, found line, value in DISCON/ED, value in model, ok).
 
 DISCON_REL  = 'openfast_q1/model/5MW_Baseline/ServoData/DISCON/DISCON.F90';
@@ -54,7 +54,7 @@ gb = ed_value(E, 'GBRatio');
 name{end+1} = 'GBRatio (ElastoDyn) = N';  eline(end+1) = NaN;  fline(end+1) = NaN;
 vsrc{end+1} = sprintf('%.17g', gb);  vmod{end+1} = sprintf('%.17g', p.N);  ok(end+1) = (gb == p.N);
 
-% inputs of R = TipRad*cos(PreCone) (spec l.59, amendment 4)
+% inputs of R = TipRad*cos(PreCone) (spec l.60, amendment 4)
 tr = ed_value(E, 'TipRad');
 name{end+1} = 'TipRad (ElastoDyn) = p.TipRad';  eline(end+1) = NaN;  fline(end+1) = NaN;
 vsrc{end+1} = sprintf('%.17g', tr);  vmod{end+1} = sprintf('%.17g', p.TipRad);  ok(end+1) = (tr == p.TipRad);

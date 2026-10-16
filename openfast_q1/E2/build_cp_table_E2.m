@@ -3,33 +3,33 @@ function [cpt, rep] = build_cp_table_E2(root, p, out_file)
 %
 %   [cpt, rep] = build_cp_table_E2(root, p, out_file)
 %
-%   Spec l.63 (amendments 2 and 4): source E1_B3.outb (12.1 rpm, lambda 2:0.25:13, beta 0:0.5:30);
+%   Spec l.64 (amendments 2 and 4): source E1_B3.outb (12.1 rpm, lambda 2:0.25:13, beta 0:0.5:30);
 %       Cp     = RtAeroPwr / (0.5*rho*pi*R^2*WindSpeed^3)
 %       lambda = (RotorSpeed*pi/30)*R/WindSpeed   (RotorSpeed in rpm)
 %   with R = p.R fixed; the RtAeroCp and TSR channels are NOT used.
-%   Spec l.66: no clipping of Cp (negative values and values above Betz are kept).
+%   Spec l.67: no clipping of Cp (negative values and values above Betz are kept).
 %
 %   Checks (any failure stops with an error; nothing is written):
-%     - SHA-256 of E1_B3.outb = 398a8918...e501 (spec l.19, meta_E1.txt B3_outb);
+%     - SHA-256 of E1_B3.outb = 398a8918...e501 (spec l.20, meta_E1.txt B3_outb);
 %     - channel units: RotorSpeed (RPM), WindSpeed (m/s), Pitch (deg), RtAeroPwr (W);
 %     - 2745 cases, all converged with the E1 criterion (fiche_E1.yaml l.110-111:
 %       Iterations < 50 and AvgError <= 1e-4);
 %     - RotorSpeed = 12.1 rpm within TOL_RPM;
 %     - each case falls on a node of the 45 x 61 grid: |lambda/lambda_node - 1| <= TOL_LAMBDA
 %       and |Pitch - beta_node| <= TOL_BETA (deg); every node is filled exactly once.
-%   Tolerances below are executor choices declared in the E2 code report (not spec values).
+%   Grid-assignment tolerances: spec amendment 5 (cp_interpolant.grid_assignment).
 %
 %   Output: cpt.lambda (45x1), cpt.beta (61x1, deg), cpt.Cp (45x61), plus provenance fields,
 %   saved as variable 'cpt' in out_file (refused if out_file exists).
 
-TOL_LAMBDA = 1e-6;   % relative (declared)
-TOL_BETA   = 1e-6;   % deg, absolute (declared)
+TOL_LAMBDA = 1e-4;   % relative, spec amendment 5
+TOL_BETA   = 1e-4;   % deg, absolute, spec amendment 5
 TOL_RPM    = 1e-5;   % rpm, absolute (declared; 12.1 stored in single precision)
 B3_REL  = 'results/Q1-E1-AEROMAP-2026-10-08-a/model/5MW_Land_AeroMap/E1_B3.outb';
 B3_SHA  = '398a8918b3728a387a375a811edbb5efe9e3affb6d59345507bbf7d5ab15e501';
 TB      = 'C:\dev\matlab-toolbox\Utilities';   % ReadFASTbinary.m, commit 66256c2 (checked by run_E2_verification)
-lam_g   = (2:0.25:13).';                       % spec l.63
-bet_g   = (0:0.5:30).';                        % spec l.63
+lam_g   = (2:0.25:13).';                       % spec l.64
+bet_g   = (0:0.5:30).';                        % spec l.64
 
 if exist(out_file, 'file')
     error('build_cp_table_E2:exists', 'Output file already exists: %s', out_file);
@@ -63,8 +63,8 @@ if max(abs(rpm - 12.1)) > TOL_RPM
     error('build_cp_table_E2:rpm', 'RotorSpeed differs from 12.1 rpm by %.3g rpm.', max(abs(rpm - 12.1)));
 end
 
-lambda = (rpm*pi/30)*p.R./V;                   % spec l.63
-Cp     = P./(0.5*p.rho*pi*p.R^2*V.^3);         % spec l.63 (no clipping, spec l.66)
+lambda = (rpm*pi/30)*p.R./V;                   % spec l.64
+Cp     = P./(0.5*p.rho*pi*p.R^2*V.^3);         % spec l.64 (no clipping, spec l.67)
 
 i = round((lambda - lam_g(1))/0.25) + 1;
 j = round((pitch - bet_g(1))/0.5) + 1;
@@ -89,7 +89,7 @@ end
 
 cpt = struct('lambda', lam_g, 'beta', bet_g, 'Cp', C, ...
              'source', B3_REL, 'source_sha256', sha, 'R', p.R, 'rho', p.rho, ...
-             'rule', 'Cp = RtAeroPwr/(0.5*rho*pi*R^2*WindSpeed^3), lambda = (RotorSpeed*pi/30)*R/WindSpeed (spec l.63)', ...
+             'rule', 'Cp = RtAeroPwr/(0.5*rho*pi*R^2*WindSpeed^3), lambda = (RotorSpeed*pi/30)*R/WindSpeed (spec l.64)', ...
              'built', char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss')));
 save(out_file, 'cpt');
 rep = struct('n_cases', n, 'max_dev_lambda', max(dev_lambda), 'max_dev_beta_deg', max(dev_beta), ...

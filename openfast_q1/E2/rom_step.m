@@ -4,14 +4,14 @@ function [x1, info] = rom_step(x0, beta_deg, V_hub, variant, p, Ts)
 %   [x1, info] = rom_step(x0, beta_deg, V_hub, variant, p)        % Ts = p.Ts (0.05 s)
 %   [x1, info] = rom_step(x0, beta_deg, V_hub, variant, p, Ts)
 %
-%   Discrete-time form supplied to nlmpc (IsContinuousTime = false)   spec l.69
-%   RK4, 4 sub-steps per Ts                                            spec l.70
-%   double precision throughout                                        spec l.71
+%   Discrete-time form supplied to nlmpc (IsContinuousTime = false)   spec l.71
+%   RK4, 4 sub-steps per Ts                                            spec l.72
+%   double precision throughout                                        spec l.73
 %   Inputs (beta_deg, V_hub) are held constant over the sample (zero-order hold).
 %
 %   info.regions  torque-law region at each of the 4*n_sub right-hand-side evaluations
-%   info.n_domain number of evaluations outside the Cp table domain (spec l.66)
-%   info.n_guard  number of evaluations with the numerical guard active (spec l.67)
+%   info.n_domain number of evaluations outside the Cp table domain (spec l.67)
+%   info.n_guard  number of evaluations with the numerical guard active (spec l.68)
 %   info.n_sat    number of evaluations with VS_MaxTq saturation active
 
 if nargin < 6
