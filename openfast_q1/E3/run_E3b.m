@@ -56,7 +56,7 @@ if ~strcmp(sha256_file(abs_(DLL_REL)), DLL_SHA), error('run_E3b:dll', 'DISCON.dl
 if ~strcmp(sha256_file(abs_(BTS_REL)), BTS_SHA), error('run_E3b:bts', 'r-test .bts SHA-256 differs from %s.', BTS_SHA); end
 [~, tb] = system(sprintf('git -C "%s" rev-parse HEAD', TB_DIR));
 if ~strcmp(strtrim(tb), TB_COMMIT), error('run_E3b:toolbox', 'matlab-toolbox is not at %s.', TB_COMMIT); end
-ID  = ['Q1-E3-QUAL-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-a'];
+ID  = ['Q1-E3-QUAL-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-b'];   % attempt -a (2026-10-17): wrong relative path to the wind file
 OUT = fullfile(ROOT, 'results', ID);
 if exist(OUT, 'dir'), error('run_E3b:exists', 'Campaign folder already exists: %s', OUT); end
 fprintf('%s\n', ID);
@@ -64,7 +64,7 @@ mkdir(OUT);
 
 % --- meta (start) -----------------------------------------------------------------------------
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));
-M = {sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
+M = {'previous_attempt: results/Q1-E3-QUAL-2026-10-17-a (all runs stopped at OpenFAST initialisation, wrong relative path to the wind file)', sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
      sprintf('start: %s', stamp()), sprintf('spec: openfast_q1/E3/spec_E3.yaml %s', SPEC_SHA)};
 for k = 1:numel(CODE), M{end+1} = sprintf('code: openfast_q1/E3/%s %s', CODE{k}, sha256_file(fullfile(ED3, CODE{k}))); end %#ok<AGROW>
 for k = 1:size(BIN_SHA, 1), M{end+1} = sprintf('binary: %s %s', fullfile(BIN_DIR, BIN_SHA{k,1}), BIN_SHA{k,2}); end %#ok<AGROW>

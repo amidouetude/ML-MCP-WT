@@ -109,7 +109,16 @@ if opt.copy_bts
         error('prepare_case_E3:bts', 'Copied .bts SHA-256 differs from %s.', opt.bts_sha);
     end
 else
-    set_quoted(F.IfW, 'FileName_BTS', BTS_NAME, relpath(fileparts(F.IfW), opt.bts));
+    % relative path computed between normalised paths (no '..' segment left in either)
+    ifw_dir = char(java.io.File(fileparts(F.IfW)).getCanonicalPath());
+    bts_can = char(java.io.File(opt.bts).getCanonicalPath());
+    set_quoted(F.IfW, 'FileName_BTS', BTS_NAME, relpath(ifw_dir, bts_can));
+    % after writing: the path read back from the copy, resolved from the InflowWind folder, must
+    % designate the generated field (existing file, SHA-256 = opt.bts_sha); otherwise no run
+    res = char(java.io.File(fullfile(ifw_dir, strrep(get_quoted(F.IfW, 'FileName_BTS'), '/', filesep))).getCanonicalPath());
+    if ~exist(res, 'file') || ~strcmp(sha256_file(res), opt.bts_sha)
+        error('prepare_case_E3:btsref', 'FileName_BTS of the InflowWind copy does not resolve to the field with SHA-256 %s (resolved: %s).', opt.bts_sha, res);
+    end
 end
 if opt.tmax == 60
     set_value(fst, 'TMax', '60', '60');                        % check only
