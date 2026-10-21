@@ -2,6 +2,7 @@
 # STATUS: ADOPTED by the author on 16/10/2026 (supervisor proposal of 16/10/2026, corrected for IECturbc, UsableTime, PLExp).
 # AMENDMENT 1, 16/10/2026: commit 31742b7 held the first draft with three replacements instead of the source-verified text of the same day; the whole text is replaced by the verified version (channels and units, S-function input conversions, Q3 on mechanical power, project-choice labels, full binary hashes, DLL placement). No code had been written and nothing had been executed.
 # AMENDMENT 2, 16/10/2026: Q5 compared the file SHA-256 of two .outb, which differ by construction because the .outb header records the generation date and time; Q5 now compares channel names, units and data byte for byte. A note on the informative channels of E3a is added. Nothing had been executed.
+# AMENDMENT 3, 21/10/2026: E3b runs on the plant of the paper, FAST_SFunc driven by the verified DISCON wrapper (spec_E3W, W1 PASS in Q1-E3-WRAP-2026-10-21-c), with InterpOrder = 1 in the .fst copy (author choice O1 of 21/10/2026). With InterpOrder = 2 the baseline pitch loop diverged at the first pitch-command saturation event (Q1-E3-WRAP-2026-10-21-c, W2); it was stable with InterpOrder = 1 (Q1-E3-WRAP-DIAG2-2026-10-21-a, case D-a). E3a is unchanged. Nothing of E3b had been run in this configuration.
 # Rule: spec, code and analysis are committed BEFORE execution; criteria cannot be changed after
 # results are seen; corrections by dated amendment in a separate commit. Long runs are launched
 # by the author from a launch block given by the executor (author rule of 16/10/2026).
@@ -17,6 +18,7 @@ campaign:
     exe: 'C:/dev/openfast-bin/openfast_x64.exe, sha256 dbae80560269c00f4a1f3529b5bb3ffcd111faa6d6791f4cce6dcf321679d924'
     sfunction: 'C:/dev/openfast-bin/FAST_SFunc.mexw64 sha256 16b628c493baf4b716cfe2373f320f72f5859b38718b2dc3da455befb3112297 and OpenFAST-Simulink_x64.dll sha256 2d61ae5e72c21376d87c95489a4db22d95e4c3b3d9f1aea92a8fee6daa0d093d'
     turbsim: 'C:/dev/openfast-bin/TurbSim_x64.exe, sha256 5f70b3e2d50cbe09ad37d98569443a7d6f1b7a97c214bf21bbd9533cf2f29df2'
+    wrapper: 'openfast_q1/E3/discon_wrapper.m and openfast_q1/E3/discon.h at commit 11f0133 (spec_E3W sha256 a78de8925221565c50f47ef458b60497891e21547d90d048f0cb38cd08bb0d86; W1 PASS in Q1-E3-WRAP-2026-10-21-c) (amendment 3)'
   controller_rule: 'DISCON gains and constants are those of DISCON.F90 (r-test 6fda1b18); they are never changed, whatever the result'
 
 channels:
@@ -37,25 +39,26 @@ E3a_plant_equivalence:
   note_inputs: 'GenPwr follows replayed input 2 and BldPitch1 follows replayed inputs 5-7 (no pitch actuator); the channels that test the equivalence of the two plants are RotSpeed, TwrBsMyt and RootMyc1; all five are still judged as written in pass'
 
 E3b_region3_qualification:
+  plant_configuration: 'FAST_SFunc (PCMode 4, VSContrl 4) with DISCON.dll called at every DT by the wrapper of campaign.depends_on.wrapper, as in spec_E3W verification.W2_closed_loop; the wrapper outputs (pitch command, torque, electrical power, records 45 and 47, aviFAIL) are logged at every call in Simulink, discon_wrapper.m is not modified; in the .fst copy InterpOrder 2 -> 1 (linear extrapolation of the module inputs, .fst comment {1=linear, 2=quadratic}); this setting differs from the r-test case (2) and applies to every controller of the paper (amendment 3)'
   wind_generation: 'TurbSim from the template openfast_q1/model/5MW_Baseline/Wind/90m_12mps_twr.inp, kept as is for TurbModel IECKAI, IECstandard 1-ed3, IEC_WindType NTM, WindProfileType PL, HubHt and RefHt 90 m, GridHeight and GridWidth 145 m, TimeStep 0.05 s, RandSeed2 RanLux. Changes in the copy only: URef = mean speed; RandSeed1 = seed; IECturbc B to A (category A, choice of the project); UsableTime 60 to 660 (TurbSim then raises AnalysisTime to UsableTime + GridWidth/URef, per the template comment); PLExp default to 0.2 written explicitly (same value as PLExp in NRELOffshrBsline5MW_InflowWind_12mps.dat, the InflowWind file of the case). Nothing else changes.'
   mean_speeds: '12, 14, 16, 18, 20, 22, 24 m/s'
   seeds: 'RandSeed1 in {31001, 31002, 31003} for every speed (project choice, no external source); this set is reserved for E3 and E2 V4 and excluded from E4'
   duration: '660 s simulated, the first 60 s excluded from every statistic'
-  runs: '21 (7 speeds x 3 seeds), openfast_x64.exe + DISCON.dll, model unchanged except the InflowWind file (WindType 3, generated .bts) and TMax = 660 s'
+  runs: '21 (7 speeds x 3 seeds) on plant_configuration, model unchanged except the InflowWind file (WindType 3, generated .bts), TMax = 660 s and InterpOrder = 1 (amendment 3)'
   repeatability: 'the run 18 m/s seed 31001 is executed twice; Q5 passes if the channel names, the units and the channel data returned by ReadFASTbinary (class double, compared byte for byte with typecast to uint8) are identical; the file SHA-256 differs by construction because the .outb header records the generation date and time (Predictions were generated on ... at ..., read on the .outb of Q1-E3-DISCON-BUILD-2026-10-09-a and Q1-F-SIMULINK-2026-10-16-b) and is reported only'
   criteria:
-    Q1_integrity: 'SHA-256 of every input (model copy, .inp, .bts, DLL, binaries) written before each run and unchanged after'
+    Q1_integrity: 'SHA-256 of every input (model copy, .inp, .bts, DLL, binaries, wrapper files; amendment 3) written before each run and unchanged after'
     Q2_execution: 'every run reaches TMax, all outputs finite'
     Q3_power: 'for mean speeds >= 14 m/s, per run, mean of GenTq x 1000 x GenSpeed x pi/30 (mechanical generator power, W) within VS_RtPwr = 5296610 W of DISCON.F90 +/- 2 % (tolerance: project choice, no external source)'
     Q4_overspeed: 'per run, max RotSpeed <= 1.2 x 12.1 rpm (project choice, no external source)'
     Q5_repeatability: 'see repeatability'
-    reported_only: 'fraction of time in region 3, reconstructed from the outputs after the test of DISCON.F90 l.384: GenSpeedF recomputed from GenSpeed (rad/s) with the DISCON filter (Alpha = exp((LastTime - Time) x CornerFreq), l.355; GenSpeedF = (1 - Alpha) x GenSpeed + Alpha x GenSpeedF, l.360; CornerFreq = 1.570796 rad/s, l.58; initial GenSpeedF = first GenSpeed, l.303) and PitCom taken as BlPitchC1 of the previous output step (PitCom is computed after the test, l.487-489; initial PitCom = first BldPitch1, l.304); region 3 if GenSpeedF >= VS_RtGnSp = 121.6805 rad/s (l.95) or PitCom >= VS_Rgn3MP = 0.01745329 rad (l.94); this is a reconstruction, not the internal state of DISCON. Also: fraction of time with BldPitch1 > 30 deg, mean and std of RotSpeed, mean GenPwr, wall time per run'
+    reported_only: 'fraction of time in region 3, reconstructed from the outputs after the test of DISCON.F90 l.384: GenSpeedF recomputed from GenSpeed (rad/s) with the DISCON filter (Alpha = exp((LastTime - Time) x CornerFreq), l.355; GenSpeedF = (1 - Alpha) x GenSpeed + Alpha x GenSpeedF, l.360; CornerFreq = 1.570796 rad/s, l.58; initial GenSpeedF = first GenSpeed, l.303) and PitCom taken as record 45 returned by the previous DISCON call, from the wrapper log (PitCom is computed after the test, l.487-489; initial PitCom = first BldPitch1, l.304; on plant_configuration the channel BlPitchC1 is the extrapolated S-function input and not the DISCON command, as seen in Q1-E3-PLANTEQ-2026-10-16-a; amendment 3); region 3 if GenSpeedF >= VS_RtGnSp = 121.6805 rad/s (l.95) or PitCom >= VS_Rgn3MP = 0.01745329 rad (l.94); this is a reconstruction, not the internal state of DISCON. Also: fraction of time with BldPitch1 > 30 deg, mean and std of RotSpeed, mean GenPwr, wall time per run'
   domain_rule: 'a mean speed belongs to the region-3 core of the paper if its fraction of time in region 3 is >= 0.90 for every seed (project choice, no external source); the others are reported as transition speeds'
   verdict: 'QUALIFIED if Q1 to Q5 pass for all runs; QUALIFIED WITH LIMITS if Q3 or Q4 fail only at listed speeds; NOT QUALIFIED otherwise'
 
 outputs:
   folders: 'results/Q1-E3-PLANTEQ-<date>-a/ and results/Q1-E3-QUAL-<date>-a/'
-  files: 'meta, verdict, case manifests, .inp, .bts and .outb of every run, summary CSV per run, console log next to each folder'
+  files: 'meta, verdict, case manifests, .inp, .bts and .outb of every run, wrapper log of every run (time, pitch command, torque, electrical power, records 45 and 47, aviFAIL), summary CSV per run, console log next to each folder (amendment 3)'
   registry: 'no value enters the values registry from E3 until a manuscript sentence needs it (rule b)'
 
 forbidden_wordings:
@@ -63,3 +66,4 @@ forbidden_wordings:
   - 'DISCON was validated'
   - 'real time'
   - 'the region-3 domain is 12-24 m/s, before domain_rule is applied'
+  - 'InterpOrder 1 is the r-test setting'
