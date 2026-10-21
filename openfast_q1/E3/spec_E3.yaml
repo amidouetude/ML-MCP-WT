@@ -3,6 +3,7 @@
 # AMENDMENT 1, 16/10/2026: commit 31742b7 held the first draft with three replacements instead of the source-verified text of the same day; the whole text is replaced by the verified version (channels and units, S-function input conversions, Q3 on mechanical power, project-choice labels, full binary hashes, DLL placement). No code had been written and nothing had been executed.
 # AMENDMENT 2, 16/10/2026: Q5 compared the file SHA-256 of two .outb, which differ by construction because the .outb header records the generation date and time; Q5 now compares channel names, units and data byte for byte. A note on the informative channels of E3a is added. Nothing had been executed.
 # AMENDMENT 3, 21/10/2026: E3b runs on the plant of the paper, FAST_SFunc driven by the verified DISCON wrapper (spec_E3W, W1 PASS in Q1-E3-WRAP-2026-10-21-c), with InterpOrder = 1 in the .fst copy (author choice O1 of 21/10/2026). With InterpOrder = 2 the baseline pitch loop diverged at the first pitch-command saturation event (Q1-E3-WRAP-2026-10-21-c, W2); it was stable with InterpOrder = 1 (Q1-E3-WRAP-DIAG2-2026-10-21-a, case D-a). E3a is unchanged. Nothing of E3b had been run in this configuration.
+# AMENDMENT 4, 21/10/2026: amendment 3 (InterpOrder 1, measured pitch) was refuted by Q1-E3-QUAL-2026-10-21-b (19 of 22 runs unstable from the first pitch activation, mean speeds 14-24 m/s). The exploratory diagnostic Q1-E3-QUAL-DIAG-2026-10-21-a found three stable options at 16 and 22 m/s over 120 s; the pre-registered comparison Q1-E3-PATHCMP-2026-10-21-a with the executable reference retained O8 (measured pitch, InterpOrder 2, NumCrctn 1; score 1.465e-02 against 1.690e-02 for O2). E3b now runs in configuration O8.
 # Rule: spec, code and analysis are committed BEFORE execution; criteria cannot be changed after
 # results are seen; corrections by dated amendment in a separate commit. Long runs are launched
 # by the author from a launch block given by the executor (author rule of 16/10/2026).
@@ -39,12 +40,12 @@ E3a_plant_equivalence:
   note_inputs: 'GenPwr follows replayed input 2 and BldPitch1 follows replayed inputs 5-7 (no pitch actuator); the channels that test the equivalence of the two plants are RotSpeed, TwrBsMyt and RootMyc1; all five are still judged as written in pass'
 
 E3b_region3_qualification:
-  plant_configuration: 'FAST_SFunc (PCMode 4, VSContrl 4) with DISCON.dll called at every DT by the wrapper of campaign.depends_on.wrapper, as in spec_E3W verification.W2_closed_loop; the wrapper outputs (pitch command, torque, electrical power, records 45 and 47, aviFAIL) are logged at every call in Simulink, discon_wrapper.m is not modified; in the .fst copy InterpOrder 2 -> 1 (linear extrapolation of the module inputs, .fst comment {1=linear, 2=quadratic}); this setting differs from the r-test case (2) and applies to every controller of the paper (amendment 3)'
+  plant_configuration: 'FAST_SFunc (PCMode 4, VSContrl 4) with DISCON.dll called at every DT by the wrapper of campaign.depends_on.wrapper, which receives the measured BldPitch1 as in spec_E3W verification.W2_closed_loop; the wrapper outputs (pitch command, torque, electrical power, records 45 and 47, aviFAIL) are logged at every call in Simulink, also when OpenFAST stops; discon_wrapper.m is not modified; in the .fst copy InterpOrder = 2 (model value, unchanged) and NumCrctn 0 -> 1 (one correction iteration, .fst comment {0=explicit calculation, i.e., no corrections}); NumCrctn differs from the r-test case (0) and applies to every controller of the paper (amendment 4)'
   wind_generation: 'TurbSim from the template openfast_q1/model/5MW_Baseline/Wind/90m_12mps_twr.inp, kept as is for TurbModel IECKAI, IECstandard 1-ed3, IEC_WindType NTM, WindProfileType PL, HubHt and RefHt 90 m, GridHeight and GridWidth 145 m, TimeStep 0.05 s, RandSeed2 RanLux. Changes in the copy only: URef = mean speed; RandSeed1 = seed; IECturbc B to A (category A, choice of the project); UsableTime 60 to 660 (TurbSim then raises AnalysisTime to UsableTime + GridWidth/URef, per the template comment); PLExp default to 0.2 written explicitly (same value as PLExp in NRELOffshrBsline5MW_InflowWind_12mps.dat, the InflowWind file of the case). Nothing else changes.'
   mean_speeds: '12, 14, 16, 18, 20, 22, 24 m/s'
   seeds: 'RandSeed1 in {31001, 31002, 31003} for every speed (project choice, no external source); this set is reserved for E3 and E2 V4 and excluded from E4'
   duration: '660 s simulated, the first 60 s excluded from every statistic'
-  runs: '21 (7 speeds x 3 seeds) on plant_configuration, model unchanged except the InflowWind file (WindType 3, generated .bts), TMax = 660 s and InterpOrder = 1 (amendment 3)'
+  runs: '21 (7 speeds x 3 seeds) on plant_configuration, model unchanged except the InflowWind file (WindType 3, generated .bts), TMax = 660 s and NumCrctn = 1 (amendment 4)'
   repeatability: 'the run 18 m/s seed 31001 is executed twice; Q5 passes if the channel names, the units and the channel data returned by ReadFASTbinary (class double, compared byte for byte with typecast to uint8) are identical; the file SHA-256 differs by construction because the .outb header records the generation date and time (Predictions were generated on ... at ..., read on the .outb of Q1-E3-DISCON-BUILD-2026-10-09-a and Q1-F-SIMULINK-2026-10-16-b) and is reported only'
   criteria:
     Q1_integrity: 'SHA-256 of every input (model copy, .inp, .bts, DLL, binaries, wrapper files; amendment 3) written before each run and unchanged after'
@@ -66,4 +67,4 @@ forbidden_wordings:
   - 'DISCON was validated'
   - 'real time'
   - 'the region-3 domain is 12-24 m/s, before domain_rule is applied'
-  - 'InterpOrder 1 is the r-test setting'
+  - 'NumCrctn 1 is the r-test setting'
