@@ -34,8 +34,11 @@ function C = prepare_case_E3(root, case_dir, opt)
 %   5. Expected output channel order (FAST_Subs.f90 l.2478-2537: Time, InflowWind, ElastoDyn,
 %      AeroDyn, ServoDyn) written to case_dir/channels.txt.
 %   6. SHA-256 of every file of the case written to case_dir/case_manifest.txt.
+%   7. check_input_refs: every file named by the input files exists and has the SHA-256 of the
+%      manifest, or of opt.bts when the field is outside the case (E3b); otherwise error.
 %
-%   C: case_dir, fst, DT, TMax, channels (cell), added (cell), manifest (n x 2 cell: path, sha256)
+%   C: case_dir, fst, DT, TMax, channels (cell), added (cell), manifest (n x 2 cell: path, sha256),
+%      refs (checked references, m x 3 cell from check_input_refs)
 
 MODEL_COMMIT = '7232a48';                                      % spec_E3 campaign.depends_on.model
 DT_MODEL     = 0.00625;                                        % spec_E3 channels.output_format
@@ -170,8 +173,11 @@ for k = 1:numel(d)
 end
 write_lines(fullfile(case_dir, 'case_manifest.txt'), ...
     cellfun(@(p, h) sprintf('%s  %s', h, strrep(erase(p, [case_dir filesep]), filesep, '/')), man(:,1), man(:,2), 'UniformOutput', false));
+% --- 7. general guard on the files named by the input files (check_input_refs, spec_E3W) ------
+if opt.copy_bts, ext = cell(0, 2); else, ext = {opt.bts, opt.bts_sha}; end
+refs = check_input_refs(fst, man, ext);
 C = struct('case_dir', case_dir, 'fst', fst, 'DT', DT, 'TMax', opt.tmax, 'channels', {ch}, ...
-           'added', {added}, 'manifest', {man});
+           'added', {added}, 'manifest', {man}, 'refs', {refs});
 end
 
 % =============================================================================================
