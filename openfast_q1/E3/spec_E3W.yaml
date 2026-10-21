@@ -1,6 +1,7 @@
 # E3W spec - DISCON called from Simulink through its Bladed interface (route B, common S-function plant)
 # STATUS: ADOPTED by the author on 21/10/2026 (supervisor proposal of 17/10/2026, corrected 21/10/2026).
 # AMENDMENT 1, 21/10/2026: records 33 and 34 filled with BldPitch1 (only BldPitch1 is an output of the model ElastoDyn file, l.139); record 49, root name, loaded library and thunk file fixed. Nothing had been written or executed.
+# AMENDMENT 2, 21/10/2026: loadlibrary is used with its default options. In Q1-E3-WRAP-2026-10-21-a and in the diagnostic Q1-E3-WRAP-DIAG-2026-10-21-a (step D2), the options alias + thunkfilename failed with "The specified module could not be found", while the default options loaded the same DLL and allowed a DISCON call (steps D1, D3, D4).
 # Rule: spec and code committed BEFORE execution; criteria fixed before results; corrections by dated
 # amendment in a separate commit. Long runs launched by the author. Code cites this spec by key path.
 
@@ -24,7 +25,7 @@ wrapper:
   checks: 'after each call: aviFAIL < 0 stops the run with avcMSG recorded, aviFAIL > 0 is recorded as a warning; records 55 and 56 must be 0 and record 35 must be 0 or 1 (BladedInterface.f90 l.1160-1171 and l.1262), otherwise the run stops'
   record_49: 'message buffer of 8196 + 1 characters: ServoDyn passes the length of its error message and ErrMsgLen = 8196 in the FAST framework (NWTC_Base.f90 l.36); the full call chain was not traced; the value only sizes the message buffer'
   root_name: '5MW_Land_DLL_WTurb.SrvD, as ServoDyn (ServoDyn.f90 l.166, BladedInterface.f90 l.202 and l.287); used by DISCON only for its debug and checkpoint files'
-  library: 'the DLL of campaign.depends_on.discon, loaded for W1 and W2 after its SHA-256 check; the thunk file of loadlibrary is written in the results folder, never in the repository'
+  library: 'the DLL of campaign.depends_on.discon, loaded for W1 and W2 after its SHA-256 check, by loadlibrary with its default options (no alias, no thunkfilename; library name DISCON); the thunk file is written where MATLAB places it by default, outside the repository (checked by git status after the run); the combination alias + thunkfilename failed in Q1-E3-WRAP-DIAG-2026-10-21-a, step D2 (amendment 2)'
 
 verification:
   W1_open_loop:
