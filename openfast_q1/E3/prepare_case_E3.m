@@ -19,6 +19,9 @@ function C = prepare_case_E3(root, case_dir, opt)
 %                     (spec_E3 E3b_region3_qualification.runs)
 %   opt.bts_sha  its SHA-256 (E3a: checked after the copy; E3b: recorded)
 %   opt.copy_bts true for E3a, false for E3b
+%   opt.interp_order  optional; 1: InterpOrder 2 -> 1 in the .fst copy, before the manifest
+%                (spec_E3 E3b_region3_qualification.plant_configuration, amendment 3); absent: the
+%                .fst is not changed for this (E3a, E3W)
 %
 %   Steps
 %   1. The files tracked by Git under openfast_q1/model/5MW_Land_DLL_WTurb and
@@ -27,7 +30,8 @@ function C = prepare_case_E3(root, case_dir, opt)
 %   2. DLL placement (spec_E3 campaign.depends_on.discon_placement): the DLL is copied to
 %      5MW_Baseline/ServoData/DISCON.dll; DLL_FileName of the ServoDyn copy is checked to be
 %      "../5MW_Baseline/ServoData/DISCON.dll"; ServoDyn is not modified for this.
-%   3. Wind file and TMax (see opt), DT checked = 0.00625 s (spec_E3 channels.output_format).
+%   3. Wind file and TMax (see opt), DT checked = 0.00625 s (spec_E3 channels.output_format);
+%      InterpOrder if opt.interp_order is given (value 2 checked, exactly one line of the .fst changed).
 %   4. OutLists completed to cover spec_E3 channels.required: only the absent channels are added,
 %      each to the OutList of its module (spec_E3 channels.verified); the list of additions is
 %      returned in C.added and written in case_dir/outlist_additions.txt.
@@ -127,6 +131,17 @@ if opt.tmax == 60
     set_value(fst, 'TMax', '60', '60');                        % check only
 else
     set_value(fst, 'TMax', '60', sprintf('%d', opt.tmax));
+end
+if isfield(opt, 'interp_order')
+    if opt.interp_order ~= 1
+        error('prepare_case_E3:interp', 'opt.interp_order is %g; only 1 is handled (spec_E3 plant_configuration).', opt.interp_order);
+    end
+    L0 = read_lines(fst);
+    set_value(fst, 'InterpOrder', '2', '1');                   % spec_E3 E3b_region3_qualification.plant_configuration
+    L1 = read_lines(fst);
+    if numel(L1) ~= numel(L0) || nnz(~strcmp(L1, L0)) ~= 1
+        error('prepare_case_E3:interp', 'The .fst copy does not differ from the model by exactly one line.');
+    end
 end
 DT = str2double(get_value(fst, 'DT'));
 if DT ~= DT_MODEL
