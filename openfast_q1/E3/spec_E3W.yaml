@@ -1,0 +1,45 @@
+# E3W spec - DISCON called from Simulink through its Bladed interface (route B, common S-function plant)
+# STATUS: ADOPTED by the author on 21/10/2026 (supervisor proposal of 17/10/2026, corrected 21/10/2026).
+# Rule: spec and code committed BEFORE execution; criteria fixed before results; corrections by dated
+# amendment in a separate commit. Long runs launched by the author. Code cites this spec by key path.
+
+campaign:
+  ids: 'Q1-E3-WRAP-<date>-a'
+  step: 'E3 (route B adopted by the author on 17/10/2026 after Q1-E3-PLANTEQ-2026-10-16-a)'
+  purpose: 'call the qualified DISCON.dll from Simulink so that the reference arm and the NMPC arms use the same plant (FAST_SFunc); verify the wrapper against the calls made by ServoDyn'
+  depends_on:
+    discon: 'results/Q1-E3-DISCON-BUILD-2026-10-09-a/build/DISCON.dll, sha256 b922907959c41a8f1fc9db8e68b43e189ce93eabff4fa0fc2da1b83d18c8671e; PE32+ with one export, DISCON (export table read 17/10/2026)'
+    sfunction: 'C:/dev/openfast-bin/FAST_SFunc.mexw64 sha256 16b628c493baf4b716cfe2373f320f72f5859b38718b2dc3da455befb3112297 and OpenFAST-Simulink_x64.dll sha256 2d61ae5e72c21376d87c95489a4db22d95e4c3b3d9f1aea92a8fee6daa0d093d'
+    reference_run: 'results/Q1-E3-PLANTEQ-2026-10-16-a/run1_exe/5MW_Land_DLL_WTurb/5MW_Land_DLL_WTurb.outb, sha256 cf07fc77fad277e6730b4de9a7439ca53a27ccb79a3dfe82c11ead60f7e14735 (executable + DISCON.dll, r-test wind, 60 s)'
+
+wrapper:
+  call: 'MATLAB loadlibrary and calllib with the prototype void DISCON(float *avrSWAP, int *aviFAIL, char *accINFILE, char *avcOUTNAME, char *avcMSG), from DISCON.F90 l.18 (BIND(C), arguments by reference, no hidden string lengths). NOT VERIFIED: loadlibrary with the selected MinGW64 8.1 compiler; the code checks at start that libfunctions lists DISCON, otherwise stops'
+  instance: 'the library is loaded at the start of each run and unloaded at its end (DISCON keeps its state between calls)'
+  avrSWAP: 'single precision (REAL(C_FLOAT) in DISCON.F90), 1000 elements (project choice, the highest record read by DISCON.F90 is 85, in debug output only), set to 0 once per run'
+  records_in: 'only the records read by DISCON.F90 are filled, with the values ServoDyn gives them in BladedInterface.f90 l.901-960 (ServoDyn fills more records, which DISCON does not read; they stay 0 here): 1 status (0 first call, 1 then, -1 final call after the last step; l.93-95, l.823); 2 time t; 3 DT; 4, 33, 34 blade pitch angles (rad) from the S-function outputs BldPitch1-3 at t; 10 = 0; 20 generator speed (rad/s) from GenSpeed at t; 27 HorWindV = sqrt(Wind1VelX^2 + Wind1VelY^2) (FAST_Solver.f90 l.867, used by DISCON only for its disabled debug output, DISCON.F90 l.112); 35 generator contactor returned by the previous call (initial 1); 49 = message buffer size + 1; 50 = length of DISCON.IN + 1; 51 = length of the root name + 1; 61 = 3'
+  strings: 'accINFILE = DISCON.IN followed by NUL (opened by DISCON only for status -8 and -9, DISCON.F90 l.531-562); avcOUTNAME = root name followed by NUL; avcMSG = buffer of record 49 characters'
+  period: 'one call every DT = 0.00625 s at each S-function output time, as ServoDyn with DLL_DT = default (ServoDyn file of the model l.80): DLL_DT then takes the ServoDyn time step (ServoDyn_IO.f90 l.1346, BladedInterface.f90 l.290-291), which is 6.250E-03 s in the summary file of Q1-E3-PLANTEQ-2026-10-16-a run1_exe; ServoDyn calls the DLL when t - DLL_DT equals the time of the last call (ServoDyn.f90 l.2093)'
+  records_out: 'pitch command = record 45 sent to S-function inputs 5-7 (collective, BladedInterface.f90 l.1149); the BPCutoff filter of ServoDyn is not reproduced because BlAlpha = exp(-2 pi DT BPCutoff) = exp(-392.7) with BPCutoff 9999.9 Hz (BladedInterface.f90 l.300, ServoDyn.f90 l.5381-5385); torque = record 47 if record 35 is not 0, else 0 (ServoDyn.f90 l.5962-5970), sent to input 1; electrical power = torque x GenSpeed x 0.944 if torque >= 0, else torque x GenSpeed / 0.944 (CalculateElecPwr, ServoDyn.f90 l.6004-6007), sent to input 2'
+  checks: 'after each call: aviFAIL < 0 stops the run with avcMSG recorded, aviFAIL > 0 is recorded as a warning; records 55 and 56 must be 0 and record 35 must be 0 or 1 (BladedInterface.f90 l.1160-1171 and l.1262), otherwise the run stops'
+
+verification:
+  W1_open_loop:
+    data: 'campaign.depends_on.reference_run, every output step from 0 to 60 s'
+    inputs: 'records 2 = Time, 4, 33 and 34 = BldPitch1 in rad (collective pitch; only BldPitch1 is in this output file, and records 33 and 34 only affect records 43 and 44, not used in collective mode, DISCON.F90 l.487-520), 20 = GenSpeed in rad/s, 27 = sqrt(Wind1VelX^2 + Wind1VelY^2); status 0 at the first step, 1 after, -1 after the last'
+    compared: 'record 45 in deg against BlPitchC1, and record 47 in kN-m against GenTq, at the same output step (lag 0, ServoDyn calls the DLL in CalcOutput with the inputs at t); lag 1 also reported'
+    pass: 'max |pitch command difference| <= 1e-3 deg and max |torque difference| <= 1e-3 x max |GenTq| over 0-60 s (project choice, no external source); the inputs are read from outputs written in single precision, which is the expected source of residual differences'
+  W2_closed_loop:
+    run: 'FAST_SFunc (PCMode 4, VSContrl 4) driven by the wrapper, r-test wind field of Q1-E3-PLANTEQ-2026-10-16-a, TMax 60 s'
+    compared: 'same channels, window and metrics as spec_E3 E3a_plant_equivalence, against the reference run'
+    status: 'reported only, no pass criterion: it documents the plant-path difference that route B removes'
+    record: 'wall time of the run and of the wrapper calls'
+
+outputs:
+  folder: 'results/Q1-E3-WRAP-<date>-a/'
+  files: 'meta, verdict, W1 comparison CSV, W2 case copy and .outb, metrics CSV, console log next to the folder'
+  next: 'if W1 passes, a dated amendment of spec_E3 moves E3b to FAST_SFunc driven by this wrapper; E3b is not run before that amendment'
+
+forbidden_wordings:
+  - 'identical to ServoDyn'
+  - 'DISCON validated in Simulink'
+  - 'real time'
