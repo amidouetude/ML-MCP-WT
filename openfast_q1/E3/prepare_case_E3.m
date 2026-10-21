@@ -20,7 +20,10 @@ function C = prepare_case_E3(root, case_dir, opt)
 %   opt.bts_sha  its SHA-256 (E3a: checked after the copy; E3b: recorded)
 %   opt.copy_bts true for E3a, false for E3b
 %   opt.interp_order  optional; 1: InterpOrder 2 -> 1 in the .fst copy, before the manifest
-%                (spec_E3 E3b_region3_qualification.plant_configuration, amendment 3); absent: the
+%                (amendment 3 of spec_E3, no longer used by E3b since amendment 4); absent: the
+%                .fst is not changed for this (E3a, E3W)
+%   opt.num_crctn optional; 1: NumCrctn 0 -> 1 in the .fst copy, before the manifest
+%                (spec_E3 E3b_region3_qualification.plant_configuration, amendment 4); absent: the
 %                .fst is not changed for this (E3a, E3W)
 %
 %   Steps
@@ -31,7 +34,8 @@ function C = prepare_case_E3(root, case_dir, opt)
 %      5MW_Baseline/ServoData/DISCON.dll; DLL_FileName of the ServoDyn copy is checked to be
 %      "../5MW_Baseline/ServoData/DISCON.dll"; ServoDyn is not modified for this.
 %   3. Wind file and TMax (see opt), DT checked = 0.00625 s (spec_E3 channels.output_format);
-%      InterpOrder if opt.interp_order is given (value 2 checked, exactly one line of the .fst changed).
+%      InterpOrder if opt.interp_order is given (value 2 checked, exactly one line of the .fst changed);
+%      NumCrctn if opt.num_crctn is given (value 0 checked, exactly one line of the .fst changed).
 %   4. OutLists completed to cover spec_E3 channels.required: only the absent channels are added,
 %      each to the OutList of its module (spec_E3 channels.verified); the list of additions is
 %      returned in C.added and written in case_dir/outlist_additions.txt.
@@ -141,6 +145,17 @@ if isfield(opt, 'interp_order')
     L1 = read_lines(fst);
     if numel(L1) ~= numel(L0) || nnz(~strcmp(L1, L0)) ~= 1
         error('prepare_case_E3:interp', 'The .fst copy does not differ from the model by exactly one line.');
+    end
+end
+if isfield(opt, 'num_crctn')
+    if opt.num_crctn ~= 1
+        error('prepare_case_E3:crctn', 'opt.num_crctn is %g; only 1 is handled (spec_E3 plant_configuration).', opt.num_crctn);
+    end
+    L0 = read_lines(fst);
+    set_value(fst, 'NumCrctn', '0', '1');                      % spec_E3 E3b_region3_qualification.plant_configuration
+    L1 = read_lines(fst);
+    if numel(L1) ~= numel(L0) || nnz(~strcmp(L1, L0)) ~= 1
+        error('prepare_case_E3:crctn', 'The .fst copy does not differ from the model by exactly one line (NumCrctn).');
     end
 end
 DT = str2double(get_value(fst, 'DT'));
