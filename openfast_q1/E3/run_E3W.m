@@ -23,7 +23,7 @@ function run_E3W()
 %   W1_comparison.csv, W2/ (case copy and .outb), metrics_W2.csv, errors_E3W.txt (full error report
 %   of every catch). loadlibrary uses its default options (spec_E3W wrapper.library, amendment 2).
 
-SPEC_SHA  = '4872fa54dbb3083553c8ffc742e3a1202e6aaf643827998fde8e0a9c4aef0daa';
+SPEC_SHA  = 'a78de8925221565c50f47ef458b60497891e21547d90d048f0cb38cd08bb0d86';
 BIN_DIR   = 'C:\dev\openfast-bin';
 BIN_SHA   = {'FAST_SFunc.mexw64',         '16b628c493baf4b716cfe2373f320f72f5859b38718b2dc3da455befb3112297';   % campaign.depends_on.sfunction
              'OpenFAST-Simulink_x64.dll', '2d61ae5e72c21376d87c95489a4db22d95e4c3b3d9f1aea92a8fee6daa0d093d'};  % campaign.depends_on.sfunction
@@ -62,7 +62,7 @@ if ~strcmp(sha256_file(abs_(REF_REL)), REF_SHA), error('run_E3W:ref', 'Reference
 if ~strcmp(sha256_file(abs_(BTS_REL)), BTS_SHA), error('run_E3W:bts', 'r-test .bts SHA-256 differs from %s.', BTS_SHA); end
 [~, tb] = system(sprintf('git -C "%s" rev-parse HEAD', TB_DIR));
 if ~strcmp(strtrim(tb), TB_COMMIT), error('run_E3W:toolbox', 'matlab-toolbox is not at %s.', TB_COMMIT); end
-ID  = ['Q1-E3-WRAP-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-b'];   % attempt -a (2026-10-21): library not loaded
+ID  = ['Q1-E3-WRAP-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-c'];   % attempts -a, -b (2026-10-21): library not loaded, MATLAB terminated
 OUT = fullfile(ROOT, 'results', ID);
 if exist(OUT, 'dir'), error('run_E3W:exists', 'Campaign folder already exists: %s', OUT); end
 fprintf('%s\n', ID);
@@ -70,7 +70,7 @@ mkdir(OUT);
 
 % --- meta (start) -----------------------------------------------------------------------------
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));
-M = {'previous_attempt: results/Q1-E3-WRAP-2026-10-21-a (library not loaded: alias + thunkfilename, see Q1-E3-WRAP-DIAG-2026-10-21-a)', sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
+M = {'previous_attempt: results/Q1-E3-WRAP-2026-10-21-b (MATLAB terminated in mxCreateString, non-UTF-8 message buffer)', sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
      sprintf('start: %s', stamp()), sprintf('spec: openfast_q1/E3/spec_E3W.yaml %s', SPEC_SHA)};
 for k = 1:numel(CODE), M{end+1} = sprintf('code: openfast_q1/E3/%s %s', CODE{k}, sha256_file(fullfile(ED3, CODE{k}))); end %#ok<AGROW>
 for k = 1:size(BIN_SHA, 1), M{end+1} = sprintf('binary: %s %s', fullfile(BIN_DIR, BIN_SHA{k,1}), BIN_SHA{k,2}); end %#ok<AGROW>

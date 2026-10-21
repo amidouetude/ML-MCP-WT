@@ -15,6 +15,8 @@ function out = discon_wrapper(mode, varargin)
 %
 %   The state between two calls (avrSWAP, record 35, status) is kept here (wrapper.instance).
 %   The final call changes only record 1, as ServoDyn (BladedInterface.f90 l.823-825).
+%   avcMSG is a byte buffer of MSGLEN + 1 bytes set to 0 before each call (uint8Ptr, discon.h), decoded
+%   up to the first NUL byte, printable ASCII kept (spec_E3W wrapper.call and wrapper.strings, amendment 3).
 
 LIB      = 'DISCON';                  % library name given by loadlibrary (wrapper.library)
 NSWAP    = 1000;                      % wrapper.avrSWAP
@@ -93,13 +95,21 @@ end
 function [w, fail, S] = call(lib, w, infile, rootname, msglen, S)
 % one call of DISCON; aviFAIL < 0 stops, aviFAIL > 0 is recorded (spec_E3W wrapper.checks)
 t0 = tic;
-[w, fail, ~, ~, msg] = calllib(lib, 'DISCON', w, int32(0), infile, rootname, blanks(msglen));
+[w, fail, ~, ~, mb] = calllib(lib, 'DISCON', w, int32(0), infile, rootname, zeros(1, msglen + 1, 'uint8'));
 S.wall_s = S.wall_s + toc(t0);
 S.ncalls = S.ncalls + 1;
-msg = strtrim(char(msg));
+msg = decode_msg(mb);
 if fail < 0
     error('discon_wrapper:fail', 'DISCON returned aviFAIL = %d at status %g: %s', fail, w(1), msg);
 elseif fail > 0
     S.warnings{end+1} = sprintf('t = %.5f s: %s', w(2), msg);
 end
+end
+
+function msg = decode_msg(mb)
+% message bytes up to the first NUL, printable ASCII only (spec_E3W wrapper.strings, amendment 3)
+b = uint8(mb(:)');
+k = find(b == 0, 1);
+if ~isempty(k), b = b(1:k-1); end
+msg = strtrim(char(b(b >= 32 & b <= 126)));
 end
