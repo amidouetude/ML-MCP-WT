@@ -20,10 +20,10 @@ function run_E3W()
 %         after the simulation; compared with the reference run with the channels, window and
 %         metrics of spec_E3 E3a_plant_equivalence; reported only, it does not change W1
 %   Writes in results/Q1-E3-WRAP-<date>-a/ (spec_E3W outputs.files): meta_E3W.txt, verdict_E3W.txt,
-%   W1_comparison.csv, W2/ (case copy and .outb), metrics_W2.csv, the loadlibrary thunk files
-%   (spec_E3W wrapper.library).
+%   W1_comparison.csv, W2/ (case copy and .outb), metrics_W2.csv, errors_E3W.txt (full error report
+%   of every catch). loadlibrary uses its default options (spec_E3W wrapper.library, amendment 2).
 
-SPEC_SHA  = '5172b31fbb7a8baefc845504d4d6d59343f919b7f228595dfe17faeb614b9a3c';
+SPEC_SHA  = '4872fa54dbb3083553c8ffc742e3a1202e6aaf643827998fde8e0a9c4aef0daa';
 BIN_DIR   = 'C:\dev\openfast-bin';
 BIN_SHA   = {'FAST_SFunc.mexw64',         '16b628c493baf4b716cfe2373f320f72f5859b38718b2dc3da455befb3112297';   % campaign.depends_on.sfunction
              'OpenFAST-Simulink_x64.dll', '2d61ae5e72c21376d87c95489a4db22d95e4c3b3d9f1aea92a8fee6daa0d093d'};  % campaign.depends_on.sfunction
@@ -62,7 +62,7 @@ if ~strcmp(sha256_file(abs_(REF_REL)), REF_SHA), error('run_E3W:ref', 'Reference
 if ~strcmp(sha256_file(abs_(BTS_REL)), BTS_SHA), error('run_E3W:bts', 'r-test .bts SHA-256 differs from %s.', BTS_SHA); end
 [~, tb] = system(sprintf('git -C "%s" rev-parse HEAD', TB_DIR));
 if ~strcmp(strtrim(tb), TB_COMMIT), error('run_E3W:toolbox', 'matlab-toolbox is not at %s.', TB_COMMIT); end
-ID  = ['Q1-E3-WRAP-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-a'];
+ID  = ['Q1-E3-WRAP-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-b'];   % attempt -a (2026-10-21): library not loaded
 OUT = fullfile(ROOT, 'results', ID);
 if exist(OUT, 'dir'), error('run_E3W:exists', 'Campaign folder already exists: %s', OUT); end
 fprintf('%s\n', ID);
@@ -70,7 +70,7 @@ mkdir(OUT);
 
 % --- meta (start) -----------------------------------------------------------------------------
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));
-M = {sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
+M = {'previous_attempt: results/Q1-E3-WRAP-2026-10-21-a (library not loaded: alias + thunkfilename, see Q1-E3-WRAP-DIAG-2026-10-21-a)', sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
      sprintf('start: %s', stamp()), sprintf('spec: openfast_q1/E3/spec_E3W.yaml %s', SPEC_SHA)};
 for k = 1:numel(CODE), M{end+1} = sprintf('code: openfast_q1/E3/%s %s', CODE{k}, sha256_file(fullfile(ED3, CODE{k}))); end %#ok<AGROW>
 for k = 1:size(BIN_SHA, 1), M{end+1} = sprintf('binary: %s %s', fullfile(BIN_DIR, BIN_SHA{k,1}), BIN_SHA{k,2}); end %#ok<AGROW>
@@ -87,6 +87,7 @@ Simulink.fileGenControl('set', 'CacheFolder', OUT, 'CodeGenFolder', OUT);
 restore = onCleanup(@() Simulink.fileGenControl('set', 'CacheFolder', cache0.CacheFolder, ...
                                                 'CodeGenFolder', cache0.CodeGenFolder));
 HFILE = fullfile(ED3, 'discon.h');
+ERRF  = fullfile(OUT, 'errors_E3W.txt');     % full report of every catch
 V = {sprintf('campaign: %s', ID), sprintf('spec: %s', SPEC_SHA)};
 extra = {};
 
@@ -108,8 +109,7 @@ try
     t = D(:,col(1));  n = numel(t);
     hwv = sqrt(D(:,col(4)).^2 + D(:,col(5)).^2);                                  % record 27
     c = zeros(n, 6);
-    mkdir(fullfile(OUT, 'W1'));
-    discon_wrapper('init', abs_(DLL_REL), HFILE, fullfile(OUT, 'W1', 'discon_thunk_pcwin64.dll'));
+    discon_wrapper('init', abs_(DLL_REL), HFILE);
     t0 = tic;
     for k = 1:n
         c(k,:) = discon_wrapper('step', t(k), D(k,col(2))*pi/180, D(k,col(3))*pi/30, hwv(k))';
@@ -135,8 +135,9 @@ try
              ['W1 ' w1]}];
     for k = 1:numel(s1.warnings), extra{end+1} = ['W1 warning: ' s1.warnings{k}]; end %#ok<AGROW>
 catch ME
-    if libisloaded('discon_e3w'), unloadlibrary('discon_e3w'); end
-    V{end+1} = ['W1 NOT EVALUATED (error: ' strrep(ME.message, newline, ' ') ')'];
+    if libisloaded('DISCON'), unloadlibrary('DISCON'); end
+    log_error(ERRF, 'W1', ME);
+    V{end+1} = ['W1 NOT EVALUATED (error: ' strrep(ME.message, newline, ' ') '; full report in errors_E3W.txt)'];
 end
 
 % --- W2, closed loop (only if W1 was evaluated) -----------------------------------------------
@@ -147,7 +148,7 @@ if any(strcmp(w1, {'PASS', 'FAIL'}))
                 'dll', abs_(DLL_REL), 'dll_sha', DLL_SHA, 'bts', abs_(BTS_REL), 'bts_sha', BTS_SHA, 'copy_bts', true));
         for k = 1:size(C.refs, 1), extra{end+1} = sprintf('W2 input_ref: %s -> %s %s', C.refs{k,1}, strrep(erase(C.refs{k,2}, [OUT filesep]), filesep, '/'), C.refs{k,3}); end %#ok<AGROW>
         if ~isempty(C.added), extra{end+1} = ['W2 outlist_additions: ' strjoin(C.added', ', ')]; end
-        [ok_run, wall2, err2, slx_sha, s2] = run_w2(C, DT, TMAX, fullfile(OUT, 'W2'), abs_(DLL_REL), HFILE);
+        [ok_run, wall2, err2, slx_sha, s2] = run_w2(C, DT, TMAX, fullfile(OUT, 'W2'), abs_(DLL_REL), HFILE, ERRF);
         extra{end+1} = sprintf('model: W2/E3W_sfunc.slx %s', slx_sha);
         V{end+1} = sprintf('W2: run %s; wall %.1f s; %d DISCON calls (wrapper %.2f s), %d warning(s)%s', ...
                            yn(ok_run), wall2, s2.ncalls, s2.wall_s, numel(s2.warnings), errtxt(err2));
@@ -174,8 +175,9 @@ if any(strcmp(w1, {'PASS', 'FAIL'}))
             w2 = ['STOPPED (' chk ')'];
         end
     catch ME
-        if libisloaded('discon_e3w'), unloadlibrary('discon_e3w'); end
-        w2 = ['ERROR (' strrep(ME.message, newline, ' ') ')'];
+        if libisloaded('DISCON'), unloadlibrary('DISCON'); end
+        log_error(ERRF, 'W2', ME);
+        w2 = ['ERROR (' strrep(ME.message, newline, ' ') '; full report in errors_E3W.txt)'];
     end
 end
 V{end+1} = ['W2 ' w2];
@@ -188,7 +190,7 @@ fprintf('%s\n', V{:});
 end
 
 % =============================================================================================
-function [ok, wall, err, slx_sha, st] = run_w2(C, DT, tmax, rd, dll, hfile)
+function [ok, wall, err, slx_sha, st] = run_w2(C, DT, tmax, rd, dll, hfile, errf)
 % build the W2 model (FAST_SFunc + wrapper block), simulate once, final call (W2_closed_loop.run)
 mdl = 'E3W_sfunc';
 if bdIsLoaded(mdl), close_system(mdl, 0); end
@@ -224,21 +226,23 @@ save_system(mdl, f);
 slx_sha = sha256_file(f);
 clear('FAST_SFunc');
 evalin('base', 'clear OutList');
-discon_wrapper('init', dll, hfile, fullfile(rd, 'discon_thunk_pcwin64.dll'));
+discon_wrapper('init', dll, hfile);
 ok = false;  err = '';
 w = tic;
 try
     sim(mdl);
     ok = true;
 catch ME
+    log_error(errf, 'W2 simulation', ME);
     err = strrep(ME.message, newline, ' ');
 end
 wall = toc(w);
 try
     discon_wrapper('final');                                        % final call after the simulation
 catch ME
+    log_error(errf, 'W2 final call', ME);
     err = strtrim([err ' | final call: ' strrep(ME.message, newline, ' ')]);
-    if libisloaded('discon_e3w'), unloadlibrary('discon_e3w'); end
+    if libisloaded('DISCON'), unloadlibrary('DISCON'); end
 end
 st = discon_wrapper('stats');
 close_system(mdl, 0);
@@ -267,6 +271,13 @@ for k = 1:size(UNITS, 1)
     end
 end
 if ~all(isfinite(D(:))), chk = 'non-finite outputs'; end
+end
+
+function log_error(f, tag, ME)
+% append the full error report of a catch (getReport extended)
+fid = fopen(f, 'a');
+fprintf(fid, '===== %s (%s)\n%s\n', tag, stamp(), getReport(ME, 'extended', 'hyperlinks', 'off'));
+fclose(fid);
 end
 
 function s = yn(ok)

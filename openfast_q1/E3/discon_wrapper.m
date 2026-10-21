@@ -1,7 +1,8 @@
 function out = discon_wrapper(mode, varargin)
 %DISCON_WRAPPER  DISCON.dll called from MATLAB through its Bladed interface (openfast_q1/E3/spec_E3W.yaml).
 %
-%   discon_wrapper('init', dll, hfile, thunk)  load the library (spec_E3W wrapper.library), check that
+%   discon_wrapper('init', dll, hfile)         load the library with the default options of loadlibrary
+%                                              (spec_E3W wrapper.library, amendment 2), check that
 %                                              libfunctions lists DISCON (wrapper.call), reset the state
 %   c = discon_wrapper('step', t, bp1, gs, hwv)
 %        t   time (s); bp1 BldPitch1 (rad); gs GenSpeed (rad/s); hwv HorWindV (m/s)
@@ -15,7 +16,7 @@ function out = discon_wrapper(mode, varargin)
 %   The state between two calls (avrSWAP, record 35, status) is kept here (wrapper.instance).
 %   The final call changes only record 1, as ServoDyn (BladedInterface.f90 l.823-825).
 
-LIB      = 'discon_e3w';
+LIB      = 'DISCON';                  % library name given by loadlibrary (wrapper.library)
 NSWAP    = 1000;                      % wrapper.avrSWAP
 DT       = 0.00625;                   % s, wrapper.records_in record 3 and wrapper.period
 NUMBL    = 3;                         % wrapper.records_in record 61
@@ -27,9 +28,9 @@ GENEFF   = 0.944;                     % wrapper.records_out (electrical power)
 persistent S
 switch mode
     case 'init'
-        [dll, hfile, thunk] = varargin{:};
+        [dll, hfile] = varargin{:};
         if libisloaded(LIB), error('discon_wrapper:loaded', 'Library %s is already loaded.', LIB); end
-        loadlibrary(dll, hfile, 'alias', LIB, 'thunkfilename', thunk);
+        loadlibrary(dll, hfile);
         if ~any(strcmp(libfunctions(LIB), 'DISCON'))
             unloadlibrary(LIB);
             error('discon_wrapper:symbol', 'libfunctions does not list DISCON (spec_E3W wrapper.call).');
