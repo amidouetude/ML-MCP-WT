@@ -6,6 +6,7 @@
 # AMENDMENT 4, 15/10/2026: R corrected from 62.9401 to 63*cos(2.5 deg) = 62.940038 m (rounding error carried from fiche_E1.yaml l.82; generer_drv_E1.m and the AeroMap driver use the exact value); no other change.
 # AMENDMENT 5, 16/10/2026: grid-assignment tolerances of the Cp table written in the spec (1e-4). The executor-chosen 1e-6 of build_cp_table_E2.m was below the single-precision resolution of the OpenFAST outputs and stopped attempt Q1-E2-ROM-2026-10-16-a at step C2 (kept as record). The new value was set after that failure, from the grid spacing and the output precision, not from the observed deviations.
 # AMENDMENT 6, 22/10/2026: V3 and V4 are run on the plant of the NMPC arms, configuration O8 of spec_E3 (FAST_SFunc, DISCON through the wrapper with the measured BldPitch1, InterpOrder 2, NumCrctn 1), qualified with limits in Q1-E3-QUAL-2026-10-22-d (author decisions D1-D9 of 22/10/2026). V3: steady wind, initial pitch, override maneuver, run length and model drive fixed. V4: data source, time window and input sampling fixed. T_H fixed at 1.5 s before V3. Nothing had been run for V3 or V4.
+# AMENDMENT 7, 22/10/2026: model v2. The disturbance input V becomes the rotor-effective wind RtVAvgxh of AeroDyn, assumed perfectly known by every NMPC arm (idealisation, author decision A of 22/10/2026), after the NO-GO of model v1 (Q1-E2-V4-2026-10-22-a) and the exploratory diagnostic Q1-E2-DIAGV4-2026-10-22-a. Equations, parameters, Cp table and code are unchanged; only the signal used as V changes. Because this input was chosen after seeing DIAGV4 on the E3b-d segments, V4-b uses new turbulent runs with new seeds; V3-b replays the V3 runs offline (no model v2 result had been computed on them). Thresholds unchanged. Model v1 results stay on record.
 # Rule: this spec, the model code and the verification/validation scripts are committed
 # BEFORE any execution. Thresholds below cannot be changed after results are seen;
 # an error is corrected by a dated amendment in a separate commit.
@@ -35,7 +36,7 @@ model:
       (PCMode 4 or 5, BPCutoff 9999.9 Hz) applies the commanded pitch without dynamics.
       Bounds and rate are NMPC constraints (see nmpc_interface), not model states.
   disturbance:
-    V: "hub-height longitudinal wind speed (m/s), OpenFAST channel Wind1VelX; variant (i) V_rotor = Wind1VelX, variant (ii) V_rotor = Wind1VelX * cos(5 deg) (ShftTilt -5 deg); variant selected in V3 (amendment 2)"
+    V: 'rotor-effective wind speed (m/s), model v2 (amendment 7): OpenFAST channel RtVAvgxh of AeroDyn v4.2.1, equal-weight average over all blade nodes of the disturbed inflow minus the average blade elastic velocity, in hub axes (AeroDyn.f90 l.3380-3404, AeroDyn_IO.f90 l.313-316), used directly as V_rotor (variant (i) only). Model v1 (record of Q1-E2-V3-2026-10-22-a and Q1-E2-V4-2026-10-22-a): V = Wind1VelX, variant (i) or variant (ii) = Wind1VelX x cos(5 deg)'
   equations:
     drivetrain: "J * d(omega_r)/dt = Q_aero - N * Q_g      (single rigid mass)"
     aerodynamics: "Q_aero = 0.5 * rho * A * R * V^2 * Cp(lambda, beta) / lambda,  lambda = omega_r * R / V"
@@ -55,7 +56,7 @@ model:
     - "no mechanical loss term (GBoxEff = 100 % in ElastoDyn; the only loss is electrical)"
     - "no torque-rate limit (15,000 N m/s in DISCON), adopted 15/10/2026; effect checked in V3 and V4"
     - "quasi-steady aerodynamics (Cp table from steady BEM; OpenFAST runs UA_Mod 3)"
-    - "hub-height wind used as rotor-effective wind (variant i) or corrected for shaft tilt only (variant ii); disk averaging and blade elastic velocity not modelled"
+    - 'model v2 (amendment 7): rotor-effective wind taken as RtVAvgxh computed by AeroDyn from the full wind field; it is not measurable on a real turbine and is assumed perfectly known (idealisation); model v1 used the hub-height wind Wind1VelX (disk averaging not modelled)'
   parameters:
     rho:   {value: 1.225, unit: kg/m3, source: "5MW_Land .fst AirDens (model commit 7232a48)"}
     R:     {value: 62.940038, unit: m, source: "R = TipRad*cos(PreCone) = 63*cos(2.5 deg), computed in code; equals rTipFixMax, the radius used by the AeroMap driver to set WindSpeed from TSR in B3 (FAST_SS_Subs.f90:216; AeroDyn.f90:4664-4675); fixed reference radius for Cp and lambda (amendments 2 and 4)"}
@@ -79,7 +80,7 @@ nmpc_interface:   # what E6 will use; fixed here so that B and C1..C6 share it
   cost: "speed tracking (omega_r - omega_rated)^2 + pitch increments; NO electrical-power term"
   power_reference: "P_ref = 5 MW electrical, used as an outcome metric only"
   constraints: "beta in [0, 30] deg, |d beta/dt| <= 8 deg/s (Jonkman), as MV bounds and MV rate bounds"  # B3 table domain; fraction of time DISCON exceeds 30 deg measured in E3
-  wind_assumption: "main arms: V measured at hub at time k, held constant over the horizon; separate arm with perfect preview (E7)"
+  wind_assumption: 'main arms: rotor-effective wind RtVAvgxh at time k, assumed perfectly known (idealisation, amendment 7), held constant over the horizon; the same disturbance input is used by every arm (B and C1..C6) and recorded in the E4 data together with Wind1VelX; separate arm with perfect preview of RtVAvgxh (E7)'
   coupling: "Simulink S-function FAST_SFunc (PCMode = 4, VSContrl = 4) for NMPC arms"
 
 verification:   # no OpenFAST run needed
@@ -115,12 +116,15 @@ validation:     # against OpenFAST + qualified DISCON
     outputs_added: "AeroDyn OutList of the V3 runs only: RtVAvgxh, RtAeroPwr, RtAeroCp, RtArea, RtTSR (output channels only, no physics change); ratio RtVAvgxh / Wind1VelX reported"
     variant_rule: "wind variants (i) and (ii) both evaluated; the variant with the lower sum over the 6 steps of e_max(omega_r) in the first 1.5 s is retained for V4 and E6; V4 is evaluated with the retained variant only"
     reported_only: 'per run: realised step BlPitchF - BldPitch1(60 s), max |BldPitch1(t) - BldPitch1(60 s)| over 50-60 s, RotSpeed change at 61.5 s and at 70 s relative to RotSpeed(60 s) (amendment 6)'
+    V3b_model_v2: 'model v2 (amendment 7), campaign Q1-E2-V3-<date>-b: offline replay of the 6 runs of Q1-E2-V3-2026-10-22-a, no OpenFAST run, .outb SHA-256 U14_up a0718d8db1664bb2cda652bd26e0431b16a79db31a2651834050a554128f67b8, U14_dn 0d104df5f0c3d91a9c4d56301404ef44543577701bf83ed9778ea768ba3db235, U18_up ba2e3917e08922a94c6d1a4a613f91938a1b784af66b8acae5faca471063dff6, U18_dn a96f1ccab3a4f6f0673566ecb8e3db78bfa9a22e15491b38a1d034ae4c0d1fd0, U22_up 9dacea0820ac4a7a9ce3fa769ea10bda6071c0f4e7fe2f0db7679fd4590f5dd1, U22_dn 4abc752203580138bb9d8d997a6f4dc6f02b18dff0a38810eaf0f8d70cf17d74; compare as V3 compare with V = RtVAvgxh held over each Ts, variant (i) only (no variant rule); pass as V3 pass for each of the 6 runs; reported as V3 reported_only'
   V4_turbulent_segments:
     data: 'the 21 runs of Q1-E3-QUAL-2026-10-22-d (repetition excluded, seeds 31001-31003 reserved for E3 and E2 V4 by spec_E3 seeds), configuration O8 with initial pitch beta_eq, only t >= 60 s (spec_E3 duration), all 7 mean speeds evaluated and reported per speed (amendment 6)'
     protocol: 'consecutive non-overlapping segments of length T_H = 1.5 s from t = 60 s; at the start of each segment the model is re-initialised on the OpenFAST state (omega_r = RotSpeed, omega_f rebuilt as in V3 compare); inputs: BldPitch1 held over each Ts = 0.05 s at its value at the start of the step; wind either (a) Wind1VelX held over each Ts in the same way, or (b) Wind1VelX at the start of the segment held over the whole segment; comparison at the instants k x Ts of the segment; (a) measures the model error, (b) adds the wind-assumption error (amendment 6)'
     metrics: "RMSE, MAE, e_max, bias of omega_r, per wind speed; median and P95 over segments"
     pass: "(a) median e_max <= 2 % and P95 e_max <= 5 % of rated rotor speed  # adopted 15/10/2026; (b) reported only"
-  exit_decision: "GO if V0-V4 pass; GO WITH CONDITIONS if V4 fails only at listed speeds (domain restricted, stated in paper); NO-GO otherwise"
+    V4b_data_model_v2: 'model v2 (amendment 7), campaign Q1-E2-V4DATA-<date>-a: 21 new runs on configuration O8 as spec_E3 E3b_region3_qualification (wind_generation, mean_speeds, duration, runs with initial pitch beta_eq, NumCrctn 1, TMax 660 s), with RandSeed1 in {32001, 32002, 32003} (project choice, no external source), reserved for E2 V4-b and excluded from E4; RtVAvgxh in the OutList; a run failing spec_E3 Q2 or Q2b is excluded and its mean speed is reported as not evaluated; spec_E3 Q3 and Q4 reported only'
+    V4b_model_v2: 'model v2 (amendment 7), campaign Q1-E2-V4-<date>-b: offline on the 21 runs of V4b_data_model_v2, same data window, segments, protocol, metrics and pass as V4, same rules R1 to R5 as run_E2_V4.m and analyse_E2_V4.m at commit c65b3b6, with V = RtVAvgxh, variant (i): (a) held over each Ts, (b) value at the segment start held over the segment'
+  exit_decision: 'model v1: NO-GO (Q1-E2-V4-2026-10-22-a). Model v2 (amendment 7): GO if V0-V2 (Q1-E2-ROM-2026-10-16-b, valid for model v2: equations, parameters and Cp table unchanged), V3-b and V4-b pass; GO WITH CONDITIONS if V4-b (a) fails only at listed speeds and passes at least one (domain restricted, stated in paper); NO-GO otherwise'
 
 order_of_work:
   1: "adopt this spec; commit spec + model code + verification scripts (before execution)"
@@ -128,8 +132,11 @@ order_of_work:
   3: "exploratory Simulink feasibility test (separate short spec; no publishable value)"
   4: "E3: plant-equivalence test (exe+DISCON vs S-function replay) and region-3 qualification of DISCON"
   5: "run V3-V4; exit decision"
+  6: 'model v2 (amendment 7): V3-b offline, V4-b data runs (seeds 32001-32003), V4-b offline, exit decision'
 
 forbidden_wordings:
   - '"validated" for the model before V3 and V4 pass'
   - "real time"
   - '"the pitch regulates power" (region 3: power is held by the torque law)'
+  - 'the rotor-effective wind is measured (RtVAvgxh is computed by AeroDyn and assumed known: idealisation)'
+  - 'model v2 is validated on E3b-d (DIAGV4 is exploratory and was used to choose the input)'
