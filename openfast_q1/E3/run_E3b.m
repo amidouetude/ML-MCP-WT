@@ -5,32 +5,35 @@ function run_E3b()
 %       >> addpath('openfast_q1/E3');  run_E3b
 %
 %   Refuses to start (error, nothing written) if: openfast_q1/ is not clean in Git; the SHA-256 of
-%   spec_E3.yaml is not SPEC_SHA (adopted spec + amendments 1 to 4); a binary, the DLL or the r-test
+%   spec_E3.yaml is not SPEC_SHA (adopted spec + amendments 1 to 6); a binary, the DLL or the r-test
 %   .bts differs from its SHA-256 (spec_E3 campaign.depends_on); the last commit of discon_wrapper.m
 %   and discon.h is not WRAP_COMMIT or spec_E3W.yaml differs from WRAP_SPEC (campaign.depends_on.wrapper);
-%   matlab-toolbox (ReadFASTbinary) is not at TB_COMMIT; the campaign folder already exists.
+%   matlab-toolbox (ReadFASTbinary) is not at TB_COMMIT; the E1 CSV differs from CSV_SHA, or for one of
+%   the 7 speeds sprintf('%.4f', beta_eq_deg) is not the string of PITCH (spec_E3
+%   E3b_region3_qualification.runs, amendment 6); the campaign folder already exists.
 %
 %   Steps, each run once, never retried, one simulation at a time:
 %     wind    gen_wind_E3: 21 TurbSim inputs and fields (spec_E3 E3b_region3_qualification.wind_generation)
 %     runs    21 runs (7 speeds x 3 seeds), then the repetition of 18 m/s seed 31001
 %             (spec_E3 E3b_region3_qualification.runs, .repeatability) on plant_configuration (amendment 4,
 %             configuration O8): case prepared by prepare_case_E3 (mode 'sfunc', InflowWind file,
-%             TMax = 660 s, NumCrctn 0 -> 1, InterpOrder 2 unchanged), Simulink model built here
+%             TMax = 660 s, NumCrctn 0 -> 1, InterpOrder 2 unchanged, BlPitch(1-3) 0 -> beta_eq_deg of
+%             E1 at the mean speed, amendment 6), Simulink model built here
 %             (FAST_SFunc and one MATLAB Function block calling discon_wrapper at every DT with the
 %             measured BldPitch1, as run_E3W W2), the 6 wrapper outputs logged at every DT by a To
 %             Workspace block; sim is called with CaptureErrors on, so that runs/<run>/wrapper_log.mat
 %             and the .outb are kept also when OpenFAST stops the run; the library is loaded before
 %             and unloaded after each run, with the final call (discon_wrapper 'final')
-%     Q1      SHA-256 of every input (case copy, .inp, .bts, DLL, S-function binaries, wrapper files)
-%             written before each run and recomputed after it (criteria.Q1_integrity)
-%     analyse analyse_E3b (Q1-Q5, reported_only, domain_rule, verdict)
+%     Q1      SHA-256 of every input (case copy, .inp, .bts, DLL, S-function binaries, wrapper files,
+%             E1 CSV) written before each run and recomputed after it (criteria.Q1_integrity)
+%     analyse analyse_E3b (Q1-Q5, Q2b, reported_only, domain_rule, verdict)
 %   Every catch appends getReport(ME, 'extended') to errors_E3b.txt.
-%   Writes in results/Q1-E3-QUAL-<date>-c/: meta_E3b.txt, verdict_E3b.txt, wind/ (.inp, .bts,
+%   Writes in results/Q1-E3-QUAL-<date>-d/: meta_E3b.txt, verdict_E3b.txt, wind/ (.inp, .bts,
 %   TurbSim logs), runs/<run>/ (case copy, manifest, model, .outb, wrapper_log.mat, wrapper_warnings.txt,
 %   inputs_before.txt, inputs_after.txt, summary.csv), summary_E3b.csv, errors_E3b.txt if any
 %   (spec_E3 outputs.files).
 
-SPEC_SHA  = '7a3a8662fa1ede2c39b08777cbddfc3196f486b3031cbb526207e4bdf4dfe2a9';   % spec_E3, amendment 4
+SPEC_SHA  = '66f7f43ba385d8b2880401d61c6ea1e75601d9c82acbc001159158a96ae96ba4';   % spec_E3, amendment 6
 BIN_DIR   = 'C:\dev\openfast-bin';
 BIN_SHA   = {'openfast_x64.exe',          'dbae80560269c00f4a1f3529b5bb3ffcd111faa6d6791f4cce6dcf321679d924';   % campaign.depends_on.exe
              'FAST_SFunc.mexw64',         '16b628c493baf4b716cfe2373f320f72f5859b38718b2dc3da455befb3112297';   % campaign.depends_on.sfunction
@@ -48,6 +51,10 @@ WRAP_FILES = {'discon_wrapper.m', 'discon.h'};                                  
 DT        = 0.00625;                          % s, spec_E3W wrapper.period
 TMAX      = 660;                              % s, E3b_region3_qualification.duration and .runs
 REPEAT    = [18 31001];                       % m/s, seed: E3b_region3_qualification.repeatability
+CSV_REL   = 'results/Q1-E1-AEROMAP-2026-10-08-a/analyse/C3_C4_par_vent.csv';                              % E3b_region3_qualification.runs (amendment 6)
+CSV_SHA   = '46bcc04149a2fbfbbc95cd3c11b5a7a3acc4b96b0cd21011be5ceeb871be671e';
+PITCH     = {12, '3.6173'; 14, '8.5723'; 16, '12.0261'; 18, '14.9124'; ...                                 % m/s, beta_eq_deg (deg) with four
+             20, '17.4663'; 22, '19.8512'; 24, '22.0761'};                                                 % decimals, E3b_region3_qualification.runs
 CODE = {'prepare_case_E3.m', 'run_E3a.m', 'analyse_E3a.m', 'gen_wind_E3.m', 'run_E3b.m', 'analyse_E3b.m', ...
         'discon_wrapper.m', 'discon.h', 'check_input_refs.m', 'spec_E3W.yaml'};
 
@@ -78,7 +85,15 @@ if ~strcmp(sha256_file(fullfile(ED3, 'spec_E3W.yaml')), WRAP_SPEC)
 end
 [~, tb] = system(sprintf('git -C "%s" rev-parse HEAD', TB_DIR));
 if ~strcmp(strtrim(tb), TB_COMMIT), error('run_E3b:toolbox', 'matlab-toolbox is not at %s.', TB_COMMIT); end
-ID  = ['Q1-E3-QUAL-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-c'];   % attempts -a (2026-10-17): wrong relative path to the wind file; -b (2026-10-21): coupling unstable with InterpOrder 1
+if ~strcmp(sha256_file(abs_(CSV_REL)), CSV_SHA), error('run_E3b:csv', 'E1 CSV SHA-256 differs from %s.', CSV_SHA); end
+beta = zeros(size(PITCH, 1), 1);
+for k = 1:size(PITCH, 1)
+    beta(k) = read_beta_eq(abs_(CSV_REL), sprintf('%d', PITCH{k,1}));
+    if ~strcmp(sprintf('%.4f', beta(k)), PITCH{k,2})
+        error('run_E3b:beta', 'beta_eq_deg at %d m/s is %.10g, which does not round to %s.', PITCH{k,1}, beta(k), PITCH{k,2});
+    end
+end
+ID  = ['Q1-E3-QUAL-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-d'];   % attempts -a (2026-10-17): wrong relative path to the wind file; -b (2026-10-21): coupling unstable with InterpOrder 1; -c (2026-10-21): tower strike and pitch-loop divergence at 24 m/s from initial pitch 0 deg
 OUT = fullfile(ROOT, 'results', ID);
 if exist(OUT, 'dir'), error('run_E3b:exists', 'Campaign folder already exists: %s', OUT); end
 fprintf('%s\n', ID);
@@ -86,12 +101,14 @@ mkdir(OUT);
 
 % --- meta (start) -----------------------------------------------------------------------------
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));
-M = {'previous_attempt: results/Q1-E3-QUAL-2026-10-21-b (coupling unstable with InterpOrder 1, 19 of 22 runs stopped)', sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
+M = {'previous_attempt: results/Q1-E3-QUAL-2026-10-21-c (NOT QUALIFIED: tower strike and pitch-loop divergence at 24 m/s from initial pitch 0 deg)', sprintf('campaign: %s', ID), sprintf('head: %s', strtrim(head)), 'clean_before: clean (openfast_q1/)', ...
      sprintf('start: %s', stamp()), sprintf('spec: openfast_q1/E3/spec_E3.yaml %s', SPEC_SHA)};
 for k = 1:numel(CODE), M{end+1} = sprintf('code: openfast_q1/E3/%s %s', CODE{k}, sha256_file(fullfile(ED3, CODE{k}))); end %#ok<AGROW>
 for k = 1:size(BIN_SHA, 1), M{end+1} = sprintf('binary: %s %s', fullfile(BIN_DIR, BIN_SHA{k,1}), BIN_SHA{k,2}); end %#ok<AGROW>
+pl = strjoin(cellfun(@(u, p) sprintf('%d m/s %s', u, p), PITCH(:,1), PITCH(:,2), 'UniformOutput', false), ', ');
 M = [M, {sprintf('input: %s %s', DLL_REL, DLL_SHA), sprintf('wrapper: commit %s (last commit of discon_wrapper.m and discon.h)', strtrim(wc)), ...
-         'plant_configuration: O8, FAST_SFunc (PCMode 4, VSContrl 4), discon_wrapper at every DT with the measured BldPitch1, InterpOrder 2, NumCrctn 1 in the .fst copy', ...
+         sprintf('input: %s %s, beta_eq_deg written as: %s deg', CSV_REL, CSV_SHA, pl), ...
+         'plant_configuration: O8, FAST_SFunc (PCMode 4, VSContrl 4), discon_wrapper at every DT with the measured BldPitch1, InterpOrder 2, NumCrctn 1 in the .fst copy, initial pitch beta_eq_deg of E1 at the mean speed (amendment 6)', ...
          sprintf('matlab_toolbox: %s', TB_COMMIT), ...
          sprintf('matlab: %s', version), sprintf('machine: %s', strtrim(getenv('COMPUTERNAME')))}];
 write_lines(fullfile(OUT, 'meta_E3b.txt'), M);
@@ -134,11 +151,14 @@ if ~isempty(W)
             r.err = ['no wind field: ' w.err];
         else
             try
+                ip = PITCH([PITCH{:,1}] == w.speed, 2);                                       % E3b_region3_qualification.runs (amendment 6)
+                if numel(ip) ~= 1, error('run_E3b:pitch', 'No initial pitch for %g m/s.', w.speed); end
                 C = prepare_case_E3(ROOT, fullfile(OUT, 'runs', r.name), struct('mode', 'sfunc', 'tmax', TMAX, ...
                         'dll', abs_(DLL_REL), 'dll_sha', DLL_SHA, 'bts', w.bts, 'bts_sha', w.bts_sha, 'copy_bts', false, ...
-                        'num_crctn', 1));                                                     % plant_configuration (amendment 4)
+                        'num_crctn', 1, ...                                                   % plant_configuration (amendment 4)
+                        'init_pitch', ip{1}));                                                % E3b_region3_qualification.runs (amendment 6)
                 r.case_dir = C.case_dir;  r.channels = C.channels;  r.added = C.added;
-                inputs = [C.manifest(:,1); {w.inp; w.bts; abs_(DLL_REL)}; SFUN; WRAP];        % Q1_integrity
+                inputs = [C.manifest(:,1); {w.inp; w.bts; abs_(DLL_REL); abs_(CSV_REL)}; SFUN; WRAP];   % Q1_integrity
                 before = hash_list(inputs);
                 write_lines(fullfile(C.case_dir, 'inputs_before.txt'), strcat(before, {'  '}, inputs));
                 [r.ok_run, r.wall_s, r.err, r.slx_sha, st] = run_sfunc(C, DT, TMAX, abs_(DLL_REL), HFILE, ERRF, r.name);
@@ -283,6 +303,28 @@ end
 
 function s = stamp()
 s = char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss'));
+end
+
+function beta = read_beta_eq(f, speed)
+% beta_eq_deg of the row vent_m_s = speed in the E1 CSV (';' separated, header on the first line),
+% as diag_E3_U24.m
+L = read_lines(f);
+H = strsplit(strtrim(L{1}), ';');
+jv = find(strcmp(H, 'vent_m_s'));  jb = find(strcmp(H, 'beta_eq_deg'));
+if ~isscalar(jv) || ~isscalar(jb), error('run_E3b:csvhead', 'Columns vent_m_s and beta_eq_deg not found once in %s.', f); end
+hit = {};
+for k = 2:numel(L)
+    F = strsplit(strtrim(L{k}), ';');
+    if numel(F) == numel(H) && strcmp(F{jv}, speed), hit{end+1} = F{jb}; end %#ok<AGROW>
+end
+if numel(hit) ~= 1, error('run_E3b:csvrow', 'Row vent_m_s = %s found %d times in %s.', speed, numel(hit), f); end
+beta = str2double(hit{1});
+if ~isfinite(beta), error('run_E3b:csvval', 'beta_eq_deg at %s m/s is not a number.', speed); end
+end
+
+function L = read_lines(f)
+L = splitlines(fileread(f));
+if isempty(L{end}), L(end) = []; end
 end
 
 function write_lines(f, L)

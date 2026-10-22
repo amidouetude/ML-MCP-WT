@@ -25,6 +25,10 @@ function C = prepare_case_E3(root, case_dir, opt)
 %   opt.num_crctn optional; 1: NumCrctn 0 -> 1 in the .fst copy, before the manifest
 %                (spec_E3 E3b_region3_qualification.plant_configuration, amendment 4); absent: the
 %                .fst is not changed for this (E3a, E3W)
+%   opt.init_pitch optional char (four decimals, e.g. '22.0761'): BlPitch(1), BlPitch(2) and BlPitch(3)
+%                of the ElastoDyn copy 0 -> opt.init_pitch (deg), before the manifest
+%                (spec_E3 E3b_region3_qualification.runs, amendment 6); absent: the ElastoDyn file is
+%                not changed for this (E3a, E3W, diagnostics)
 %
 %   Steps
 %   1. The files tracked by Git under openfast_q1/model/5MW_Land_DLL_WTurb and
@@ -35,7 +39,9 @@ function C = prepare_case_E3(root, case_dir, opt)
 %      "../5MW_Baseline/ServoData/DISCON.dll"; ServoDyn is not modified for this.
 %   3. Wind file and TMax (see opt), DT checked = 0.00625 s (spec_E3 channels.output_format);
 %      InterpOrder if opt.interp_order is given (value 2 checked, exactly one line of the .fst changed);
-%      NumCrctn if opt.num_crctn is given (value 0 checked, exactly one line of the .fst changed).
+%      NumCrctn if opt.num_crctn is given (value 0 checked, exactly one line of the .fst changed);
+%      BlPitch(1-3) of the ElastoDyn copy if opt.init_pitch is given (value 0 checked, exactly three
+%      lines of the ElastoDyn copy changed).
 %   4. OutLists completed to cover spec_E3 channels.required: only the absent channels are added,
 %      each to the OutList of its module (spec_E3 channels.verified); the list of additions is
 %      returned in C.added and written in case_dir/outlist_additions.txt.
@@ -158,6 +164,12 @@ if isfield(opt, 'num_crctn')
         error('prepare_case_E3:crctn', 'The .fst copy does not differ from the model by exactly one line (NumCrctn).');
     end
 end
+if isfield(opt, 'init_pitch')
+    if ~ischar(opt.init_pitch) || ~isfinite(str2double(opt.init_pitch)) || strcmp(opt.init_pitch, '0')
+        error('prepare_case_E3:pitch', 'opt.init_pitch must be a char holding a number other than 0.');
+    end
+    set_blpitch(F.ED, '0', opt.init_pitch);                    % spec_E3 E3b_region3_qualification.runs (amendment 6)
+end
 DT = str2double(get_value(fst, 'DT'));
 if DT ~= DT_MODEL
     error('prepare_case_E3:dt', 'DT of the case is %g, expected %g.', DT, DT_MODEL);
@@ -253,6 +265,27 @@ end
 if strcmp(old, new), return, end
 L{i} = [tok{1} sprintf('%*s', numel(tok{2}), new) tok{3}];
 write_lines(f, L);
+end
+
+function set_blpitch(f, old, new)
+% BlPitch(1), BlPitch(2), BlPitch(3) of the ElastoDyn copy: old checked, replaced by new;
+% exactly three lines changed (as diag_E3_U24.m)
+L0 = read_lines(f);
+L = L0;
+for b = 1:3
+    key = sprintf('BlPitch(%d)', b);
+    pat = ['^(\s*)(\S+)(\s+' regexptranslate('escape', key) '\s.*)$'];
+    i = find(~cellfun(@isempty, regexp(L, pat, 'once')));
+    if numel(i) ~= 1, error('prepare_case_E3:key', '%s found %d times in %s.', key, numel(i), f); end
+    tok = regexp(L{i}, pat, 'tokens', 'once');
+    if ~strcmp(tok{2}, old), error('prepare_case_E3:value', '%s is %s in %s, expected %s.', key, tok{2}, f, old); end
+    L{i} = [tok{1} sprintf('%*s', numel(tok{2}), new) tok{3}];
+end
+write_lines(f, L);
+L1 = read_lines(f);
+if numel(L1) ~= numel(L0) || nnz(~strcmp(L1, L0)) ~= 3
+    error('prepare_case_E3:pitch', 'The ElastoDyn copy does not differ from the model by exactly three lines (BlPitch).');
+end
 end
 
 function v = get_quoted(f, key)
