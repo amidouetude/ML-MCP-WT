@@ -1,7 +1,14 @@
-function W = gen_wind_E3(root, wind_dir, tsexe)
+function W = gen_wind_E3(root, wind_dir, tsexe, seeds)
 %GEN_WIND_E3  TurbSim inputs and wind fields of E3b (openfast_q1/E3/spec_E3.yaml).
 %
-%   W = gen_wind_E3(root, wind_dir, tsexe)    called once by run_E3b
+%   W = gen_wind_E3(root, wind_dir, tsexe)           called once by run_E3b
+%   W = gen_wind_E3(root, wind_dir, tsexe, seeds)    called once by run_E2_V4data
+%
+%   seeds  optional row vector of distinct positive integers used as RandSeed1 in place of the
+%          default set [31001 31002 31003] (spec_E3 E3b_region3_qualification.seeds); E2 V4-b uses
+%          [32001 32002 32003] (openfast_q1/E2/spec_E2.yaml
+%          validation.V4_turbulent_segments.V4b_data_model_v2, amendment 7). Without it the
+%          behaviour is unchanged.
 %
 %   For each mean speed and seed (spec_E3 E3b_region3_qualification.mean_speeds, .seeds), a copy of
 %   the template openfast_q1/model/5MW_Baseline/Wind/90m_12mps_twr.inp is written to
@@ -17,7 +24,14 @@ function W = gen_wind_E3(root, wind_dir, tsexe)
 
 TEMPLATE = 'openfast_q1/model/5MW_Baseline/Wind/90m_12mps_twr.inp';   % wind_generation
 SPEEDS   = [12 14 16 18 20 22 24];          % m/s, E3b_region3_qualification.mean_speeds
-SEEDS    = [31001 31002 31003];             % E3b_region3_qualification.seeds
+SEEDS    = [31001 31002 31003];             % E3b_region3_qualification.seeds (default)
+if nargin >= 4                              % spec_E2 validation.V4_turbulent_segments.V4b_data_model_v2
+    if ~(isnumeric(seeds) && isrow(seeds) && ~isempty(seeds) && all(isfinite(seeds)) && all(seeds > 0) ...
+         && all(seeds == round(seeds)) && numel(unique(seeds)) == numel(seeds))
+        error('gen_wind_E3:seeds', 'seeds must be a row vector of distinct positive integers.');
+    end
+    SEEDS = double(seeds);
+end
 % wind_generation: key, value in the template, value in the copy ('%SPEED%' and '%SEED%' replaced)
 CHANGES  = {'URef',       '12',        '%SPEED%';
             'RandSeed1',  '13428',     '%SEED%';
