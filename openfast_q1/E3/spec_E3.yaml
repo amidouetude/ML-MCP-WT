@@ -4,6 +4,7 @@
 # AMENDMENT 2, 16/10/2026: Q5 compared the file SHA-256 of two .outb, which differ by construction because the .outb header records the generation date and time; Q5 now compares channel names, units and data byte for byte. A note on the informative channels of E3a is added. Nothing had been executed.
 # AMENDMENT 3, 21/10/2026: E3b runs on the plant of the paper, FAST_SFunc driven by the verified DISCON wrapper (spec_E3W, W1 PASS in Q1-E3-WRAP-2026-10-21-c), with InterpOrder = 1 in the .fst copy (author choice O1 of 21/10/2026). With InterpOrder = 2 the baseline pitch loop diverged at the first pitch-command saturation event (Q1-E3-WRAP-2026-10-21-c, W2); it was stable with InterpOrder = 1 (Q1-E3-WRAP-DIAG2-2026-10-21-a, case D-a). E3a is unchanged. Nothing of E3b had been run in this configuration.
 # AMENDMENT 4, 21/10/2026: amendment 3 (InterpOrder 1, measured pitch) was refuted by Q1-E3-QUAL-2026-10-21-b (19 of 22 runs unstable from the first pitch activation, mean speeds 14-24 m/s). The exploratory diagnostic Q1-E3-QUAL-DIAG-2026-10-21-a found three stable options at 16 and 22 m/s over 120 s; the pre-registered comparison Q1-E3-PATHCMP-2026-10-21-a with the executable reference retained O8 (measured pitch, InterpOrder 2, NumCrctn 1; score 1.465e-02 against 1.690e-02 for O2). E3b now runs in configuration O8.
+# AMENDMENT 5, 22/10/2026: Q2b_pitch_loop is added to E3b_region3_qualification.criteria and to verdict, and runs failing Q2 or Q2b are excluded from domain_rule. Reason: in Q1-E3-QUAL-2026-10-21-c the run U24_S31003 reached TMax with finite outputs after a pitch loop divergence (BldPitch1 from -90.10 to 179.95 deg, rotor reversal at 4.375 s) and passed Q2 and Q4. The threshold is fixed before the execution of the exploratory diagnostic Q1-E3-DIAG24 and before any new E3b run. Nothing else changes.
 # Rule: spec, code and analysis are committed BEFORE execution; criteria cannot be changed after
 # results are seen; corrections by dated amendment in a separate commit. Long runs are launched
 # by the author from a launch block given by the executor (author rule of 16/10/2026).
@@ -50,12 +51,13 @@ E3b_region3_qualification:
   criteria:
     Q1_integrity: 'SHA-256 of every input (model copy, .inp, .bts, DLL, binaries, wrapper files; amendment 3) written before each run and unchanged after'
     Q2_execution: 'every run reaches TMax, all outputs finite'
+    Q2b_pitch_loop: 'per run, over the whole record from t = 0 (the exclusion of the first 60 s in duration does not apply), at the output times common to the .outb and the wrapper log: max |BldPitch1 x pi/180 - record 45| <= 10 x PC_MaxRat x DT (rad), with PC_MaxRat = 0.1396263 rad/s (DISCON.F90 l.75) and DT = 0.00625 s (model .fst), i.e. 8.7266e-03 rad or about 0.5 deg, and min RotSpeed > 0 rpm. The factor 10 is a project choice, no external source, informed by Q1-E3-QUAL-2026-10-21-c (maximum 0.0500 deg on the 21 runs other than U24_S31003, 90.0999 deg on U24_S31003)'
     Q3_power: 'for mean speeds >= 14 m/s, per run, mean of GenTq x 1000 x GenSpeed x pi/30 (mechanical generator power, W) within VS_RtPwr = 5296610 W of DISCON.F90 +/- 2 % (tolerance: project choice, no external source)'
     Q4_overspeed: 'per run, max RotSpeed <= 1.2 x 12.1 rpm (project choice, no external source)'
     Q5_repeatability: 'see repeatability'
     reported_only: 'fraction of time in region 3, reconstructed from the outputs after the test of DISCON.F90 l.384: GenSpeedF recomputed from GenSpeed (rad/s) with the DISCON filter (Alpha = exp((LastTime - Time) x CornerFreq), l.355; GenSpeedF = (1 - Alpha) x GenSpeed + Alpha x GenSpeedF, l.360; CornerFreq = 1.570796 rad/s, l.58; initial GenSpeedF = first GenSpeed, l.303) and PitCom taken as record 45 returned by the previous DISCON call, from the wrapper log (PitCom is computed after the test, l.487-489; initial PitCom = first BldPitch1, l.304; on plant_configuration the channel BlPitchC1 is the extrapolated S-function input and not the DISCON command, as seen in Q1-E3-PLANTEQ-2026-10-16-a; amendment 3); region 3 if GenSpeedF >= VS_RtGnSp = 121.6805 rad/s (l.95) or PitCom >= VS_Rgn3MP = 0.01745329 rad (l.94); this is a reconstruction, not the internal state of DISCON. Also: fraction of time with BldPitch1 > 30 deg, mean and std of RotSpeed, mean GenPwr, wall time per run'
-  domain_rule: 'a mean speed belongs to the region-3 core of the paper if its fraction of time in region 3 is >= 0.90 for every seed (project choice, no external source); the others are reported as transition speeds'
-  verdict: 'QUALIFIED if Q1 to Q5 pass for all runs; QUALIFIED WITH LIMITS if Q3 or Q4 fail only at listed speeds; NOT QUALIFIED otherwise'
+  domain_rule: 'a mean speed belongs to the region-3 core of the paper if its fraction of time in region 3 is >= 0.90 for every seed (project choice, no external source); the others are reported as transition speeds. A run failing Q2 or Q2b is excluded, and its mean speed is reported as not evaluated (amendment 5)'
+  verdict: 'QUALIFIED if Q1, Q2, Q2b, Q3, Q4 and Q5 pass for all runs; QUALIFIED WITH LIMITS if Q3 or Q4 fail only at listed speeds; NOT QUALIFIED otherwise (a failure of Q2b gives NOT QUALIFIED, amendment 5)'
 
 outputs:
   folders: 'results/Q1-E3-PLANTEQ-<date>-a/ and results/Q1-E3-QUAL-<date>-a/'
@@ -68,3 +70,4 @@ forbidden_wordings:
   - 'real time'
   - 'the region-3 domain is 12-24 m/s, before domain_rule is applied'
   - 'NumCrctn 1 is the r-test setting'
+  - 'Q2b proves the stability of the coupling'
