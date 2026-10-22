@@ -29,6 +29,18 @@ function C = prepare_case_E3(root, case_dir, opt)
 %                of the ElastoDyn copy 0 -> opt.init_pitch (deg), before the manifest
 %                (spec_E3 E3b_region3_qualification.runs, amendment 6); absent: the ElastoDyn file is
 %                not changed for this (E3a, E3W, diagnostics)
+%   opt.steady_wind optional char (e.g. '14'): WindType 3 -> 1 and HWindSpeed 0 -> opt.steady_wind
+%                (m/s) in the InflowWind copy, old values checked, exactly two lines changed; opt.bts
+%                must then be absent and opt.copy_bts absent or false; no external reference at step 7
+%                (spec_E2 validation.V3_pitch_steps.steady_wind, amendment 6)
+%   opt.maneuver optional struct of chars TPitManS, PitManRat, BlPitchF: in the ServoDyn copy
+%                TPitManS(1-3) 9999.9 -> opt.maneuver.TPitManS (s), PitManRat(1-3) 2 ->
+%                opt.maneuver.PitManRat (deg/s), BlPitchF(1-3) 0 -> opt.maneuver.BlPitchF (deg), old
+%                values checked, exactly nine lines changed (spec_E2 validation.V3_pitch_steps.maneuver)
+%   opt.extra_ad_channels optional cell of AeroDyn channel names added to the AeroDyn part of the
+%                required list of step 4; only the absent ones are added (spec_E2
+%                validation.V3_pitch_steps.outputs_added)
+%   Without these three options the case is prepared as before.
 %
 %   Steps
 %   1. The files tracked by Git under openfast_q1/model/5MW_Land_DLL_WTurb and
@@ -41,15 +53,19 @@ function C = prepare_case_E3(root, case_dir, opt)
 %      InterpOrder if opt.interp_order is given (value 2 checked, exactly one line of the .fst changed);
 %      NumCrctn if opt.num_crctn is given (value 0 checked, exactly one line of the .fst changed);
 %      BlPitch(1-3) of the ElastoDyn copy if opt.init_pitch is given (value 0 checked, exactly three
-%      lines of the ElastoDyn copy changed).
-%   4. OutLists completed to cover spec_E3 channels.required: only the absent channels are added,
+%      lines of the ElastoDyn copy changed); steady wind of the InflowWind copy if opt.steady_wind is
+%      given (exactly two lines changed); pitch maneuver of the ServoDyn copy if opt.maneuver is
+%      given (exactly nine lines changed). All before steps 4, 6 and 7.
+%   4. OutLists completed to cover spec_E3 channels.required (and opt.extra_ad_channels in the
+%      AeroDyn OutList): only the absent channels are added,
 %      each to the OutList of its module (spec_E3 channels.verified); the list of additions is
 %      returned in C.added and written in case_dir/outlist_additions.txt.
 %   5. Expected output channel order (FAST_Subs.f90 l.2478-2537: Time, InflowWind, ElastoDyn,
 %      AeroDyn, ServoDyn) written to case_dir/channels.txt.
 %   6. SHA-256 of every file of the case written to case_dir/case_manifest.txt.
 %   7. check_input_refs: every file named by the input files exists and has the SHA-256 of the
-%      manifest, or of opt.bts when the field is outside the case (E3b); otherwise error.
+%      manifest, or of opt.bts when the field is outside the case (E3b); none with opt.steady_wind;
+%      otherwise error.
 %
 %   C: case_dir, fst, DT, TMax, channels (cell), added (cell), manifest (n x 2 cell: path, sha256),
 %      refs (checked references, m x 3 cell from check_input_refs)
@@ -66,6 +82,15 @@ REQ = {'IfW',  {'Wind1VelX'};
 
 if exist(case_dir, 'dir')
     error('prepare_case_E3:exists', 'Case folder already exists: %s', case_dir);
+end
+steady = isfield(opt, 'steady_wind');
+if steady
+    if ~ischar(opt.steady_wind) || ~(str2double(opt.steady_wind) > 0)
+        error('prepare_case_E3:steady', 'opt.steady_wind must be a char holding a positive number.');
+    end
+    if isfield(opt, 'bts') || (isfield(opt, 'copy_bts') && opt.copy_bts)
+        error('prepare_case_E3:steady', 'opt.steady_wind excludes opt.bts and opt.copy_bts = true.');
+    end
 end
 [~, o] = system(sprintf('git -C "%s" log -1 --format=%%h -- openfast_q1/model', root));
 if ~startsWith(strtrim(o), MODEL_COMMIT)
@@ -116,7 +141,15 @@ set_value(F.IfW, 'NWindVel', '1', '1');                        % check only: spe
 set_value(F.IfW, 'WindVxiList', '0', '0');
 set_value(F.IfW, 'WindVyiList', '0', '0');
 set_value(F.IfW, 'WindVziList', '90', '90');
-if opt.copy_bts
+if steady
+    L0 = read_lines(F.IfW);
+    set_value(F.IfW, 'WindType', '3', '1');                    % spec_E2 validation.V3_pitch_steps.steady_wind
+    set_value(F.IfW, 'HWindSpeed', '0', opt.steady_wind);
+    L1 = read_lines(F.IfW);
+    if numel(L1) ~= numel(L0) || nnz(~strcmp(L1, L0)) ~= 2
+        error('prepare_case_E3:steady', 'The InflowWind copy does not differ from the model by exactly two lines.');
+    end
+elseif opt.copy_bts
     if ~strcmp(get_quoted(F.IfW, 'FileName_BTS'), BTS_NAME)
         error('prepare_case_E3:btsname', 'FileName_BTS of the model is not %s.', BTS_NAME);
     end
@@ -170,12 +203,38 @@ if isfield(opt, 'init_pitch')
     end
     set_blpitch(F.ED, '0', opt.init_pitch);                    % spec_E3 E3b_region3_qualification.runs (amendment 6)
 end
+if isfield(opt, 'maneuver')
+    mv  = opt.maneuver;
+    fld = {'TPitManS', '9999.9'; 'PitManRat', '2'; 'BlPitchF', '0'};   % key, model value (checked)
+    for j = 1:size(fld, 1)
+        if ~isfield(mv, fld{j,1}) || ~ischar(mv.(fld{j,1})) || ~isfinite(str2double(mv.(fld{j,1})))
+            error('prepare_case_E3:maneuver', 'opt.maneuver.%s must be a char holding a number.', fld{j,1});
+        end
+    end
+    L0 = read_lines(F.SrvD);
+    for j = 1:size(fld, 1)
+        for b = 1:3                                            % spec_E2 validation.V3_pitch_steps.maneuver
+            set_value(F.SrvD, sprintf('%s(%d)', fld{j,1}, b), fld{j,2}, mv.(fld{j,1}));
+        end
+    end
+    L1 = read_lines(F.SrvD);
+    if numel(L1) ~= numel(L0) || nnz(~strcmp(L1, L0)) ~= 9
+        error('prepare_case_E3:maneuver', 'The ServoDyn copy does not differ from the model by exactly nine lines.');
+    end
+end
 DT = str2double(get_value(fst, 'DT'));
 if DT ~= DT_MODEL
     error('prepare_case_E3:dt', 'DT of the case is %g, expected %g.', DT, DT_MODEL);
 end
 
 % --- 4. OutLists ---------------------------------------------------------------------------------
+if isfield(opt, 'extra_ad_channels')                           % spec_E2 validation.V3_pitch_steps.outputs_added
+    if ~iscellstr(opt.extra_ad_channels)
+        error('prepare_case_E3:channels', 'opt.extra_ad_channels must be a cell of channel names.');
+    end
+    x = opt.extra_ad_channels(:)';
+    REQ{3,2} = [REQ{3,2}, x(~ismember(lower(x), lower(REQ{3,2})))];
+end
 added = {};
 for m = 1:size(REQ, 1)
     f = F.(REQ{m,1});
@@ -216,7 +275,7 @@ end
 write_lines(fullfile(case_dir, 'case_manifest.txt'), ...
     cellfun(@(p, h) sprintf('%s  %s', h, strrep(erase(p, [case_dir filesep]), filesep, '/')), man(:,1), man(:,2), 'UniformOutput', false));
 % --- 7. general guard on the files named by the input files (check_input_refs, spec_E3W) ------
-if opt.copy_bts, ext = cell(0, 2); else, ext = {opt.bts, opt.bts_sha}; end
+if steady || opt.copy_bts, ext = cell(0, 2); else, ext = {opt.bts, opt.bts_sha}; end
 refs = check_input_refs(fst, man, ext);
 C = struct('case_dir', case_dir, 'fst', fst, 'DT', DT, 'TMax', opt.tmax, 'channels', {ch}, ...
            'added', {added}, 'manifest', {man}, 'refs', {refs});

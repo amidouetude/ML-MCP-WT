@@ -20,7 +20,9 @@ function R = check_input_refs(fst, manifest, external)
 %     AeroDyn    ADBlFile(1), ADBlFile(2), ADBlFile(3); the NumAFfiles airfoil files from the AFNames
 %                line; AA_InputFile, OLAFInputFileName, TFinFile must be "unused"
 %     airfoils   every @"file" include line (coordinates files); BL_file must be "unused"
-%     InflowWind FileName_BTS (WindType 3 required)
+%     InflowWind WindType 3: FileName_BTS; WindType 1 (steady wind, spec_E2
+%                validation.V3_pitch_steps.steady_wind): no file named, FileName_BTS is not read by
+%                OpenFAST and is not checked; any other WindType stops with an error
 %     ServoDyn   DLL_FileName; BStCfiles, NStCfiles, TStCfiles, SStCfiles must be "unused". DLL_InFile
 %                is a string passed to the DLL, opened by DISCON only for status -8 and -9
 %                (spec_E3W wrapper.strings); it is not a file read by OpenFAST and is not checked.
@@ -68,8 +70,14 @@ for j = 0:n-1
 end
 
 % --- InflowWind ---------------------------------------------------------------------------------
-need_value(ifw, 'WindType', '3');
-R = add(R, ifw, 'FileName_BTS', known);
+switch value_of(ifw, 'WindType')
+    case '3'
+        R = add(R, ifw, 'FileName_BTS', known);
+    case '1'
+        % steady wind: no wind file is read by OpenFAST (spec_E2 validation.V3_pitch_steps.steady_wind)
+    otherwise
+        error('check_input_refs:format', 'WindType of %s is %s; this guard handles 3 and 1 only.', ifw, value_of(ifw, 'WindType'));
+end
 
 % --- ServoDyn -----------------------------------------------------------------------------------
 R = add(R, srv, 'DLL_FileName', known);
