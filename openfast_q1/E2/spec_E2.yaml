@@ -5,6 +5,7 @@
 # AMENDMENT 3, 15/10/2026: J corrected to the ElastoDyn rotor inertia of the model (previous value 43,788,060 came from Jonkman's continuous blade properties, -0.195 % mismatch); V1 uses wind variant (i); V2b transition jumps reported without threshold.
 # AMENDMENT 4, 15/10/2026: R corrected from 62.9401 to 63*cos(2.5 deg) = 62.940038 m (rounding error carried from fiche_E1.yaml l.82; generer_drv_E1.m and the AeroMap driver use the exact value); no other change.
 # AMENDMENT 5, 16/10/2026: grid-assignment tolerances of the Cp table written in the spec (1e-4). The executor-chosen 1e-6 of build_cp_table_E2.m was below the single-precision resolution of the OpenFAST outputs and stopped attempt Q1-E2-ROM-2026-10-16-a at step C2 (kept as record). The new value was set after that failure, from the grid spacing and the output precision, not from the observed deviations.
+# AMENDMENT 6, 22/10/2026: V3 and V4 are run on the plant of the NMPC arms, configuration O8 of spec_E3 (FAST_SFunc, DISCON through the wrapper with the measured BldPitch1, InterpOrder 2, NumCrctn 1), qualified with limits in Q1-E3-QUAL-2026-10-22-d (author decisions D1-D9 of 22/10/2026). V3: steady wind, initial pitch, override maneuver, run length and model drive fixed. V4: data source, time window and input sampling fixed. T_H fixed at 1.5 s before V3. Nothing had been run for V3 or V4.
 # Rule: this spec, the model code and the verification/validation scripts are committed
 # BEFORE any execution. Thresholds below cannot be changed after results are seen;
 # an error is corrected by a dated amendment in a separate commit.
@@ -18,7 +19,7 @@ campaign:
     that the six learned families must reproduce in E5.
   depends_on:
     E1: "Q1-E1-AEROMAP-2026-10-08-a, accepted; B3 table E1_B3.outb sha256 398a8918..."
-    E3_DISCON: "DISCON.dll sha256 b9229079..., accepted on r-test case (means); region-3 qualification pending"
+    E3_DISCON: 'DISCON.dll sha256 b9229079..., region-3 qualification Q1-E3-QUAL-2026-10-22-d QUALIFIED WITH LIMITS (Q3 fails at 14 m/s), spec_E3 sha256 66f7f43ba385d8b2880401d61c6ea1e75601d9c82acbc001159158a96ae96ba4, region-3 core 16-24 m/s, transition 12-14 m/s (amendment 6)'
   adopted_choices: "author's decisions of 15/10/2026 (7 choices) - listed in 'model' and 'nmpc_interface'"
 
 model:
@@ -74,7 +75,7 @@ model:
 
 nmpc_interface:   # what E6 will use; fixed here so that B and C1..C6 share it
   Ts: {main: 0.05, sensitivity: [0.025, 0.1], unit: s, note: "integer multiples of OpenFAST DT = 0.00625 s"}
-  horizon: "T_H >= 1.5 s (Np = 30 at Ts = 0.05 s); confirmed against the rotor time constant measured in V3"
+  horizon: 'T_H = 1.5 s (Np = 30 at Ts = 0.05 s), fixed by amendment 6 before V3; no value measured in V3 changes T_H'
   cost: "speed tracking (omega_r - omega_rated)^2 + pitch increments; NO electrical-power term"
   power_reference: "P_ref = 5 MW electrical, used as an outcome metric only"
   constraints: "beta in [0, 30] deg, |d beta/dt| <= 8 deg/s (Jonkman), as MV bounds and MV rate bounds"  # B3 table domain; fraction of time DISCON exceeds 30 deg measured in E3
@@ -105,18 +106,18 @@ verification:   # no OpenFAST run needed
 
 validation:     # against OpenFAST + qualified DISCON
   V3_pitch_steps:
-    plant: "openfast_x64.exe + DISCON b9229079, steady wind 14, 18, 22 m/s; pitch override (TPitManS, PitManRat 8 deg/s) of +1 deg and -1 deg"
-    compare: "omega_r over 10 s after the step, model driven by the recorded BldPitch1 and Wind1VelX"
+    plant: 'configuration O8 of spec_E3 (amendment 4): FAST_SFunc with PCMode 4 and VSContrl 4, DISCON b9229079 called at every DT by the wrapper of spec_E3 campaign.depends_on.wrapper with the measured BldPitch1, InterpOrder 2, NumCrctn 1 in the .fst copy; 6 runs: steady wind 14, 18 and 22 m/s, override to beta_eq + 1 deg and to beta_eq - 1 deg (amendment 6)'
+    steady_wind: 'copy of the InflowWind file of the case (NRELOffshrBsline5MW_InflowWind_12mps.dat): WindType 3 -> 1 and HWindSpeed 0 -> U (14, 18 or 22), old values checked; RefHt 90 m and PLExp 0.2 of that file unchanged (amendment 6)'
+    initial_conditions: 'ElastoDyn copy: BlPitch(1), BlPitch(2), BlPitch(3) 0 -> beta_eq_deg of results/Q1-E1-AEROMAP-2026-10-08-a/analyse/C3_C4_par_vent.csv (SHA-256 46bcc04149a2fbfbbc95cd3c11b5a7a3acc4b96b0cd21011be5ceeb871be671e) at U, written with four decimals (14 m/s 8.5723, 18 m/s 14.9124, 22 m/s 19.8512 deg), old value checked, as spec_E3 E3b_region3_qualification.runs; RotSpeed 12.1 rpm of the model unchanged (amendment 6)'
+    maneuver: 'ServoDyn copy: TPitManS(1-3) 9999.9 -> 60 s, PitManRat(1-3) 2 -> 8 deg/s, BlPitchF(1-3) 0 -> beta_eq_deg(U) + 1 or - 1 deg written with four decimals (14 m/s 9.5723 or 7.5723, 18 m/s 15.9124 or 13.9124, 22 m/s 20.8512 or 18.8512 deg), old values checked; the override applies whatever PCMode (ServoDyn.f90 l.5402-5420, OpenFAST v4.2.1); TMax = 70 s (amendment 6)'
+    compare: 'RotSpeed (omega_r) from 60 to 70 s; the model is initialised at t = 60 s with omega_r = RotSpeed(60 s) and omega_f rebuilt at every output step from t = 0 from GenSpeed (rad/s) with the DISCON filter (GenSpeedF = (1 - Alpha) x GenSpeed + Alpha x GenSpeedF, Alpha = exp(-DT x 1.570796), initial GenSpeedF = first GenSpeed; DISCON.F90 l.58, l.303, l.355, l.360); it is driven by BldPitch1 and Wind1VelX of the run, each held over one Ts = 0.05 s at its value at the start of the step, and compared at the instants 60 + k x Ts (amendment 6)'
     pass: "e_max(omega_r) over the first 1.5 s <= 2 % of rated rotor speed  # adopted 15/10/2026; 10-s window reported only"
     outputs_added: "AeroDyn OutList of the V3 runs only: RtVAvgxh, RtAeroPwr, RtAeroCp, RtArea, RtTSR (output channels only, no physics change); ratio RtVAvgxh / Wind1VelX reported"
     variant_rule: "wind variants (i) and (ii) both evaluated; the variant with the lower sum over the 6 steps of e_max(omega_r) in the first 1.5 s is retained for V4 and E6; V4 is evaluated with the retained variant only"
+    reported_only: 'per run: realised step BlPitchF - BldPitch1(60 s), max |BldPitch1(t) - BldPitch1(60 s)| over 50-60 s, RotSpeed change at 61.5 s and at 70 s relative to RotSpeed(60 s) (amendment 6)'
   V4_turbulent_segments:
-    data: "E3 region-3 DISCON runs (TurbSim NTM cat. A; seeds disjoint from E4 training seeds)"
-    protocol: >
-      segments of length T_H re-initialized every T_H on the OpenFAST state
-      (omega_r from RotSpeed, omega_f rebuilt from GenSpeed with the same filter);
-      inputs replayed: recorded BldPitch1; wind either (a) recorded trajectory, or (b) held at k.
-      (a) measures model error, (b) adds the wind-assumption error.
+    data: 'the 21 runs of Q1-E3-QUAL-2026-10-22-d (repetition excluded, seeds 31001-31003 reserved for E3 and E2 V4 by spec_E3 seeds), configuration O8 with initial pitch beta_eq, only t >= 60 s (spec_E3 duration), all 7 mean speeds evaluated and reported per speed (amendment 6)'
+    protocol: 'consecutive non-overlapping segments of length T_H = 1.5 s from t = 60 s; at the start of each segment the model is re-initialised on the OpenFAST state (omega_r = RotSpeed, omega_f rebuilt as in V3 compare); inputs: BldPitch1 held over each Ts = 0.05 s at its value at the start of the step; wind either (a) Wind1VelX held over each Ts in the same way, or (b) Wind1VelX at the start of the segment held over the whole segment; comparison at the instants k x Ts of the segment; (a) measures the model error, (b) adds the wind-assumption error (amendment 6)'
     metrics: "RMSE, MAE, e_max, bias of omega_r, per wind speed; median and P95 over segments"
     pass: "(a) median e_max <= 2 % and P95 e_max <= 5 % of rated rotor speed  # adopted 15/10/2026; (b) reported only"
   exit_decision: "GO if V0-V4 pass; GO WITH CONDITIONS if V4 fails only at listed speeds (domain restricted, stated in paper); NO-GO otherwise"
