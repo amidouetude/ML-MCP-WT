@@ -42,3 +42,11 @@ The full-precision ("raw") lines stay in the registry: they are the reference of
 analysis; the "published" lines are those the manuscript cites. A number printed in
 `Paper_Q1/` without a published line is not allowed, except values cited from the literature
 (for example Jonkman et al., 2009), which are cited, not computed.
+
+**Complement, 23/10/2026 (author's decision, option (i)).** A protocol parameter is a value fixed
+before execution in a committed campaign spec, for example a wind speed, a rotor speed, a number
+of runs or seeds, a horizon or an acceptance threshold. It is printed in `Paper_Q1/` without a
+registry line, because it is not computed from a raw file; the commit that adds it to the
+manuscript names the spec file and key path. This writes down the practice already followed in
+subsection 2.1 (step E1: 8 m/s, 12.1 rpm, fifteen wind speeds). Every value obtained from a raw
+file or an analysis output, including a range or an extremum over wind speeds, keeps its own line.
