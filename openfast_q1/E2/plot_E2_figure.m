@@ -11,10 +11,15 @@ function plot_E2_figure()
 %   Thresholds: median e_max 2 % and P95 e_max 5 % of rated rotor speed (openfast_q1/E2/spec_E2.yaml,
 %   validation.V4_turbulent_segments.pass).
 %   Refuses to run (error, nothing written) if openfast_q1/ is not clean in Git, if an input SHA-256
-%   differs, or if the output folder results/Q1-E2-FIG-<yyyy-MM-dd>-a/ already exists.
+%   differs, or if the output folder results/Q1-E2-FIG-<yyyy-MM-dd>-b/ already exists.
 %   Writes in that folder: E2_fig1_emax_by_speed.pdf (vector), E2_fig1_emax_by_speed.png (300 dpi)
 %   and E2_fig1_emax_by_speed_stamp.txt (repository commit, clean-tree status, SHA-256 of this
 %   script, of every file read and of every file written), as plot_E1_figures_v2.m.
+%
+%   Amendment 1 (23/10/2026, after the run Q1-E2-FIG-2026-10-23-a; rendering only, inputs, data and
+%   thresholds unchanged): one legend shared by both panels, placed north of the layout, instead of
+%   one legend per panel drawn over the model v1 series; short y labels ('Median of e_{max} (%)' and
+%   'P95 of e_{max} (%)') instead of labels that overlapped; output suffix -b.
 
 NAME    = 'E2_fig1_emax_by_speed';
 SPEEDS  = [12 14 16 18 20 22 24];          % m/s, spec_E3 E3b_region3_qualification.mean_speeds
@@ -40,7 +45,7 @@ for k = 1:numel(IN)
         error('plot_E2_figure:input', '%s is missing or its SHA-256 differs from %s.', IN(k).rel, IN(k).sha);
     end
 end
-ID  = ['Q1-E2-FIG-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-a'];
+ID  = ['Q1-E2-FIG-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-b'];
 OUT = fullfile(ROOT, 'results', ID);
 if isfolder(OUT), error('plot_E2_figure:exists', 'Output folder already exists: %s', OUT); end
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));  head = strtrim(head);
@@ -63,8 +68,10 @@ mkdir(OUT);
 % --- figure -----------------------------------------------------------------------------------
 h = figure('Visible', 'off', 'Units', 'centimeters', 'Position', [2 2 16 14]);
 tl = tiledlayout(h, 2, 1, 'TileSpacing', 'compact');
-panel(nexttile(tl), IN, SPEEDS, 'med', THR_MED, 'Median of e_{max} (% of rated rotor speed)');
-panel(nexttile(tl), IN, SPEEDS, 'p95', THR_P95, 'P95 of e_{max} (% of rated rotor speed)');
+ax1 = nexttile(tl);
+panel(ax1, IN, SPEEDS, 'med', THR_MED, 'Median of e_{max} (%)');
+panel(nexttile(tl), IN, SPEEDS, 'p95', THR_P95, 'P95 of e_{max} (%)');
+lg = legend(ax1);  lg.Layout.Tile = 'north';                 % one legend for both panels
 xlabel(tl, 'Mean wind speed (m/s)');
 png = fullfile(OUT, [NAME '.png']);  pdf = fullfile(OUT, [NAME '.pdf']);
 exportgraphics(h, png, 'Resolution', 300);
@@ -90,18 +97,17 @@ end
 
 % =========================================================================================
 function panel(ax, IN, speeds, field, thr, ylab)
-% one panel: the two series (distinct markers, black and white), the threshold (dashed), a legend
+% one panel: the two series (distinct markers, black and white), the threshold (dashed); no legend
 hold(ax, 'on');
 for k = 1:numel(IN)
     plot(ax, speeds, IN(k).(field), IN(k).style, 'Color', 'k', 'MarkerFaceColor', IN(k).face, ...
          'MarkerSize', 6, 'LineWidth', 1, 'DisplayName', IN(k).label);
 end
-yline(ax, thr, '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 1, 'DisplayName', sprintf('acceptance threshold (%g %%)', thr));
+yline(ax, thr, '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 1, 'DisplayName', 'acceptance threshold');
 ymax = max([IN(1).(field); IN(2).(field); thr]);
 xlim(ax, [speeds(1) - 1, speeds(end) + 1]);  ylim(ax, [0, 1.1*ymax]);
 xticks(ax, speeds);  grid(ax, 'on');  box(ax, 'on');
 ylabel(ax, ylab);
-legend(ax, 'Location', 'northwest');
 end
 
 function h = sha256_file(p)
