@@ -1,0 +1,44 @@
+# E4X exploratory spec - entry point of the pitch excitation for the E4 dataset
+# STATUS: DRAFT 3 (supervisor, 24/10/2026, executor remarks R1-R7 of 23-24/10/2026 applied), to be adopted by the author; exploratory, no publishable value.
+# Rule: spec and code committed BEFORE execution; nothing here is changed after results are seen.
+
+campaign:
+  id: 'Q1-E4-EXCIT-<date>-a'
+  step: 'E4 (exploratory)'
+  purpose: 'choose, by a rule fixed before the runs, how the collective pitch is excited around the baseline controller for the E4 dataset, without changing DISCON, its gains or discon_wrapper.m'
+  plant: 'configuration O8 of openfast_q1/E3/spec_E3.yaml E3b_region3_qualification.plant_configuration, initial pitch beta_eq_deg of E1 at the mean speed, model built as run_E3b.m; the excitation is injected only in the generated MATLAB Function block'
+  status_rule: 'EXPLORATORY: no value of this campaign enters the values registry or the manuscript; it only fixes the excitation of spec_E4'
+
+cases:
+  mean_speeds: '16 and 22 m/s (region-3 core of Q1-E3-QUAL-2026-10-22-d)'
+  seed: 'RandSeed1 33001 for both speeds (project choice), reserved for this campaign and excluded from E4, E5 and E7'
+  wind: 'as spec_E3 E3b_region3_qualification.wind_generation, with UsableTime 180'
+  duration: '180 s simulated, statistics on 60-180 s; Q2b on the whole record'
+  arms: 'X0, X1, X2, X3 at each speed: 8 runs; X4 (open-loop ServoDyn maneuvers) excluded before the runs: one maneuver per blade and run, data outside the closed loop (author choice delegated to the executor, 23/10/2026)'
+
+excitation:
+  units: 'p is defined in deg; it is converted to rad (p x pi/180) wherever it enters a pitch signal (X2, X3) and for the clipping, since c(1) is in rad (run_E3b.m generated block)'
+  signal: 'p(t): sequence of plateaus at +A or -A; each plateau lasts a time drawn uniformly in [0.5, 3] s, counted after the end of the ramp that leads to it; ramps at 4 deg/s (half of PC_MaxRat), so a change from -A to +A lasts 0.5 s for A = 1 deg; drawn with MATLAB rng(33001, twister); p = 0 before t = 60 s, first ramp from 0 to +A at t = 60 s; the same sequence is used for X1-X3, scaled as below'
+  A_pitch: '1.0 deg (project choice, no external source)'
+  X0: 'no excitation (reference)'
+  X1: 'DISCON receives GenSpeed + (A_speed/A_pitch) x p(t), A_speed = 1 % of PC_RefSpd = 1.229096 rad/s (DISCON.F90 l.77); its pitch command and torque are applied unchanged; electrical power recomputed from the true GenSpeed. Expected before the runs: in region 3 the torque VS_RtPwr/GenSpeedF (DISCON.F90 l.385) shifts by about 1 %, i.e. about 0.009 x VS_MaxTq, so X1 is expected to fail torque_consistency; it is run to document this'
+  X2: 'DISCON receives BldPitch1 + p(t) x pi/180; its command is applied unchanged'
+  X3: 'DISCON receives BldPitch1(k) - p(k-1) x pi/180; the applied pitch command is c(1) + p(k) x pi/180. Limit noted before the runs: on O8, BldPitch1(k) is the S-function input extrapolated with InterpOrder 2 (spec_E3 criteria.reported_only), so the compensation by p(k-1) is not exact'
+  bounds: 'applied pitch command clipped to [0, 30 x pi/180] rad (spec_E2 nmpc_interface.constraints); every clipping instant counted'
+  logging: 'p(k), the GenSpeed and BldPitch1 values passed to DISCON, the applied command and the wrapper outputs, at every DT'
+
+metrics:
+  safety: 'Q2 and Q2b of spec_E3 (Q2b on the whole record), max RotSpeed <= 14.52 rpm (spec_E3 criteria.Q4_overspeed), applied pitch within [0, 30] deg, number of clipping instants'
+  torque_error: 'RMS over 60-180 s of (GenTq x 1000 - Q_g) / VS_MaxTq (VS_MaxTq = 47402.91 N m, DISCON.F90 l.91), with Q_g = rom_torque_law(omega_f, beta_deg, p) of openfast_q1/E2 evaluated on omega_f rebuilt from the true GenSpeed with the DISCON filter (as spec_E2 validation.V3_pitch_steps.compare) and on the applied pitch; nonzero in X0 because rom_torque_law has no torque-rate limit (DISCON VS_MaxRat, l.405-407)'
+  torque_consistency: 'torque_error of the arm minus torque_error of X0 at the same speed'
+  independence: '1 - R^2 of the least-squares fit of the applied pitch on [1, RtVAvgxh, GenSpeed] at the same output step over 60-180 s, solved with the MATLAB backslash operator on the regressor matrix; RotSpeed is not used because it is almost proportional to GenSpeed (gearbox ratio 97)'
+  excitation_gain: 'independence of the arm minus independence of X0 at the same speed'
+
+choice_rule:
+  admissible: 'an arm is admissible if, at both speeds, safety passes, there is no clipping instant, torque_consistency <= 0.002 and excitation_gain >= 0.02 (project choices)'
+  retained: 'among admissible arms X1-X3, the one with the larger mean excitation_gain over the two speeds; if none is admissible, E4 uses X0 (DISCON only) and this is stated in spec_E4'
+  tie: 'between admissible arms only: mean excitation_gain differing by less than 0.02, the arm closer to normal operation is retained, in the order X2, X1, X3'
+
+outputs:
+  folder: 'results/Q1-E4-EXCIT-<date>-a/ with meta, case manifests, .inp, .bts, .outb, wrapper and excitation logs, metrics CSV, verdict file stating RETAINED: Xn and the values that decided it'
+  register: 'one line EXPLORATORY in openfast_q1/docs/campaign_register_Q1.csv'
