@@ -1,0 +1,53 @@
+# E4 campaign spec - closed-loop dataset for the six learned families of Q1 (arms C1-C6)
+# STATUS: DRAFT 3 (supervisor, 26/10/2026): draft 1 with the author decisions of 26/10/2026 (5 seeds, choices 1-6, X3 at every speed), two declared limits (X3 at 12-14 m/s, one test seed per speed) and the executor proposals P1-P5 of 26/10/2026 (interruption, launch conditions, readiness by arm, data checks, E7 as the independent evaluation), to be adopted by the author.
+# Rule: spec, code and analysis committed BEFORE execution; nothing here is changed after results are seen.
+
+campaign:
+  id: 'Q1-E4-DATA-<date>-a'
+  purpose: 'closed-loop OpenFAST trajectories, sampled at the NMPC interface of spec_E2, on which the six learned families and the baseline MLP are trained (E5); author decisions D1-D9 of 23/10/2026'
+  depends_on: 'openfast_q1/E2/spec_E2.yaml (nmpc_interface, model.states, model.inputs, model.disturbance), openfast_q1/E3/spec_E3.yaml (E3b_region3_qualification), openfast_q1/E4/spec_E4X.yaml with amendment 1 and its verdict RETAINED: X3 (Q1-E4-EXCIT-2026-10-26-a)'
+  status_rule: 'no value of this campaign enters the values registry until a manuscript sentence needs it (rule b)'
+
+plant: 'configuration O8 of spec_E3 E3b_region3_qualification.plant_configuration, NumCrctn 1, initial pitch beta_eq_deg of E1 at the mean speed, TMax 660 s, model built as run_E4X.m'
+
+wind:
+  generation: 'as spec_E3 E3b_region3_qualification.wind_generation (category A, IECKAI, NTM, PLExp 0.2, UsableTime 660) (D5)'
+  mean_speeds: '12, 14, 16, 18, 20, 22, 24 m/s; region-3 core 16-24 m/s and transition 12-14 m/s reported separately (D4)'
+  seeds: 'RandSeed1 34001, 34002, 34003, 34004, 34005 for every mean speed (project choice), reserved for E4 and excluded from E7'
+  duration: '660 s simulated, the first 60 s excluded from every dataset sample and statistic (D7)'
+
+arms:
+  X0: 'baseline controller only (spec_E4X excitation.X0)'
+  X3: 'spec_E4X excitation.X3 with A_pitch = 1.0 deg, signal as spec_E4X excitation.signal and signal_amendment_1, except: rng seed 100 x RandSeed1 + mean speed (distinct per run), d = 0.5 + 2.5 x rand(1, 1200), p = 0 before 60 s and evaluated until 660 s; clipping as bounds_amendment_1 (D3, E4X verdict)'
+  runs: '7 speeds x 5 seeds x 2 arms = 70 runs, one at a time, ordered by speed, then seed, then X0 before X3; X0 and X3 of the same speed and seed use the same .bts'
+  limit: 'X3 was tried only at 16 and 22 m/s (Q1-E4-EXCIT-2026-10-26-a); at 12 and 14 m/s, where the region-3 fraction was 0.54-0.60 and 0.87-0.91 in Q1-E3-QUAL-2026-10-22-d and region 2.5 occurs, frequent clipping at 0 deg is expected and the torque consistency of X3 relative to X0 was not measured; clipping instants, out-of-range instants and this torque consistency are counted and reported for every run'
+
+usability: 'a run failing spec_E3 criteria.Q2_execution or criteria.Q2b_pitch_loop (whole record) is excluded and declared; the other arm of the same seed is kept if it passes (D8)'
+
+partition: 'by seed, the same for every speed and both arms, fixed before any run: training 34001, 34002, 34003; validation 34004; test 34005; the test partition is never used to choose a model, a hyperparameter or a normalisation (D6); it holds one seed per speed (14 runs), a limit to be declared in the evaluation of E5; the independent evaluation of the paper is E7, in closed loop on its own seeds, and the E5 test score is not presented as a main result'
+
+signals:
+  recorded: 'spec_E3 channels.required (including RtVAvgxh and Wind1VelX) and the block log of run_E4X (applied pitch command, p, values passed to DISCON) at every DT = 0.00625 s (D1)'
+  states: 'x = [omega_r, omega_f]: omega_r = RotSpeed x pi/30 (rad/s); omega_f rebuilt from GenSpeed (rad/s) with the DISCON filter from t = 0, as spec_E2 validation.V3_pitch_steps.compare (spec_E2 model.states)'
+  input: 'u = applied collective pitch command (deg), spec_E4X metrics.applied_pitch_amendment_1 (spec_E2 model.inputs.beta)'
+  disturbance: 'd = RtVAvgxh (m/s), assumed known (spec_E2 model.disturbance, model v2); Wind1VelX kept in the dataset but not used as an input'
+  sampling: 'Ts = 0.05 s (spec_E2 nmpc_interface.Ts.main): x at t = k x Ts; u and d taken at the start of each Ts step and held over it, as spec_E2 validation.V4_turbulent_segments.protocol; the sensitivity datasets at Ts = 0.025 s and 0.1 s are built from the same runs by the same rule'
+  target: 'Delta x_k = x_{k+1} - x_k for every family; every metric is computed on x reconstructed as x_k + Delta x_k (D2)'
+  history: 'history windows are taken from the same run only and from t >= 60 s; their maximum length is fixed in spec_E5 before any training'
+
+normalisation: 'per variable mean and standard deviation computed on the training partition only, both arms together, for the states, the input, the disturbance and the targets Delta x, stored with their SHA-256 and reused unchanged for validation and test'
+
+format: 'per run: an archival table at DT and a dataset table at Ts with metadata trajectory_id, mean_speed, seed, arm, bts_sha256, outb_sha256, partition, Ts; one index CSV of all runs with usability, clipping and out-of-range counts'
+
+quality:
+  reported: 'per run and per speed: usable or excluded, clipping and out-of-range counts, torque_consistency of X3 relative to X0 of the same speed and seed (as spec_E4X metrics.torque_consistency), fraction of samples where lambda = omega_r x R / RtVAvgxh (R of rom_params) lies outside the Cp table domain [2, 13] or the applied pitch outside [0, 30] deg (relevant to arm B and the grey-box)'
+  data_checks: 'block log times equal to the .outb times at every output step (as Q1-E3-QUAL-2026-10-22-d); no NaN, duplicate or missing time step in the tables at Ts; Delta x computed only between consecutive samples of the same run, never across two runs and never across t = 60 s'
+  status: 'READY: every X0 run is usable and, for X3, every validation and test run is usable and every speed keeps at least 2 usable training seeds. READY WITH CONDITIONS: the only exclusions are X3 runs, or X0 training runs that leave at least 2 usable X0 training seeds at each speed; the excluded runs and the affected speeds and arms are listed and stated (X3 at 12-14 m/s is an accepted risk). NOT READY: an X0 validation or test run is excluded, or a speed keeps fewer than 2 usable X0 training seeds'
+
+budget: '70 runs and 35 TurbSim fields: expected 6 to 13 h, worst case about 30 h, from the durations of Q1-E2-V4DATA-2026-10-22-a and Q1-E3-QUAL-2026-10-22-d (D9: about 32 h)'
+
+launch_conditions: 'OneDrive stopped; computer on mains power with sleep and hibernation disabled and Windows updates paused for the expected duration; at least 15 GB free on the drive of results/ (expected volume about 6 GB: 70 .outb of about 36 MB, 35 .bts of about 74 MB, block logs)'
+
+interruption: 'run_E4 writes a completion record for each run as soon as it ends (run name, status, SHA-256 of the .outb and of the block log); an interrupted campaign is kept as FAILED_KEPT in the campaign register and is never relaunched; a campaign -b, under its own authorisation, runs only the runs of -a that are missing or not completed, with the same code commit, specs, seeds and wind generation, reuses the .bts of -a whose SHA-256 is unchanged, and reuses a completed run of -a only if its recorded SHA-256 values are unchanged; the dataset is then built from the completed runs of -a and -b and states this'
+
+outputs: 'results/Q1-E4-DATA-<date>-a/ with meta, wind fields, case copies, .outb, block logs, dataset tables, index CSV, normalisation file, quality report and status; one line in openfast_q1/docs/campaign_register_Q1.csv'
