@@ -1,0 +1,42 @@
+% Figure E3-1 of Paper_Q1 (section 3.2): closed loop of configuration O8. Schematic only: no data and
+% no result number (openfast_q1/docs/spec_figures_E3_E4.yaml, E3_1_loop and general.schematics).
+% Content as coded in openfast_q1/E3/run_E3b.m and openfast_q1/E4/run_E4.m: FAST_SFunc outputs go to
+% the MATLAB Function block, which calls discon_wrapper and DISCON.dll at every DT = 0.00625 s; the
+% measured BldPitch1 and GenSpeed go to DISCON; generator torque (input 1), electrical power (input 2)
+% and collective pitch command (inputs 5-7) go back to FAST_SFunc; the dashed frame marks where the
+% NMPC arms replace DISCON at Ts = 0.05 s (spec_E2 nmpc_interface.Ts.main).
+% Requires \usepackage{tikz}, \usetikzlibrary{arrows.meta, positioning, calc} and siunitx
+% (Paper_Q1/main.tex). Included with \input{figures/E3_fig1_loop} inside a figure environment of
+% section 3 (step 5 of spec_figures_E3_E4 order).
+\begin{tikzpicture}[
+    >={Stealth[length=2.2mm]},
+    blk/.style={draw, thick, align=center, font=\small, inner sep=2mm},
+    sig/.style={font=\footnotesize, align=center}
+  ]
+  % plant
+  \node[blk, minimum width=32mm, minimum height=26mm] (fast) at (0, 0)
+    {\texttt{FAST\_SFunc}\\[2pt]{\footnotesize OpenFAST plant}\\{\footnotesize PCMode 4, VSContrl 4}};
+  % baseline controller, called by the MATLAB Function block
+  \node[blk, minimum width=34mm, minimum height=9mm] (wrap) at (9.6, 0.85) {\texttt{discon\_wrapper}};
+  \node[blk, minimum width=34mm, minimum height=9mm] (dll)  at (9.6, -0.85) {\texttt{DISCON.dll}};
+  \draw[<->] (wrap) -- (dll);
+  % dashed frame: part replaced by the NMPC arms
+  \draw[dashed, thick] ($(wrap.north west) + (-2.5mm, 2.5mm)$) rectangle ($(dll.south east) + (2.5mm, -2.5mm)$);
+  % MATLAB Function block
+  \coordinate (mnw) at ($(wrap.north west) + (-6mm, 8mm)$);
+  \coordinate (mse) at ($(dll.south east) + (6mm, -8mm)$);
+  \draw[thick] (mnw) rectangle (mse);
+  \node[sig, align=left, anchor=south west] at (mnw)
+    {MATLAB Function block,\\called every $\mathrm{DT} = 0.00625\,\mathrm{s}$};
+  % signals between the plant and the block
+  \coordinate (inA) at (mnw |- fast.east);
+  \draw[->, thick] ($(fast.east) + (0, 6mm)$) --
+    node[sig, above] {measured \texttt{BldPitch1}\\and \texttt{GenSpeed} to DISCON}
+    ($(inA) + (0, 6mm)$);
+  \draw[->, thick] ($(inA) + (0, -6mm)$) --
+    node[sig, below] {generator torque (input 1)\\electrical power (input 2)\\collective pitch command\\(inputs 5--7)}
+    ($(fast.east) + (0, -6mm)$);
+  % meaning of the dashed frame
+  \node[sig, align=right, anchor=north east] at (mse)
+    {dashed frame: replaced by the\\NMPC arms at $T_s = \SI{0.05}{\second}$};
+\end{tikzpicture}
