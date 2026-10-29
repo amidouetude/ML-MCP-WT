@@ -1,0 +1,37 @@
+# Figure spec - sections 3 and 4 of Paper_Q1 (figures E3-1, E3-2, E4-1, E4-2, E4-3)
+# STATUS: DRAFT 1 (supervisor, 29/10/2026, author decisions and executor suggestions of 29/10/2026), to be adopted by the author.
+# Rule: this spec and every plotting script are committed BEFORE any plot; runs, windows, panels and reference lines below are not changed after a plot is seen; a figure shows no number that is not a protocol parameter or a registered value.
+
+general:
+  style: 'black and white, distinct line styles, English labels with units, vector PDF (data figures also PNG at 300 dpi), as Paper_Q1 figure E2_fig1_emax_by_speed'
+  data_figures: 'produced by a script committed before it is run, reading only the files listed below and refusing to run if a SHA-256 differs or openfast_q1/ is not clean in Git; it writes a stamp file (repository commit, SHA-256 of the script, of every file read and of every file written), as openfast_q1/E2/plot_E2_figure.m'
+  schematics: 'TikZ code in Paper_Q1/figures/, no data and no result number; requires \usepackage{tikz} in Paper_Q1/main.tex, added in a separate commit'
+  text: 'every figure and table is introduced in the body by a sentence that describes it (author rule); a caption carries no value of E4 and only registered values of E3'
+  copyright: 'no image of the course notes or of a third party is reused'
+
+E3_1_loop:
+  type: 'schematic (TikZ), section 3.2, file Paper_Q1/figures/E3_fig1_loop.tex'
+  content: 'configuration O8 as coded in openfast_q1/E3/run_E3b.m and run_E4.m: FAST_SFunc outputs to the MATLAB Function block, which calls discon_wrapper and DISCON.dll at every DT = 0.00625 s; measured BldPitch1 and GenSpeed to DISCON; generator torque (input 1), electrical power (input 2) and collective pitch command (inputs 5-7) back to FAST_SFunc; a dashed frame marks where the NMPC arms replace DISCON at Ts = 0.05 s (spec_E2 nmpc_interface.Ts.main)'
+
+E3_2_signals:
+  type: 'data figure, section 3.3, script openfast_q1/E3/plot_E3_figure.m, output results/Q1-E3-FIG-<date>-a/E3_fig2_signals.pdf and .png'
+  runs: 'two columns: left results/Q1-E3-QUAL-2026-10-22-d/runs/U18_S31001/5MW_Land_DLL_WTurb/5MW_Land_DLL_WTurb.SFunc.outb (SHA-256 f79c8785e0607fb3e3a2dc7ae2acfdfc45545ed7e8b68cc4fa62c8b70157d57e, 18 m/s, seed 31001); right results/Q1-E3-QUAL-2026-10-22-d/runs/U14_S31003/5MW_Land_DLL_WTurb/5MW_Land_DLL_WTurb.SFunc.outb (SHA-256 8dc40c3a45626651767e7b82468ebe4eb057fb7f3e2bb7ea327e9ee06fb223cc, 14 m/s, seed 31003, the run that fails the power criterion)'
+  window: '60 to 180 s for both columns'
+  panels: '(1) Wind1VelX and RtVAvgxh (m/s); (2) RotSpeed (rpm) with horizontal lines at 12.1 rpm and 14.52 rpm (spec_E3 criteria.Q4_overspeed); (3) BldPitch1 (deg); (4) mechanical generator power GenTq x 1000 x GenSpeed x pi/30 (MW) with a horizontal line at 5.296610 MW and dashed lines at plus and minus 2 % (spec_E3 criteria.Q3_power)'
+
+E4_1_matrix:
+  type: 'table (LaTeX), section 4, in Paper_Q1/sections/04_data_generation.tex'
+  content: 'rows: mean speeds 12, 14, 16, 18, 20, 22, 24 m/s; columns: seeds 34001 to 34005 with their partition (training, training, training, validation, test); every cell: X0 and X3 (spec_E4 wind, arms.runs, partition); protocol parameters only, no registry line'
+
+E4_2_sampling:
+  type: 'schematic (TikZ), section 4, file Paper_Q1/figures/E4_fig2_sampling.tex'
+  content: 'output grid at DT = 0.00625 s; samples at Ts = 0.05 s, one every 8 output steps, from t = 60 s; x_k sampled, u_k and d_k taken at the start of the step and held over it; Delta x_k = x_{k+1} - x_k between two samples of the same run; the 60 s boundary and the absence of a difference across two runs are marked (spec_E4 signals.sampling, signals.target)'
+
+E4_3_excitation:
+  type: 'data figure, section 4, script openfast_q1/E4/plot_E4_figures.m, output results/Q1-E4-FIG-<date>-a/E4_fig3_excitation.pdf and .png'
+  runs: 'results/Q1-E4-DATA-2026-10-28-a/runs/<run>/5MW_Land_DLL_WTurb/5MW_Land_DLL_WTurb.SFunc.outb and runs/<run>/wrapper_log.mat for U18_S34001_X0 (outb b9e2b2484d2d6e89e71a9fad4d8107d10e65c9525053603bbd8d04ab00eed739, log dd3796c82e373eea69d074be9a878f028bf33a250eef074a75dcb7cd5552b4ea), U18_S34001_X3 (outb 5cd3fb0ec360c4571eefda51bdf421d5096e0a2a5f787775eb4bf17bdce3a715, log 9c2ee026963b71ebce94b4d14450913ea726039f585ba09ae11d27d3106b2e72), U12_S34001_X0 (outb 4de1dba42c1067408d18370388b759788ecb559bd3df32b683d77504418e29bf, log 7cc5569ad21c6d1b804e8397b626b25af1551a183a1629a93e8987d4adac51da), U12_S34001_X3 (outb fb06336bea33cf2b80004521c4ce4b0d129d71bf862a126d9c75db6e8e4356de, log af73c5e7824aa77566fa123911884b8c0163b8bf105dcc6b55f781d3b0ab23b9)'
+  window: '60 to 120 s'
+  panels: '(1) p(t) of U18_S34001_X3 (deg, block log column p_deg); (2) applied pitch command at 18 m/s, X0 and X3 (deg, block log column command_applied_rad); (3) RotSpeed at 18 m/s, X0 and X3 (rpm); (4) applied pitch command at 12 m/s, X0 and X3 (deg), with a horizontal line at 0 deg (lower bound of the clipping, spec_E4X bounds_amendment_1)'
+  caption: 'no value of E4 (the clipping fraction would first need its own registry line)'
+
+order: '1 commit of this spec; 2 commit of \usepackage{tikz}; 3 plot_E3_figure.m and plot_E4_figures.m written, reviewed and committed before any run; 4 one run of each script under its own authorisation; 5 manuscript commit per section (text sentences, TikZ files, table, figure PDFs)'
