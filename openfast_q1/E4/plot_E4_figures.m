@@ -23,7 +23,7 @@ function plot_E4_figures()
 %   figure (general.text, E4_3_excitation.caption).
 %   Refuses to run (error, nothing written) if openfast_q1/ is not clean in Git, if an input is
 %   missing or its SHA-256 differs, if matlab-toolbox is not at TB_COMMIT, or if the output folder
-%   results/Q1-E4-FIG-<yyyy-MM-dd>-a/ already exists.
+%   results/Q1-E4-FIG-<yyyy-MM-dd>-b/ already exists.
 %   Writes in that folder: E4_fig3_excitation.pdf (vector), E4_fig3_excitation.png (300 dpi) and
 %   E4_fig3_excitation_stamp.txt (repository commit, clean-tree status, SHA-256 of this script, of
 %   every file read and of every file written), as openfast_q1/E2/plot_E2_figure.m
@@ -32,6 +32,9 @@ function plot_E4_figures()
 %
 %   Amendment 1 (29/10/2026, before any run of this script, after the run Q1-E3-FIG-2026-10-29-a of
 %   plot_E3_figure.m; rendering only): the 0 deg line carries no text label; it is identified in the caption.
+%   Amendment 2 (29/10/2026, after the run Q1-E4-FIG-2026-10-29-a; rendering only, inputs, window, panels
+%   and reference line unchanged): a 5 % margin is added to the y limits of every panel, so that no curve
+%   lies on the frame (p at +/-1 deg, pitch command at 0 deg); output suffix -b.
 
 NAME      = 'E4_fig3_excitation';
 T_WIN     = [60 120];                     % s, E4_3_excitation.window
@@ -81,7 +84,7 @@ end
 if st ~= 0 || ~strcmp(strtrim(tb), TB_COMMIT)
     error('plot_E4_figures:toolbox', 'matlab-toolbox is not at %s.', TB_COMMIT);
 end
-ID  = ['Q1-E4-FIG-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-a'];
+ID  = ['Q1-E4-FIG-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-b'];
 OUT = fullfile(ROOT, 'results', ID);
 if isfolder(OUT), error('plot_E4_figures:exists', 'Output folder already exists: %s', OUT); end
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));  head = strtrim(head);
@@ -122,8 +125,8 @@ try
     lg = legend(ax(2), hl, {'X0: baseline controller only', 'X3: excitation added to the command'}, ...
                 'Orientation', 'horizontal');
     lg.Layout.Tile = 'north';
-    yl = ylim(ax(4));  ylim(ax(4), [min(yl(1), P_LOW - 0.05*diff(yl)), yl(2)]);   % 0 deg line inside the panel
-    for r = 1:4
+    for r = 1:4                                                        % 5 % margin: no curve lies on the frame
+        yl = ylim(ax(r));  pad = 0.05*diff(yl);  ylim(ax(r), [yl(1) - pad, yl(2) + pad]);
         xlim(ax(r), T_WIN);  grid(ax(r), 'on');  box(ax(r), 'on');
         if r < 4, xticklabels(ax(r), {}); end
     end
