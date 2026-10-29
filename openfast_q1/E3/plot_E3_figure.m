@@ -23,12 +23,16 @@ function plot_E3_figure()
 %   from the data is written on the figure (general.text).
 %   Refuses to run (error, nothing written) if openfast_q1/ is not clean in Git, if an input is
 %   missing or its SHA-256 differs, if matlab-toolbox is not at TB_COMMIT, or if the output folder
-%   results/Q1-E3-FIG-<yyyy-MM-dd>-a/ already exists.
+%   results/Q1-E3-FIG-<yyyy-MM-dd>-b/ already exists.
 %   Writes in that folder: E3_fig2_signals.pdf (vector), E3_fig2_signals.png (300 dpi) and
 %   E3_fig2_signals_stamp.txt (repository commit, clean-tree status, SHA-256 of this script, of every
 %   file read and of every file written), as openfast_q1/E2/plot_E2_figure.m
 %   (spec_figures_E3_E4 general.data_figures). After the folder is created, a catch appends
 %   getReport(ME, 'extended') to errors_E3_fig2.txt and rethrows the error.
+%
+%   Amendment 1 (29/10/2026, after the run Q1-E3-FIG-2026-10-29-a; rendering only, inputs, window,
+%   panels and reference lines unchanged): the reference lines carry no text label (the labels
+%   overlapped the curves); they are identified by their line style in the caption; output suffix -b.
 
 NAME      = 'E3_fig2_signals';
 T_WIN     = [60 180];                     % s, E3_2_signals.window
@@ -66,7 +70,7 @@ end
 if st ~= 0 || ~strcmp(strtrim(tb), TB_COMMIT)
     error('plot_E3_figure:toolbox', 'matlab-toolbox is not at %s.', TB_COMMIT);
 end
-ID  = ['Q1-E3-FIG-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-a'];
+ID  = ['Q1-E3-FIG-' char(datetime('now', 'Format', 'yyyy-MM-dd')) '-b'];
 OUT = fullfile(ROOT, 'results', ID);
 if isfolder(OUT), error('plot_E3_figure:exists', 'Output folder already exists: %s', OUT); end
 [~, head] = system(sprintf('git -C "%s" rev-parse HEAD', ROOT));  head = strtrim(head);
@@ -95,16 +99,15 @@ try
         title(ax(1,c), IN(c).head, 'FontWeight', 'normal');
         ax(2,c) = nexttile(tl, 2 + c);
         plot(ax(2,c), t, S{c}.RotSpeed, '-', 'Color', 'k', 'LineWidth', 0.8);
-        yline(ax(2,c), RATED_RPM, '-.', 'rated rotor speed', 'Color', 'k', 'LineWidth', 0.8, 'FontSize', 7);
-        yline(ax(2,c), Q4_RPM, ':', '1.2 \times rated rotor speed', 'Color', 'k', 'LineWidth', 1.0, 'FontSize', 7);
+        yline(ax(2,c), RATED_RPM, '-.', 'Color', 'k', 'LineWidth', 0.8);
+        yline(ax(2,c), Q4_RPM, ':', 'Color', 'k', 'LineWidth', 1.0);
         ax(3,c) = nexttile(tl, 4 + c);
         plot(ax(3,c), t, S{c}.BldPitch1, '-', 'Color', 'k', 'LineWidth', 0.8);
         ax(4,c) = nexttile(tl, 6 + c);
         plot(ax(4,c), t, S{c}.Pmech_MW, '-', 'Color', 'k', 'LineWidth', 0.8);
-        yline(ax(4,c), VS_RTPWR/1e6, '-', 'rated power', 'Color', GRAY, 'LineWidth', 1.0, 'FontSize', 7);
-        yline(ax(4,c), (1 + Q3_TOL)*VS_RTPWR/1e6, '--', '+2 %', 'Color', 'k', 'LineWidth', 0.8, 'FontSize', 7);
-        yline(ax(4,c), (1 - Q3_TOL)*VS_RTPWR/1e6, '--', '-2 %', 'Color', 'k', 'LineWidth', 0.8, ...
-              'FontSize', 7, 'LabelVerticalAlignment', 'bottom');
+        yline(ax(4,c), VS_RTPWR/1e6, '-', 'Color', GRAY, 'LineWidth', 1.0);
+        yline(ax(4,c), (1 + Q3_TOL)*VS_RTPWR/1e6, '--', 'Color', 'k', 'LineWidth', 0.8);
+        yline(ax(4,c), (1 - Q3_TOL)*VS_RTPWR/1e6, '--', 'Color', 'k', 'LineWidth', 0.8);
         if c == 1
             lg = legend(ax(1,1), [hw hr], {'Wind1VelX (hub height)', 'RtVAvgxh (rotor-effective)'}, ...
                         'Orientation', 'horizontal');

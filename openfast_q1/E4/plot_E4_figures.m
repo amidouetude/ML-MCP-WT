@@ -29,6 +29,9 @@ function plot_E4_figures()
 %   every file read and of every file written), as openfast_q1/E2/plot_E2_figure.m
 %   (general.data_figures). After the folder is created, a catch appends getReport(ME, 'extended')
 %   to errors_E4_fig3.txt and rethrows the error.
+%
+%   Amendment 1 (29/10/2026, before any run of this script, after the run Q1-E3-FIG-2026-10-29-a of
+%   plot_E3_figure.m; rendering only): the 0 deg line carries no text label; it is identified in the caption.
 
 NAME      = 'E4_fig3_excitation';
 T_WIN     = [60 120];                     % s, E4_3_excitation.window
@@ -113,8 +116,7 @@ try
     ylabel(ax(3), 'Rotor speed (rpm)');
     ax(4) = nexttile(tl, 4);                                          % (4) applied command, 12 m/s
     pair(ax(4), R('U12_S34001_X0'), R('U12_S34001_X3'), 'cmd_deg', STY);
-    yline(ax(4), P_LOW, ':', 'lower bound of the clipping', 'Color', 'k', 'LineWidth', 1.0, ...
-          'FontSize', 7, 'LabelVerticalAlignment', 'bottom');
+    yline(ax(4), P_LOW, ':', 'Color', 'k', 'LineWidth', 1.0);
     title(ax(4), 'Applied pitch command, 12 m/s, seed 34001', 'FontWeight', 'normal');
     ylabel(ax(4), 'Pitch command (deg)');
     lg = legend(ax(2), hl, {'X0: baseline controller only', 'X3: excitation added to the command'}, ...
