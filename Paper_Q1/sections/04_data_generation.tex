@@ -2,4 +2,56 @@
 \section{Training data from OpenFAST}
 \label{sec:data}
 
-% TODO: Step E4: excitation, wind fields (TurbSim, IEC category A), seeds, coverage, train/validation/test split.
+\subsection{Runs and partition}
+\label{subsec:data_runs}
+{\color{revQ1}
+The learned models are trained on closed-loop runs of the plant of Section~\ref{sec:reference}, in the configuration qualified there, with the initial blade pitch angle at its equilibrium value of Section~\ref{subsec:aero_verification}. The wind fields were generated as in Section~\ref{subsec:region3_qual}, at the same seven mean wind speeds from 12 to 24~m/s, with five new turbulence seeds that are used neither in the qualification of Section~\ref{subsec:region3_qual} nor in the validation of the reduced-order model of Section~\ref{subsec:rom}. Each run lasted 660~s, and the first 60~s were discarded. Every wind field was simulated twice: once with the reference controller alone (arm X0), and once with an excitation added to its pitch command (arm X3, Section~\ref{subsec:excitation}), so that the pitch angle is not determined by the wind and the rotor speed alone. Table~\ref{tab:E4_matrix} lists the resulting 70 runs and their partition: the first three seeds form the training set, the fourth the validation set and the fifth the test set, the same for every mean wind speed and for both arms, so that no wind realization is shared between two sets.
+}
+
+\begin{table}[htbp]
+\centering
+\caption{{\color{revQ1}Runs of the training dataset: seven mean wind speeds, five turbulence seeds and two arms per seed, X0 (reference controller alone) and X3 (excitation added to its pitch command). The partition is made by seed.}}
+\label{tab:E4_matrix}
+\begin{tabular}{lccccc}
+\toprule
+ & \multicolumn{5}{c}{Turbulence seed} \\
+\cmidrule(lr){2-6}
+Mean wind speed (m/s) & 34001 & 34002 & 34003 & 34004 & 34005 \\
+Partition & training & training & training & validation & test \\
+\midrule
+12 & X0, X3 & X0, X3 & X0, X3 & X0, X3 & X0, X3 \\
+14 & X0, X3 & X0, X3 & X0, X3 & X0, X3 & X0, X3 \\
+16 & X0, X3 & X0, X3 & X0, X3 & X0, X3 & X0, X3 \\
+18 & X0, X3 & X0, X3 & X0, X3 & X0, X3 & X0, X3 \\
+20 & X0, X3 & X0, X3 & X0, X3 & X0, X3 & X0, X3 \\
+22 & X0, X3 & X0, X3 & X0, X3 & X0, X3 & X0, X3 \\
+24 & X0, X3 & X0, X3 & X0, X3 & X0, X3 & X0, X3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Pitch excitation}
+\label{subsec:excitation}
+{\color{revQ1}
+The excitation $p(t)$ is a sequence of plateaus at $+1^\circ$ and $-1^\circ$ with alternating signs, each lasting a random time between 0.5 and 3~s after the ramp that leads to it, with ramps at 4~$^\circ$/s, half the maximum pitch rate of the reference controller; it is zero before $t = 60$~s and is drawn with a different random seed in every excited run. Because the reference controller computes its command from the measured pitch angle (Section~\ref{subsec:coupling}), it receives the measured pitch angle minus the value of $p$ applied at the previous time step, and the applied command is its command plus $p$, clipped to $[0^\circ, 30^\circ]$. This entry point of the excitation was retained, among three entry points tried, by an exploratory comparison of eight runs at two mean wind speeds, with a choice rule fixed before the runs. Figure~\ref{fig:E4_excitation} illustrates the excitation and its effect: at 18~m/s, the excited command follows the command of the reference controller with an offset of about one degree, whereas at 12~m/s, where the reference controller often commands the lower bound of $0^\circ$, the negative part of the excitation is clipped, so that the excitation is weaker in the transition range.
+}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{figures/E4_fig3_excitation.pdf}
+\caption{{\color{revQ1}Excitation of the pitch command from 60 to 120~s, seed 34001. From top to bottom: excitation signal $p$ of the excited run at 18~m/s; applied pitch command at 18~m/s with the reference controller alone (X0, grey) and with the excitation (X3, dashed); rotor speed of the same two runs; applied pitch command at 12~m/s, where the dotted line is the lower bound of $0^\circ$ on which the excited command rests when it is clipped.}}
+\label{fig:E4_excitation}
+\end{figure}
+
+\subsection{Samples and targets}
+\label{subsec:samples}
+{\color{revQ1}
+The dataset is built at the sample time of the NMPC, $T_s = 0.05$~s, from the outputs recorded every 0.00625~s. Its state is $x = [\omega_r, \omega_f]$ and its input is the applied collective pitch command (Section~\ref{subsec:rom}); its disturbance is the rotor-effective wind speed, assumed known as in Section~\ref{subsec:rom}, and the wind speed at hub height is kept in the dataset but is not an input. Figure~\ref{fig:E4_sampling} illustrates the construction of the samples: the state is sampled every $T_s$ from $t = 60$~s, the input and the disturbance are taken at the start of each step and held over it, and the learning target is the state increment $\Delta x_k = x_{k+1} - x_k$, computed only between two consecutive samples of the same run. The mean and the standard deviation used to normalize every variable, the targets included, are computed on the training set only, both arms together. Datasets at 0.025~s and 0.1~s are built from the same runs by the same rule for the sensitivity study. Every run met the execution and pitch-loop criteria of Section~\ref{subsec:region3_qual}, and the dataset was declared ready by a rule fixed before the runs.
+}
+
+\begin{figure}[htbp]
+\centering
+\input{figures/E4_fig2_sampling}
+\caption{{\color{revQ1}Construction of the samples at the NMPC sample time $T_s = 8\,\mathrm{DT}$ from the output grid $\mathrm{DT} = 0.00625$~s. Top: one run around $t = 60$~s; the input $u_k$ and the disturbance $d_k$ are held over $[t_k, t_{k+1})$, and the target is $\Delta x_k$. Bottom: no increment is computed across two runs.}}
+\label{fig:E4_sampling}
+\end{figure}

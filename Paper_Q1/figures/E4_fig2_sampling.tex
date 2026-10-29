@@ -1,0 +1,70 @@
+% Figure E4-2 of Paper_Q1 (section 4): sampling of the dataset. Schematic only: no data and no result
+% number; the heights of the held values are arbitrary (openfast_q1/docs/spec_figures_E3_E4.yaml,
+% E4_2_sampling and general.schematics).
+% Content (spec_E4 signals.sampling, signals.target): output grid at DT = 0.00625 s; samples at
+% Ts = 0.05 s, one every 8 output steps, from t = 60 s; x_k sampled, u_k and d_k taken at the start of
+% the step and held over it; Delta x_k = x_{k+1} - x_k between two samples of the same run; the 60 s
+% boundary and the absence of a difference across two runs are marked.
+% Requires \usepackage{tikz}, \usetikzlibrary{arrows.meta, positioning, calc} and siunitx
+% (Paper_Q1/main.tex). Included with \input{figures/E4_fig2_sampling} inside a figure environment of
+% section 4 (step 5 of spec_figures_E3_E4 order).
+\begin{tikzpicture}[
+    >={Stealth[length=2mm]},
+    lab/.style={font=\footnotesize, align=center}
+  ]
+  \pgfmathsetmacro{\sTs}{3.0}     % drawing length of one Ts (cm)
+  \pgfmathsetmacro{\sDT}{0.375}   % drawing length of one DT (cm), Ts / 8
+  % ---------------- one run around t = 60 s ----------------
+  \fill[gray!15] (-1.5, -0.1) rectangle (0, 2.9);
+  \node[lab] at (-0.75, 2.5) {excluded\\$t < \SI{60}{\second}$};
+  \draw[->] (-1.5, 0) -- (9.9, 0) node[lab, right] {$t$};
+  \foreach \i in {-4,...,25} \draw (\sDT*\i, 0) -- ++(0, 0.1);            % output grid (DT)
+  \foreach \k in {0, 1, 2, 3} \draw[thick] (\sTs*\k, -0.15) -- (\sTs*\k, 0.2);   % samples (Ts)
+  \node[lab, below] at (0, -0.15) {$t_0 = \SI{60}{\second}$};
+  \foreach \k in {1, 2, 3} \node[lab, below] at (\sTs*\k, -0.15) {$t_{\k}$};
+  \draw[dashed] (0, -0.1) -- (0, 2.9);                                       % 60 s boundary
+  % sampling period and output step
+  \draw[<->] (0, -0.95) -- node[lab, below] {$T_s = \SI{0.05}{\second} = 8\,\mathrm{DT}$} (\sTs, -0.95);
+  \draw[<->] (2*\sTs, -0.95) -- (2*\sTs + \sDT, -0.95)
+    node[lab, right] {$\mathrm{DT} = 0.00625\,\mathrm{s}$ (output grid)};
+  % input and disturbance: value at the start of the step, held over it
+  \foreach \k/\y in {0/0.6, 1/0.95, 2/0.75} {
+    \draw[thick] (\sTs*\k, \y) -- (\sTs*\k + \sTs, \y);
+    \fill (\sTs*\k, \y) circle (1.5pt);
+    \draw[fill=white] (\sTs*\k + \sTs, \y) circle (1.5pt);
+    \node[lab, above] at (\sTs*\k + 0.5*\sTs, \y) {$u_{\k}, d_{\k}$};
+  }
+  % sampled state and target
+  \foreach \k in {0, 1, 2, 3} {
+    \fill (\sTs*\k, 2.0) circle (2pt);
+    \node[lab, below right] at (\sTs*\k, 2.0) {$x_{\k}$};
+  }
+  \foreach \k in {0, 1, 2}
+    \draw[->] (\sTs*\k + 0.1, 2.1) to[bend left=30] node[lab, above] {$\Delta x_{\k}$} (\sTs*\k + \sTs - 0.1, 2.1);
+  % reading of the row
+  \node[lab, align=left, anchor=west] at (10.4, 2.0) {$x_k$ sampled at $t_k$\\$\Delta x_k = x_{k+1} - x_k$};
+  \node[lab, align=left, anchor=west] at (10.4, 0.8) {$u_k$, $d_k$: value at $t_k$,\\held over $[t_k, t_{k+1})$};
+  % ---------------- no difference across two runs ----------------
+  \begin{scope}[yshift=-3.9cm]
+    \draw (-1.5, 0) -- (4.2, 0);
+    \node[lab, anchor=west] at (-1.5, 2.2) {run $r$ (end)};
+    \foreach \x in {0.6, 3.6} {
+      \draw[thick] (\x, -0.15) -- (\x, 0.2);
+      \fill (\x, 0.9) circle (2pt);
+    }
+    \node[lab, below] at (0.6, -0.15) {$t_{K-1}$};
+    \node[lab, below] at (3.6, -0.15) {$t_K$};
+    \node[lab, below right] at (0.6, 0.9) {$x_{K-1}$};
+    \node[lab, below right] at (3.6, 0.9) {$x_K$};
+    \draw[->] (0.7, 1.0) to[bend left=30] node[lab, above] {$\Delta x_{K-1}$} (3.5, 1.0);
+    \draw[->] (6.0, 0) -- (9.9, 0) node[lab, right] {$t$};
+    \node[lab, anchor=west] at (6.0, 2.2) {run $r+1$ (start)};
+    \draw[thick] (6.6, -0.15) -- (6.6, 0.2);
+    \node[lab, below] at (6.6, -0.15) {$t_0 = \SI{60}{\second}$};
+    \fill (6.6, 0.9) circle (2pt);
+    \node[lab, below right] at (6.6, 0.9) {$x_0$};
+    \draw[->, dashed] (3.75, 0.9) -- (6.45, 0.9);
+    \draw[thick] (5.1, 0.9) +(-0.15, -0.15) -- +(0.15, 0.15) +(-0.15, 0.15) -- +(0.15, -0.15);
+    \node[lab, above] at (5.1, 1.05) {no $\Delta x$ across\\two runs};
+  \end{scope}
+\end{tikzpicture}
