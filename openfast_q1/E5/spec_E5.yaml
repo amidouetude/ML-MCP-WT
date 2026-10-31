@@ -1,8 +1,9 @@
 # E5 campaign spec - offline training and offline evaluation of the learned internal models of Q1 (arms C1-C6 and the baseline MLP)
 # STATUS: ADOPTED on 31/10/2026 by the supervisor under the author delegation of 29/10/2026 (full power to fix the E5 framework), revisable by the author. Text of draft 3 (executor, 31/10/2026, sha256 24ef0bb240eea7ebfab806c1222cfeea9c9595ee0d3246c1d0d55265067333b7) with three adoption edits: this line, campaign.open_item and launch_conditions.C4_bound. Drafts 1 (sha256 54a326b4fd2ac2fd40a1409178c6adb446142be6b3fc4360ee90520756a34ab5) and 2 (sha256 7be4e2ca39169f22c9dee8bbd5ee20bce86a6e97df2d74f446bdd53658d35e17) stay outside the repository.
+# AMENDMENT 1, 31/10/2026 (executor proposal of 31/10/2026, adopted by the supervisor under the author delegation of 29/10/2026): width factor of the validity functions of C4 fixed a priori at k_sigma = 1/3, with sigma_ij = k_sigma x Delta_ij, Delta_ij the extension of the hyperrectangle of local model i in scheduling dimension j, not optimised. Source read: O. Nelles, Nonlinear System Identification, 2nd ed., Springer, 2020, DOI 10.1007/978-3-030-47439-3 (results/sources_Q1/, PDF sha256 752917693cdf575da9fb86a2c212a35d05910b528cb4977f9bbb3edee3d3a11d): Sect. 13.3, eq. (13.35), p. 419; Sect. 13.3.1, p. 421-422, eq. (13.36) and (13.37); Sect. 13.3.3, p. 433, 'it can be generally recommended to fix k_sigma a priori by the rule of thumb (13.36)'. Fixed before the commit of the C4 code and before any training (campaign.open_item); no model metric seen. Keys edited: framework_decisions.C4_LLNFM, families.C4_LLNFM, campaign.open_item and the Marking line.
 # DRAFT 3 changes: supervisor corrections D1-D4 of 29/10/2026; the block framework_decisions inserted word for word after campaign (supervisor text of 31/10/2026); every key of draft 2 that carried a TO FIX settled by that block now refers to the block key; the formula of the upper bound of the computation (launch_conditions.duration); S1-S6 are settled in the block and referred to, not open.
 # Rule: spec, code and analysis are committed BEFORE any training; nothing here is changed after a validation or test metric is seen; corrections by dated amendment in a separate commit.
-# Marking: every value cites its source (spec key, file and line, dated author decision, or framework_decisions). 'TO FIX' marks a value without source; one remains, the width factor of the validity functions of C4 (framework_decisions.C4_LLNFM). A course notion may be an argument, never a value.
+# Marking: every value cites its source (spec key, file and line, dated author decision, or framework_decisions). 'TO FIX' marks a value without source; none remains since amendment 1 (width factor of the validity functions of C4). A course notion may be an argument, never a value.
 
 campaign:
   id: 'Q1-E5-TRAIN-<date>-a'
@@ -15,7 +16,7 @@ campaign:
     rom_code: 'openfast_q1/E2/rom_params.m sha256 0b886331556bbb069238ec80709ac0d476824f81666813f6890e2444442f59b8; rom_rhs.m sha256 0ef3c080fbf07df660fb6f1d3000be2cdc496a7ede4cd6d9e4059e90aee2a37d; rom_step.m sha256 836a47c59f36bd0b347292141eda17464aff31bf29149efbab05953e0601f4e1; rom_torque_law.m sha256 4a769a46f09900013a7f02dbdb1fd6c418fc250871af788cf89eb1e4db1f6b5d (read-only check of 29/10/2026, openfast_q1/ clean at 5f469b0)'
   status_rule: 'no value of E5 enters the values registry or the manuscript until a manuscript sentence needs it (rule b); the E5 test score is not presented as a main result (spec_E4 partition)'
   adoption_condition: 'option (iii) excluded (framework_decisions.torque); the adoption no longer depends on the torque choice (correction D1 of 29/10/2026)'
-  open_item: 'the width factor of the validity functions of C4 (framework_decisions.C4_LLNFM) is fixed by a dated amendment of this spec, in a separate commit, from a LOLIMOT source read and cited with its page, before the commit of the C4 code and before any training'
+  open_item: 'the width factor of the validity functions of C4 (framework_decisions.C4_LLNFM) is fixed by a dated amendment of this spec, in a separate commit, from a LOLIMOT source read and cited with its page, before the commit of the C4 code and before any training (settled by amendment 1 of 31/10/2026: k_sigma = 1/3)'
 
 framework_decisions:
   authority: 'decisions of the supervisor under the author delegation of 29/10/2026 (full power to fix the E5 framework), revisable by the author; text sent by the supervisor on 31/10/2026'
@@ -37,7 +38,7 @@ framework_decisions:
   dense: 'dense parts of the MLP, C1 and the residual of C5: 1, 2 or 3 hidden layers of 16, 32, 64 or 128 units; tanh activation in every family, for a smooth model under the finite-difference derivatives of nlmpc'
   C2_TCN: 'kernel size 2 or 3, dilations 1, 2, 4 and so on with the smallest number of blocks whose receptive field reaches L, causal convolutions, 16, 32 or 64 channels'
   C3_LSTM: 'hidden size 16, 32, 64 or 128, 1 or 2 layers; hidden state: warm-up on the measured history of L samples before the segment start, then recursive prediction with the predicted states fed back'
-  C4_LLNFM: 'LOLIMOT with local linear models and normalised Gaussian validity functions; scheduling variables [d_k, u_k] or [x_k, u_k, d_k] (current sample only); regressor history L in {1, 4, 8, 16, 34}; TO FIX: width factor of the validity functions, taken from a LOLIMOT source read and cited with its page before the code commit'
+  C4_LLNFM: 'LOLIMOT with local linear models and normalised Gaussian validity functions; scheduling variables [d_k, u_k] or [x_k, u_k, d_k] (current sample only); regressor history L in {1, 4, 8, 16, 34}; width factor of the validity functions k_sigma = 1/3, sigma_ij = k_sigma x Delta_ij, fixed a priori and not optimised (amendment 1)'
   C5_residual: 'residual network with the inputs of the MLP (no history) and the dense space of the MLP; target Delta x - (rom_step(x_k, u_k, d_k) - x_k), scaled with the Delta x standard deviations of normalisation_E4, no new normalisation fitted'
   C6_sparse_GP: 'one GP per state component, ARD squared exponential kernel, FIC approximation, inputs the current sample (x_k, u_k, d_k), random active set and documented random subsample of the training rows, drawn with the seeds 35001-35003'
   omega_f: 'metrics on omega_f reported, not used for the selection'
@@ -99,7 +100,7 @@ families:
   C1_SW_MLP: 'framework_decisions.history and framework_decisions.dense'
   C2_TCN: 'framework_decisions.history and framework_decisions.C2_TCN'
   C3_LSTM: 'framework_decisions.history and framework_decisions.C3_LSTM (hidden state: option (a) of draft 2)'
-  C4_LLNFM: 'framework_decisions.C4_LLNFM and framework_decisions.optimiser; TO FIX: width factor of the validity functions (framework_decisions.C4_LLNFM)'
+  C4_LLNFM: 'framework_decisions.C4_LLNFM and framework_decisions.optimiser; width factor of the validity functions k_sigma = 1/3, sigma_ij = k_sigma x Delta_ij (amendment 1)'
   C5_grey_box: 'physical part fixed (arms.C5); residual: framework_decisions.C5_residual and framework_decisions.dense'
   C6_sparse_GP: 'framework_decisions.C6_sparse_GP and framework_decisions.search; argument only: the classical GP scales poorly (General table of model families, rows 17-18, listed in course_notes.files), hence inducing points and a documented subsampling'
   MLP: 'history length 0 by definition (arms.MLP); framework_decisions.dense (course_notes.notions.history_control)'
