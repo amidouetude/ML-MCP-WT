@@ -1,0 +1,190 @@
+# E5 campaign spec - offline training and offline evaluation of the learned internal models of Q1 (arms C1-C6 and the baseline MLP)
+# STATUS: ADOPTED on 31/10/2026 by the supervisor under the author delegation of 29/10/2026 (full power to fix the E5 framework), revisable by the author. Text of draft 3 (executor, 31/10/2026, sha256 24ef0bb240eea7ebfab806c1222cfeea9c9595ee0d3246c1d0d55265067333b7) with three adoption edits: this line, campaign.open_item and launch_conditions.C4_bound. Drafts 1 (sha256 54a326b4fd2ac2fd40a1409178c6adb446142be6b3fc4360ee90520756a34ab5) and 2 (sha256 7be4e2ca39169f22c9dee8bbd5ee20bce86a6e97df2d74f446bdd53658d35e17) stay outside the repository.
+# DRAFT 3 changes: supervisor corrections D1-D4 of 29/10/2026; the block framework_decisions inserted word for word after campaign (supervisor text of 31/10/2026); every key of draft 2 that carried a TO FIX settled by that block now refers to the block key; the formula of the upper bound of the computation (launch_conditions.duration); S1-S6 are settled in the block and referred to, not open.
+# Rule: spec, code and analysis are committed BEFORE any training; nothing here is changed after a validation or test metric is seen; corrections by dated amendment in a separate commit.
+# Marking: every value cites its source (spec key, file and line, dated author decision, or framework_decisions). 'TO FIX' marks a value without source; one remains, the width factor of the validity functions of C4 (framework_decisions.C4_LLNFM). A course notion may be an argument, never a value.
+
+campaign:
+  id: 'Q1-E5-TRAIN-<date>-a'
+  purpose: 'train the learned internal models of the NMPC arms C1-C6 and the baseline MLP on the E4 dataset, and evaluate them offline with a protocol fixed before any training, to retain one configuration per family for E6 (spec_E2 campaign.purpose: the six learned families reproduce the structure of the reduced-order model in E5)'
+  depends_on:
+    spec_E2: 'openfast_q1/E2/spec_E2.yaml sha256 6c09b3ef2df0d8dade7123caaa56e22c6ce248578518545793a8a44dd2d00515 (model v2, amendment 7; nmpc_interface)'
+    spec_E4: 'openfast_q1/E4/spec_E4.yaml sha256 73e07bca01ffce034a34c5b0d6b334eec48e603936a92fe7569f9d79ad885088'
+    dataset: 'results/Q1-E4-DATA-2026-10-28-a, STATUS: READY in quality_E4.txt sha256 51d5ea3e36b871da539d6735c739cc786df71bf6d767394ac9e6bd0d9e31120d; index_E4.csv sha256 28aafe065536341750079b2436e24b135519d0f8acfda1f05b3e6cbc1af46490; normalisation_E4.mat sha256 ba876ad1dd5b9756b54d32ad32649e4280024e680b48154a58e1139644a95a65; normalisation_E4.csv sha256 2bc337067814191939c03c16758f4926ac3790d6f23526828da759a51ea279f1; meta_E4.txt sha256 131f1217ee0a0ac2db1d17a5d4d45f274dd786890100a65648e7e021cd6a80a9 (all checked read-only on 29/10/2026)'
+    cp_table: 'results/Q1-E2-ROM-2026-10-16-b/verification/cp_table_E2.mat sha256 9e16ebbf84d0de9cd3f09ecae3a2e7cbf8b469415e7f6e65c6f8ec484c6ceac2, frozen (lambda 2:0.25:13, beta 0:0.5:30 deg, 45 x 61 nodes, no NaN node, read-only check of 29/10/2026)'
+    rom_code: 'openfast_q1/E2/rom_params.m sha256 0b886331556bbb069238ec80709ac0d476824f81666813f6890e2444442f59b8; rom_rhs.m sha256 0ef3c080fbf07df660fb6f1d3000be2cdc496a7ede4cd6d9e4059e90aee2a37d; rom_step.m sha256 836a47c59f36bd0b347292141eda17464aff31bf29149efbab05953e0601f4e1; rom_torque_law.m sha256 4a769a46f09900013a7f02dbdb1fd6c418fc250871af788cf89eb1e4db1f6b5d (read-only check of 29/10/2026, openfast_q1/ clean at 5f469b0)'
+  status_rule: 'no value of E5 enters the values registry or the manuscript until a manuscript sentence needs it (rule b); the E5 test score is not presented as a main result (spec_E4 partition)'
+  adoption_condition: 'option (iii) excluded (framework_decisions.torque); the adoption no longer depends on the torque choice (correction D1 of 29/10/2026)'
+  open_item: 'the width factor of the validity functions of C4 (framework_decisions.C4_LLNFM) is fixed by a dated amendment of this spec, in a separate commit, from a LOLIMOT source read and cited with its page, before the commit of the C4 code and before any training'
+
+framework_decisions:
+  authority: 'decisions of the supervisor under the author delegation of 29/10/2026 (full power to fix the E5 framework), revisable by the author; text sent by the supervisor on 31/10/2026'
+  torque: 'option (iii) excluded: the models have no torque input (spec_E4 signals.input). Option (i) is the working basis of spec_E6: the NMPC commands the pitch only and DISCON, called with the measured BldPitch1, produces the torque; its limits are declared in spec_E6 (torque-rate limit of 15000 N m/s in the plant and not in model v2, DISCON pitch loop running unapplied, wrapper rewiring to verify)'
+  framework: 'MATLAB R2024a (24.1.0.2537033) only: Deep Learning Toolbox for the MLP, C1, C2, C3 and the residual of C5; own code with unit tests for C4; fitrgp of the Statistics and Machine Learning Toolbox for C6'
+  compute: 'training on the GPU (RTX 4060 Laptop, 8 GB) in single precision; after training the learnables are cast to double; every E5 evaluation (selection, test, plausibility, prediction cost) is computed in double precision on the CPU, as nlmpc will call the model in E6; maxNumCompThreads is set to feature(numcores) for the whole campaign and recorded in meta'
+  reproducibility: 'the trained model files are the artefacts of record, identified by their SHA-256; a retraining is not expected to reproduce them bit for bit (GPU, single precision); the word reproducible is not used for the training (S6)'
+  sensitivity_datasets: 'the E4 datasets at Ts = 0.025 s and 0.1 s are not used in E5'
+  segments: 'identical evaluation segments for every family: the first segment of a run starts at the first instant at which a window of 34 samples (largest history of the search spaces) lies entirely in t >= 60 s; consecutive non-overlapping segments of T_H = 1.5 s follow; the number of segments per run is reported'
+  per_arm: 'metrics reported for X0 and X3 separately and pooled; not used for the selection'
+  F2_filter: 'the X3 runs at 12 m/s of the training seeds 34001-34003 are excluded from the training of every family. Basis, data quality of the training seeds only, before any training, no model metric (quality_E4.txt): torque_consistency of X3 0.075 to 0.111, i.e. 4.9 to 5.4 times the torque_error of X0 at the same seed (0.015 to 0.021), and 23.6 to 25.0 % of the about 96000 output steps of 60-660 s clipped; at 14 m/s 1.0 to 2.0 times and 4.7 to 6.7 %, kept. Project choice. The X3 runs at 12 m/s of validation and test are evaluated and reported separately and are not in the selection subset'
+  partition_note: 'the partition of spec_E4 by seed is unchanged and the exclusion is a training filter of E5 (S1); the normalisation of spec_E4 is reused unchanged although it includes the three excluded runs, because it is a scaling and a second normalisation would contradict spec_E4 normalisation (S2); the 70 runs are read and checked, the training uses 39 of the 42 training runs, the selection subset is 13 of the 14 validation runs, every validation and test run is evaluated (S3)'
+  loss: 'mean squared error on the normalised Delta x, one step, equal weights, for every family (the Gaussian likelihood of C6 and the least squares of C4 are squared-error criteria); the multi-step prediction is evaluated, not trained'
+  optimiser: 'MLP, C1, C2, C3 and the residual of C5: Adam, learning rate in {1e-3, 3e-4}, batch 4096, at most 100 epochs, early stopping on the training loss computed on the selection subset once per epoch, patience 10 epochs; the use of the validation partition for both early stopping and selection is declared. C4: LOLIMOT incremental construction up to 32 local models, the number of local models chosen on the selection subset. C6: kernel hyperparameters by maximisation of the marginal likelihood (fitrgp)'
+  repetitions: 'seeds 35001, 35002 and 35003 for every stochastic family (MLP, C1, C2, C3, C5, and the subsample and active-set draws of C6); one run per configuration for C4, which is deterministic, unless its implementation has a random element, in which case the three seeds apply (S5); the score of a configuration is the median of its repetitions, and the model passed to E6 is the repetition whose score is that median'
+  search: 'random search with seed 35100 and N = 8 configurations for each of the MLP, C1, C2, C3 and C5, drawn from the full spaces; C4: the full grid of its space (10 configurations); C6: two configurations (subsample 10000 with active set 500, subsample 40000 with active set 1000); the budgets therefore differ between families and the training time of every family is reported (S4); upper bound of the computation per training from the synthetic timing of 29/10/2026 (timing_E5_nn.txt sha256 8a416ded281b938d70b44ebe20e59c17a89736750905efd9a4a2b46bb5893ecb, timing_E5_gp.txt sha256 d2629dbc20c39135d6136aa2b75e704c22fe5fbfec62c79271ee39c889d5ac63)'
+  ceiling: 'ceiling of 48 h of computation for the campaign (project choice); ceiling_check: before each training the campaign compares the elapsed time plus the upper bound of that training with the ceiling and does not start it if the sum exceeds the ceiling; stopping at the ceiling is an interruption under the interruption rule'
+  history: 'history window L in {4, 8, 16, 34} samples for C1, C2 (receptive field) and C3 (warm-up); L = 34 spans 33 x 0.05 = 1.65 s, at least one period of the first drivetrain torsion mode (0.6205 Hz, 1.612 s, spec_E2 simplifications_declared), the unmodelled dynamics declared by spec_E2'
+  dense: 'dense parts of the MLP, C1 and the residual of C5: 1, 2 or 3 hidden layers of 16, 32, 64 or 128 units; tanh activation in every family, for a smooth model under the finite-difference derivatives of nlmpc'
+  C2_TCN: 'kernel size 2 or 3, dilations 1, 2, 4 and so on with the smallest number of blocks whose receptive field reaches L, causal convolutions, 16, 32 or 64 channels'
+  C3_LSTM: 'hidden size 16, 32, 64 or 128, 1 or 2 layers; hidden state: warm-up on the measured history of L samples before the segment start, then recursive prediction with the predicted states fed back'
+  C4_LLNFM: 'LOLIMOT with local linear models and normalised Gaussian validity functions; scheduling variables [d_k, u_k] or [x_k, u_k, d_k] (current sample only); regressor history L in {1, 4, 8, 16, 34}; TO FIX: width factor of the validity functions, taken from a LOLIMOT source read and cited with its page before the code commit'
+  C5_residual: 'residual network with the inputs of the MLP (no history) and the dense space of the MLP; target Delta x - (rom_step(x_k, u_k, d_k) - x_k), scaled with the Delta x standard deviations of normalisation_E4, no new normalisation fitted'
+  C6_sparse_GP: 'one GP per state component, ARD squared exponential kernel, FIC approximation, inputs the current sample (x_k, u_k, d_k), random active set and documented random subsample of the training rows, drawn with the seeds 35001-35003'
+  omega_f: 'metrics on omega_f reported, not used for the selection'
+  V4_thresholds: 'the V4 pass of spec_E2 is reported only; no family is excluded on it; a failure is declared'
+  plausibility: 'reported only: fraction of the validation samples in region 3 (applied pitch >= 1 deg, VS_Rgn3MP, DISCON.F90 l.94, the pitch criterion of the torque law of spec_E2 model.generator_torque) where the change of the predicted Delta omega_r for a +0.1 deg finite difference on u is negative (spec_E2 verification.V2b_units_signs)'
+  derivatives: 'Jacobian check in E6, with the protocol of spec_E2 verification.V2_derivatives and the models in double precision'
+  selection: 'criterion: per speed the median over segments of e_max of omega_r, wind case (a), on the selection subset, then the mean over the seven speeds; a segment out of the Cp domain (C5) or with a non-finite prediction (every family) is a failure; configurations are ranked first by their number of failed segments, then by the criterion on the segments without failure; a tie, when two criteria differ by less than 1 % of the better one, is resolved by the lower prediction cost; failure rates are reported'
+  disk: 'at least 20 GB free on the drive of results/ (expected volume below 1 GB)'
+
+arms:
+  C1: 'SW-MLP, sliding-window multilayer perceptron (author decision of 23/10/2026)'
+  C2: 'TCN, temporal convolutional network (author decision of 23/10/2026)'
+  C3: 'LSTM (author decision of 23/10/2026)'
+  C4: 'LLNFM, local linear neuro-fuzzy model (author decision of 23/10/2026)'
+  C5: 'grey-box with residual: x_{k+1} = rom_step(x_k, u_k, d_k) + r_theta(.), physical part = model v2 of spec_E2 (V = RtVAvgxh, variant (i), RK4 with 4 sub-steps per Ts, Cp table 9e16ebbf frozen) (author decision of 23/10/2026)'
+  C6: 'Sparse GP (author decision of 23/10/2026)'
+  MLP: 'baseline: MLP on the current sample only (x_k, u_k, d_k), no history, to isolate the effect of the history (author decision of 23/10/2026)'
+  out_of_scope: 'Neural State-Space with latent state and PINN are extensions, not trained in E5 (supervisor authorisation of 29/10/2026, item 1)'
+  framework:
+    decided: 'framework_decisions.framework, framework_decisions.compute, framework_decisions.reproducibility'
+    constraint: 'every model must be callable from the internal-model function of nlmpc used in E6 (spec_E2 model.discretization.form; the feasibility campaigns of step F, Q1-F-SIMULINK-2026-10-16-b and Q1-F-REPLAY-2026-10-16-a, used nlmpc in MATLAB R2024a)'
+
+data:
+  source: 'the 70 runs of results/Q1-E4-DATA-2026-10-28-a, both arms X0 and X3 (spec_E4 normalisation: training partition, both arms together); every dataset file is checked against its SHA-256 recorded in index_E4.csv before use (column sha_Ts0p050 and its 0.025 s and 0.1 s analogues, build_dataset_E4.m); runs used for training, selection and evaluation: framework_decisions.partition_note (S3)'
+  partition: 'training 34001, 34002, 34003; validation 34004; test 34005, same for every speed and both arms (spec_E4 partition); the test partition is never used to choose a model, a hyperparameter or a normalisation (spec_E4 partition, D6); training filter of E5: framework_decisions.F2_filter and framework_decisions.partition_note (S1)'
+  interface: 'state x = [omega_r, omega_f] (rad/s), input u = applied collective pitch command (deg), disturbance d = RtVAvgxh (m/s), assumed known; Wind1VelX not an input (spec_E4 signals.states, signals.input, signals.disturbance; spec_E2 nmpc_interface.wind_assumption)'
+  target: 'Delta x_k = x_{k+1} - x_k for every family; every metric is computed on x reconstructed as x_k + Delta x_k (spec_E4 signals.target, D2)'
+  normalisation: 'mean and standard deviation of normalisation_E4.mat (training partition, both arms, 42 runs) reused unchanged for every family and every partition (spec_E4 normalisation; framework_decisions.partition_note, S2)'
+  sample_time: 'Ts = 0.05 s for every family (spec_E2 nmpc_interface.Ts.main)'
+  sensitivity_datasets:
+    decided: 'framework_decisions.sensitivity_datasets'
+    source_of_the_data: 'built for the sensitivity study (spec_E4 signals.sampling; spec_E2 nmpc_interface.Ts.sensitivity [0.025, 0.1])'
+  history:
+    rule: 'history windows are taken from the same run only and from t >= 60 s (spec_E4 signals.history); maximum length per family: framework_decisions.history and framework_decisions.C4_LLNFM'
+    decided: 'framework_decisions.segments'
+  rows_samples: 'training partition at Ts = 0.05 s: 504000 samples from 42 runs (normalisation_E4.csv n_samples, n_runs)'
+
+E4_findings:
+  F1_clipping:
+    fact: 'clipping instants of X3 over 60-660 s, five seeds together (quality_E4.txt): 12 m/s 122653 (training seeds 24027, 23475, 22665); 14 m/s 27019 (training 6477, 4483, 4605); 16 m/s 3823 (training 1310, 771, 114); 18 m/s 353 (training 132, 0, 0; validation 210; test 11); 20, 22 and 24 m/s 0. The region-3 core 16-24 m/s is therefore not free of clipping. The excitation is weaker where DISCON commands the lower bound of 0 deg'
+    status: 'accepted risk at 12-14 m/s, the runs are kept (spec_E4 arms.limit, quality.status)'
+    treatment: 'every offline metric is reported separately for the region-3 core 16-24 m/s and the transition speeds 12-14 m/s (spec_E4 wind.mean_speeds, D4)'
+    per_arm: 'framework_decisions.per_arm'
+  F2_torque_consistency:
+    fact: 'torque_consistency of X3 relative to X0 (spec_E4X metrics.torque_consistency, computed by build_dataset_E4.m on 60-660 s; quality_E4.txt, five seeds; signed quantity): 12 m/s 0.071386 to 0.110971; 14 m/s 0.015952 to 0.031490; 16 m/s 0.000129 to 0.020434; 18 m/s -0.009747 to 0.009236 (negative for seeds 34003 and 34004); 20-24 m/s 0.000000 to 0.000002; over 16-24 m/s -0.0097 to 0.0204'
+    mechanism: 'reasoning on the code, not a measurement: within one call of DISCON the torque block (DISCON.F90 l.366-407) runs before the pitch block (l.431-496), so the region test of l.384 uses the PitCom of the previous call (spec_E4X l.39); in X3 DISCON receives BldPitch1 - p(k-1) (spec_E4X excitation.X3), and its command PitCom is that input moved by at most PC_MaxRat x DT (DISCON.F90 l.485-489, spec_E3 amendment 6), i.e. about the applied pitch minus p, not the applied pitch; the torque law of model v2 (rom_torque_law, evaluated on the applied pitch) then differs from the plant torque, mostly at 12 m/s (correction D2 of 29/10/2026)'
+    argument_E6: 'with option (i) or (ii) of E6_prerequisites.torque, the X3 torque behaviour at 12-14 m/s is absent from the E6 plant, because DISCON (option (i)) or rom_torque_law (option (ii)) receives the applied pitch without p (reasoning on the code, not a measurement; correction D3 of 29/10/2026)'
+    decided: 'framework_decisions.F2_filter and framework_decisions.partition_note'
+  F3_cp_domain:
+    fact: 'quality_E4.txt reports, per run at Ts = 0.05 s, the fraction of samples with lambda = omega_r R / RtVAvgxh outside [2, 13] or applied pitch outside [0, 30] deg: 0 on every run. The Cp table has no NaN node, so its domain is the full rectangle. These fractions are taken at the measured samples only; in Q1-E2-V4-2026-10-23-b the model v2 left the domain inside segments (NaN segments 9, 7, 1 at 12, 14, 16 m/s, campaign_register_Q1.csv), i.e. along its own predicted trajectory and RK4 sub-steps'
+    treatment: 'offline, C5 is evaluated by rom_step on every evaluation segment; a segment with n_domain > 0 at any RK4 evaluation is a failure of C5, counted and reported per speed (author decision of 23/10/2026, rule R4 of V4); for training, a one-step sample whose rom_step evaluation leaves the domain has no defined residual and is excluded from the training of C5, with its count reported (consequence of the residual definition); the same count is reported for the validation and test samples without using it to choose anything'
+
+families:
+  common:
+    loss: 'framework_decisions.loss'
+    optimiser: 'framework_decisions.optimiser'
+    init_seeds: 'framework_decisions.repetitions (S5)'
+    search: 'framework_decisions.search (S4) and framework_decisions.ceiling'
+  C1_SW_MLP: 'framework_decisions.history and framework_decisions.dense'
+  C2_TCN: 'framework_decisions.history and framework_decisions.C2_TCN'
+  C3_LSTM: 'framework_decisions.history and framework_decisions.C3_LSTM (hidden state: option (a) of draft 2)'
+  C4_LLNFM: 'framework_decisions.C4_LLNFM and framework_decisions.optimiser; TO FIX: width factor of the validity functions (framework_decisions.C4_LLNFM)'
+  C5_grey_box: 'physical part fixed (arms.C5); residual: framework_decisions.C5_residual and framework_decisions.dense'
+  C6_sparse_GP: 'framework_decisions.C6_sparse_GP and framework_decisions.search; argument only: the classical GP scales poorly (General table of model families, rows 17-18, listed in course_notes.files), hence inducing points and a documented subsampling'
+  MLP: 'history length 0 by definition (arms.MLP); framework_decisions.dense (course_notes.notions.history_control)'
+
+evaluation_offline:
+  horizon: 'T_H = 1.5 s, Np = 30 at Ts = 0.05 s (spec_E2 nmpc_interface.horizon)'
+  segments: 'the segments of framework_decisions.segments in every run of the partition, the model re-initialised at the start of each segment on the measured state (omega_r = RotSpeed, omega_f rebuilt as in the dataset), the measured applied pitch command held over each Ts; recursive prediction over Np steps without re-injecting the true states (as spec_E2 validation.V4_turbulent_segments.protocol); history-based families take their history from the same run before the segment start'
+  wind_cases: '(a) RtVAvgxh held over each Ts at its value at the start of the step (model error); (b) RtVAvgxh at the segment start held over the whole segment, as the NMPC wind assumption (spec_E2 nmpc_interface.wind_assumption, V4 protocol (a) and (b))'
+  one_step: 'one-step error on Delta x per state component, normalised and in physical units (spec_E4 signals.target)'
+  metrics: 'RMSE, MAE, e_max and bias of omega_r per mean wind speed; median and P95 of e_max over segments, in percent of the rated rotor speed (spec_E2 validation.V4_turbulent_segments.metrics); per arm: framework_decisions.per_arm'
+  precision: 'framework_decisions.compute (double precision on the CPU for every evaluation)'
+  omega_f: 'framework_decisions.omega_f'
+  thresholds: 'framework_decisions.V4_thresholds (V4 pass of spec_E2, case (a): median e_max <= 2 % and P95 e_max <= 5 % of rated rotor speed, spec_E2 validation.V4_turbulent_segments.pass)'
+  physical_plausibility: 'framework_decisions.plausibility (course_notes.notions.physical_consistency)'
+  derivatives: 'framework_decisions.derivatives'
+  cost: 'prediction time per call measured on the machine of the runs (percentiles and maximum observed), offline only, in double precision on the CPU (framework_decisions.compute); training time recorded separately (course_notes.notions.cost); the wording real time is forbidden'
+  selection:
+    rule: 'on the selection subset of the validation partition only (spec_E4 partition; framework_decisions.F2_filter)'
+    limit: 'the validation partition holds one seed per speed (14 runs), as the test partition; a limit declared in the evaluation of E5 (spec_E4 partition: one seed per speed, a limit to be declared in the evaluation of E5)'
+    decided: 'framework_decisions.selection and framework_decisions.repetitions'
+  test:
+    rule: 'the retained configuration of each family is evaluated once on the test partition (seed 34005) after the selection is frozen and committed; the test score is reported and is not a main result (spec_E4 partition)'
+    limit: 'one seed per speed (14 runs, spec_E4 partition); permitted wording: the E5 test measures one-seed-per-speed interpolation on independent turbulence realisations at the seven trained mean speeds (course_notes.notions.interpolation; supervisor review of 29/10/2026)'
+
+outputs:
+  folder: 'results/Q1-E5-TRAIN-<date>-a/ with meta (code commit, SHA-256 of specs, code, dataset files and Cp table, maxNumCompThreads of framework_decisions.compute), per family the trial table, the trained model files with their SHA-256, training logs, the selection verdict, the test metrics, a console log next to the folder; one line in openfast_q1/docs/campaign_register_Q1.csv'
+  trial_record_fields: 'per trial (fields to fill, not values to fix): family, configuration (all hyperparameters), partitions used, loss and its weights, normalisation file SHA-256, optimiser, learning rate, batch size, stopping rule and stopping epoch, best validation value, random seed, training time, prediction cost per call, model file SHA-256 (course_notes.notions.record)'
+  registry: 'no line in registre_valeurs_publiees.csv until a manuscript sentence needs a value (rule b)'
+  stamp: 'as results of E4: repository commit, clean-tree status, SHA-256 of every file read and written; trained models: framework_decisions.reproducibility (S6)'
+
+interruption: 'as spec_E4 interruption: a completion record is written for each (family, configuration, seed) as soon as it ends, with the SHA-256 of the model file; an interrupted campaign is kept as FAILED_KEPT and never relaunched; a campaign -b, under its own authorisation, runs only the missing records with the same code commit and specs, and reuses a completed record only if its SHA-256 values are unchanged; stopping at the ceiling: framework_decisions.ceiling'
+
+launch_conditions:
+  fixed: 'as spec_E4 launch_conditions: OneDrive stopped; mains power, sleep and hibernation disabled, Windows updates paused for the expected duration'
+  disk: 'framework_decisions.disk'
+  ceiling: 'framework_decisions.ceiling'
+  duration: 'upper bound of the computation of the trainings, executor formula from timing_E5_nn.txt and timing_E5_gp.txt (sha256 in framework_decisions.search): for the MLP, C1, C2, C3 and C5, sum of the times per epoch of the largest configuration at batch 4096 on the GPU (3.9 + 3.1 + 8.1 + 7.9 + 3.9 = 26.9 s, the residual of C5 at the cost of the MLP) x 468000 / 504000 (training rows after framework_decisions.F2_filter) x 1.15 (executor allowance for the pass on the selection subset after every epoch, not measured) x 100 epochs x 3 seeds x 8 configurations = 68941 s = 19.2 h; the same product without the factors 468000 / 504000 and 1.15 gives 64560 s = 17.9 h (supervisor recomputation of 31/10/2026); C6: (149.0 + 1957.5) s per fit x 2 states x 3 seeds = 12639 s = 3.5 h; C4, data loading, rom_step of C5, evaluation and test not measured'
+  C4_bound: 'the upper bound of a C4 training used by framework_decisions.ceiling is measured on synthetic data with the committed code of C4, before the launch and under its own authorisation, and written in the launch record; without it the campaign is not launched'
+
+E6_prerequisites:
+  cp_fallback: 'the fallback of arm B (and of C5 inside the NMPC) when lambda leaves the Cp table domain is not defined (spec_E2 nmpc_interface.constraints bounds beta only); it is fixed in spec_E6 before any E5 training (author decision of 29/10/2026: E5 first, fallback fixed in E6 before the trainings)'
+  torque:
+    decided: 'framework_decisions.torque'
+    status: 'the author delegated the choice to the executor on 29/10/2026 (answer: la bonne approche); the executor choice and its reasons are in the executor report of 29/10/2026, controlled by the supervisor (correction D4 of 29/10/2026)'
+    options_considered: '(i) pitch only, torque produced by DISCON called with the measured BldPitch1: reuses the qualified DLL and the torque law of arm A and of the X0 data, including the torque-rate limit VS_MaxRat; (ii) pitch only, torque from rom_torque_law evaluated on omega_f and the applied pitch: exactly the torque law of model v2 (spec_E2 model.generator_torque), new code to verify, no rate limit unless added (spec_E2 simplifications_declared); (iii) pitch and torque commanded by the NMPC: the models have no torque input (spec_E4 signals.input), E4 would have to be repeated with an excited torque'
+    figure_4: 'with option (i), the dashed frame of Figure 4 of Paper_Q1, which encloses the whole of DISCON, must be amended by a separate manuscript act'
+  history_in_loop: 'C1-C3 (and C4 if it uses a history) need past x, u and d in the NMPC prediction model; their handling inside nlmpc is fixed in spec_E6 (course_notes.notions.recurrent_memory)'
+
+course_notes:
+  status: 'general course material read on 29/10/2026 (openfast_q1/courses/, ignored by Git); it informs the options of the TO FIX items and is the source of no value; where a course differs from a spec or an author decision, the spec or the decision prevails'
+  files:
+    - 'E - General table of model families.md sha256 f05e5824de023db4dabf9e8165707a587971d9a038fb414d2201a7cae628e61b'
+    - 'E5.1 (architecture of the six families and equitable training protocol) sha256 0ba525bd9ce9ecae17eece1927ec27298724a0796971e4d0dc77e3b5ff00ccc3'
+    - 'E5.2 (mathematical definition of the six families) sha256 ed89daf594677f06b2569a076c62d77b487ed73cd3929fb1503cfe6aa9d2099a'
+    - 'E5.3 (loss function and training strategy) sha256 11e6d130926a955e88cfddff4ed5f912a0d492f5732a442b1be3f80935a81379'
+    - 'E5.4 (independent evaluation of the learned models) sha256 0d308ad310fb6200a84c3c5b87068777aa85fb2fe34b26da9d049e864f937fbf'
+    - 'E5.5 (final selection and preparation for E6) 0 bytes, empty, no notion'
+    - 'E5.6 (figures) sha256 4a26b421259e1155a9da93bac609f67548024acead33ee66c0480c0ceffa6eee, figure proposals for a later manuscript step, not used in this spec'
+  notions:
+    fair_comparison: 'same runs, partitions, variables, targets, wind information, and normalisation fitted on the training partition only, for every family (E5.1 sections 3 and 4A, General table section 5); already in data'
+    history_control: 'the MLP without history beside SW-MLP separates the effect of the history from that of the architecture (E5.1 section 3, General table section 4); already in arms.MLP'
+    search_budget: 'for each family, document the explored hyperparameters, the number of trials, the random initialisations, the compute budget, the stopping rule and the selection rule on validation; unequal budgets bias the comparison (E5.1 section 4C); informs families.common'
+    loss: 'squared error normalised per state, weights justified and documented, training loss kept distinct from the metrics in physical units (E5.1 section 4B, E5.3 section 2); informs families.common.loss'
+    levels: 'one-step prediction, recursive multi-step prediction without re-injecting the true states, control-oriented quality in closed loop (E5.3 section 3, E5.4 section 2); the third level belongs to E6'
+    physics_penalty: 'physics-informed losses belong to a separate experiment (E5.3 section 5); consistent with PINN out of scope (arms.out_of_scope)'
+    record: 'per training: configuration, partitions, loss and weights, normalisation, optimiser, learning rate, batch size, stopping rule and best validation value, seeds and search budget, test metrics, training time and separately the prediction cost (E5.3 section 6); informs outputs'
+    leakage: 'partition by whole runs or wind realisations, never by rows (E5.4 section 1); already in data.partition'
+    physical_consistency: 'plausibility checks of the predicted trajectories (E5.4 section 3); informs evaluation_offline'
+    interpolation: 'the E5 test measures interpolation on independent turbulence seeds at the seven trained mean speeds, not extrapolation (E5.4 section 4)'
+    cost: 'training time, prediction time, derivative cost and full NMPC solve time are distinct; the last one exists only in closed loop (E5.1 section 4D, E5.4 section 5)'
+    recurrent_memory: 'recurrent and latent-state models need a consistent memory update across the candidate input sequences of the optimiser (E5.2 section 4); informs families.C3_LSTM and E6_prerequisites.history_in_loop'
+    selection: 'not the best global RMSE alone: minimum requirements first, then the trade-off between accuracy, robustness and cost, all fixed before the test (E5.4 section 6); informs evaluation_offline.selection'
+  divergences:
+    - 'E5.1 and E5.2 list NARX, MLP, LSTM, GRU, TCN and Neural State-Space; the arms are those of the author decision of 23/10/2026 (arms)'
+    - 'the core of the General table includes Neural State-Space and lists Sparse GP as an extension; the author decision of 23/10/2026 retains Sparse GP as C6 and keeps Neural State-Space as an extension'
+    - 'E5.2 takes as example x = [omega_r, beta] and u = beta_ref; spec_E4 signals fixes x = [omega_r, omega_f] and u = applied pitch command'
+    - 'E5.1 to E5.4 use the target x_{k+1}; spec_E4 signals.target fixes Delta x_k (D2)'
+    - 'E5.4 gives example horizons H = 1, 5, 10, 20; spec_E2 nmpc_interface.horizon fixes Np = 30 at Ts = 0.05 s'
+    - 'E5.4 calls 12-24 m/s a provisional region-3 domain; E3 qualified the core 16-24 m/s and the transition 12-14 m/s separately'
+    - 'section 3 of the General table uses the words real time, which are forbidden in this project'
+
+forbidden_wordings:
+  - 'validated (for any learned model)'
+  - 'generalises (for the E5 test)'
+  - 'real time'
+  - 'the rotor-effective wind speed is measured'
+  - 'the test score as a main result'
+  - 'any comparison between a learned model and the physics model before E6 and E7'
