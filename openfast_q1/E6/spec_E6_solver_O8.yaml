@@ -1,0 +1,283 @@
+# E6 solver spec, option O8 - single-shooting nonlinear MPC written on fmincon for the NMPC arms of E6, with the equivalence test against nlmpcmove on arm B and the fallback criteria O8 -> O9 -> O2 fixed before any test
+# STATUS: ADOPTED 03/11/2026 by the supervisor under the author delegation of 31/10/2026, with the author decisions of 02/11/2026 and 03/11/2026; built by the supervisor from draft 3 (executor, %TEMP%\spec_E6_solver_O8_draft3.yaml sha256 fce25eba7359110abd52f9c5901c52e5dfbd402116cce175f5586e4548fe2953) by the changes of the next line; committed as openfast_q1/E6/spec_E6_solver_O8.yaml before any O8 code. Drafts 1 (%TEMP%\spec_E6_solver_O8_draft1.yaml sha256 cf5d6c99d781ecac8e5fb6e625c984bb13178508dfe4406229961b96ec8b5179), 2 (%TEMP%\spec_E6_solver_O8_draft2.yaml sha256 069826e0c69bed1db9bb58273162110b076c22b9491b7c7a67f67f2fe84e8215) and 3 are kept unchanged outside the repository.
+# Changes from draft 3 (supervisor, 03/11/2026): author decisions of 03/11/2026 (7 runs per arm; E6 budget fixed from cost tests instead of the 72 h set a priori on 02/11/2026); fallback_criteria.F3_campaign_cost rewritten (OpenFAST time term from the E4 records, budget rule, interruption limit per arm); cost_measurement_protocol.measurements.ii_selected by open-loop replay per speed; new block pilot_closed_loop (optional); cross_evaluation scope note; campaign_organisation.ceilings; to_fix_summary updated. The supervisor supplement of 03/11/2026 on these points was not received by the executor before draft 3.
+# Draft 3 changes from draft 2 (record): the two author decisions recorded by the supervisor on 03/11/2026 (ceiling 72 h in total, exceeding_family option (a)); supervisor decisions 21 to 28 of 03/11/2026 written where they apply (marked 'supervisor decision 2x of 03/11/2026'); to_fix_summary reduced to three items.
+# Draft 2 changes from draft 1 (record): supervisor decisions 1 to 20 of 02/11/2026 written where they apply (marked 'supervisor decision of 02/11/2026'); executor proposals for tol_x, tol_u and tol_Jopt (decision 12); two author items marked AUTHOR DECISION PENDING with the author answers of 02/11/2026; fallback_criteria.scope_note corrected; new blocks campaign_organisation and cost_measurement_protocol.measurements; F3 statistic changed to the mean per call.
+# Note: the supplement family by family of 02/11/2026 mentioned by the supervisor was not received by the executor; campaign_organisation is written from the supervisor message of 02/11/2026 (draft 2 authorisation) only.
+# Rule: spec and code are committed BEFORE any run; nothing here is changed after a result is seen; corrections by dated amendment in a separate commit.
+# Marking: every value cites its source (spec key, file and line, dated decision). 'TO FIX' marks an item without an established value; its options are listed with their sources and arguments, without preference unless a line says 'executor proposal'. 'reasoning' marks a statement deduced from code or arithmetic, not measured. 'not found' marks a behaviour absent from the readable files.
+# Line numbers of MATLAB R2024a files refer to the files listed in sources.toolbox_R2024a with their SHA-256 (read-only, 02/11/2026).
+
+spec:
+  id: 'spec_E6_solver_O8'
+  purpose: 'define the O8 solver used by every NMPC arm of E6 (B, MLP, C1 to C6): unknowns, prediction, cost, constraints, gradient, fmincon settings, warm start, failure rule; define before any code the equivalence test against nlmpcmove on arm B, the gradient check, the fallback criteria and the protocol of the O8 cost measurement'
+  author_decisions:
+    formulation: 'O8 main formulation, O9 declared fallback, O2 last resort (author adoption relayed on 02/11/2026, recorded by the supervisor on 02/11/2026)'
+    E5_loss: 'one-step loss, the same for the six families; multi-step loss and physics penalty are declared extensions after E5; no amendment of spec_E5 (spec_E5 framework_decisions.loss, l.32: the multi-step prediction is evaluated, not trained)'
+    E6_runs: '7 runs per NMPC arm: the seven mean speeds 12 to 24 m/s, one seed each (author decision of 03/11/2026); a limit declared: one turbulence realisation per speed in E6, E6 being the integration step and E7 the evaluation (spec_E6 draft 1 E7_role)'
+    E6_budget: 'the E6 budget is fixed from cost tests and not a priori (author decision of 03/11/2026: tests to fix a realistic and defensible budget); the 72 h in total given on 02/11/2026 is no longer a ceiling; rule: fallback_criteria.F3_campaign_cost.budget_rule'
+    exceeding_family: 'option (a) of fallback_criteria.F3_campaign_cost.exceeding_family (supervisor recommendation of 02/11/2026); author answer of 02/11/2026, recorded by the supervisor on 03/11/2026'
+    campaign_organisation: 'author decision of 02/11/2026 as stated in the supervisor message of 02/11/2026: launches arm by arm (campaign_organisation)'
+  supervisor_decisions: 'decisions 1 to 20 of 02/11/2026 on the TO FIX items of draft 1 and decisions 21 to 28 of 03/11/2026 on the items of draft 2, under the author delegation of 31/10/2026, written in the blocks where they apply'
+  depends_on:
+    spec_E2: 'openfast_q1/E2/spec_E2.yaml sha256 6c09b3ef2df0d8dade7123caaa56e22c6ce248578518545793a8a44dd2d00515'
+    spec_E5: 'openfast_q1/E5/spec_E5.yaml sha256 622eae5157832429609b39f5c65e7c2ae9c90bafa9e3db76724e53f779152c88 (commit cded3d2, amendment 1)'
+    spec_E6_draft1: '%TEMP%\spec_E6_draft1.yaml sha256 232afc5bc4fa8611fda0a12b060532be5acdbbee9a13310c5ff48e4f3b90f6f0, not adopted; decisions E6-6 to E6-18 of the supervisor review of 31/10/2026'
+    options_note_v2: '%TEMP%\E6_options_cost_v2.md sha256 987de0c42a75f766258b081c482be61d35d35b42cba335e2a09440824142f51b (questions Q1 to Q7, option O9); its durations per run (Q7) are medians x 13200 calls, an order of magnitude and not a criterion (supervisor decision 16 of 02/11/2026)'
+    spec_O8_draft1: '%TEMP%\spec_E6_solver_O8_draft1.yaml sha256 cf5d6c99d781ecac8e5fb6e625c984bb13178508dfe4406229961b96ec8b5179'
+    spec_O8_draft2: '%TEMP%\spec_E6_solver_O8_draft2.yaml sha256 069826e0c69bed1db9bb58273162110b076c22b9491b7c7a67f67f2fe84e8215'
+    spec_O8_draft3: '%TEMP%\spec_E6_solver_O8_draft3.yaml sha256 fce25eba7359110abd52f9c5901c52e5dfbd402116cce175f5586e4548fe2953'
+    E6_timing: 'script %TEMP%\E6_timing_code\timing_E6_nlmpc.m sha256 3bb3d6bdf3d6d25159ca725cd4ca14caafefe328092f028d6158f2d5848874bb; output %TEMP%\E6_timing\timing_E6_nlmpc.txt sha256 c226862389c25036b69fc298c2cedeba906662234a75de2cd82dbb49ae52cbd9'
+    P2_reference: 'docs/campagnes/P2-BYPASS-2026-09-24-a.yaml sha256 db8c60f2e4bc4ceb6a762e6e59380628bed722a20613a949fc82d743e556094c (working tree at cded3d2, clean); code commit 200fe22c925ee7a96bf33e3e5b6e7fe11691378a'
+  sources:
+    toolbox_R2024a:
+      getDecisions: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/getDecisions.m 9c469ae3e5d3f08c684742c81896a152e14336e40f611ea4471a3ce82e3348db'
+      getXUe: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/getXUe.m a0d06cf4b9dc4f43e3b1e93ef725e0fad5aa488f105d95edfb801711b2daa0e6'
+      objfun: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/objfun.m 05cf21efaeb1a734a3002fb4b208495cccd1400e2e19f53132a2391f92c391b3'
+      confun: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/confun.m 0da1523fc0a8c3caafa9d1bc53884afdbf163fa918afd3df1d934d592a9e36e6'
+      getUBounds: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/getUBounds.m 70160e41cd9b5de728025af0fa97f025e037f0f31ab0cf8cca4424979374f9e8'
+      getZBounds: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/getZBounds.m 2f0bb356be05457f806d4fbbc9f58f082d51e4ef3a38eb86978c574e6437fd1d'
+      computeJacobianState: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/computeJacobianState.m f60c0b6b73bf1d4a00e6303025a1bb15b6a18fecb9174073feb311dd0a89d816'
+      computeInfo: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/computeInfo.m a211bca4d2043237b5befa05708d071f8dbdc51ab03d389ec91ef5577d031930'
+      setDecisions: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/setDecisions.m cf35db6fca5cbc0fd0931a28d165661bbe83e19a63904108e448e4ea9a3995bb'
+      generateRuntimeData: 'toolbox/mpc/mpcutils/+mpc/+internal/+nlmpc/generateRuntimeData.m f401ed4de996f432c3f68a2e02d67db0f2911702ebe2019a811f7d3b7768ef6e'
+      nlmpcmove: 'toolbox/mpc/mpc/@nlmpc/nlmpcmove.m 2ebefec71ab3cdb61acfcc487937d18c9e838d7c64fc11462b75f75a25dca883'
+      nlmpc_getDefault: 'toolbox/mpc/mpc/@nlmpc/private/nlmpc_getDefault.m a416b03324e1947f49db1c4450e74c118b66e76b030ca1d70218dd744f68c82f'
+      nlmpc_getCoreData: 'toolbox/mpc/mpc/@nlmpc/private/nlmpc_getCoreData.m 563ab0a1efd9c536043d5dfa74e6a693c1e117f148cb9c549e345a6e9acdc066'
+      fmincon: 'toolbox/shared/optimlib/fmincon.m 924970840a47a87b3f35e7d82a631f0add1e381706e1f2da9aed0af8bf81f38b'
+    project:
+      rom_step: 'openfast_q1/E2/rom_step.m sha256 836a47c59f36bd0b347292141eda17464aff31bf29149efbab05953e0601f4e1'
+      F2_logs: 'results/Q1-F-SIMULINK-2026-10-16-b/F2/logs.mat sha256 050746a75793648f4a27ca9af119068935c9c3f9a35097d7ff39edba50bd9c6e (struct L: x 2x1x601, lastmv 601x1, md 601x1, ref 1x2, mv_block 601x1, status_block 601x1; read with whos and fieldnames only)'
+      F_replay: 'results/Q1-F-REPLAY-2026-10-16-a/verdict_FR.txt sha256 ddd6c9ae0437f926367a1d7273857b0004b5d7b3c01d9bb600b8a2e58279a20c; make_nlobj.m sha256 b85c7654f440a6bc75873c9e7e695d544dc7c7cdfcb6bcc4fe21154805497806 (meta_FR.txt l.8)'
+      audit_double: 'docs/audit_double_2026-09-26.md sha256 01f6c3a76df4fdbcd79b972d0e9838337fa9e41c858278d80ddcb59dcdaa5bff'
+      verifier_lot_campagne: 'common/verifier_lot_campagne.m sha256 501428fca4cd87980c299bb8cc372e5f9187cff53925a3f9d4da26b2f4afaa3c (P2 lot check, header l.1-45)'
+      campaign_register: 'openfast_q1/docs/campaign_register_Q1.csv, one line per campaign_id (header l.1)'
+      E4_completion: 'results/Q1-E4-DATA-2026-10-28-a/completion_E4.csv sha256 d5c58ef701ad9750381cc6666695ddc2ee3a6a5264ee9d1452659f52ab8f415a (70 runs, status completed 70, column wall_s); meta_E4.txt sha256 131f1217ee0a0ac2db1d17a5d4d45f274dd786890100a65648e7e021cd6a80a9 l.37 (plant configuration O8, TMax 660 s); whether the E4 runs were run one at a time: not recorded in meta_E4.txt (not found)'
+  nc_note: 'Nc = 5 is the value of the E6 timing measurement and of this authorisation; spec_E6 nmpc_settings.Nc stays TO FIX (supervisor review of 31/10/2026: Nc waits for the measurement); every block below is written for a scalar Nc and gives the Nc = 5 case; Nc = 5 for the measurement (supervisor decision 20 of 02/11/2026)'
+
+unknowns:
+  moves: 'the Nc blocked pitch moves uz = [uz_1, ..., uz_Nc] (deg), one MV (nmv = 1); the states are not unknowns'
+  blocking: 'identical to nlmpc with a scalar ControlHorizon and MVInterpolationOrder 0 (default, nlmpc_getDefault.m l.131): block lengths m = [1, ..., 1, Np - Nc + 1] (nlmpc_getCoreData.m l.196-197), piecewise constant (l.206-215); the MV of step i (time k+i-1, i = 1..Np) is u_i = uz_b(i) with b(i) = min(i, Nc) (reasoning on getMaps, l.184-237); Nc = 5, Np = 30: m = [1 1 1 1 26]; same mapping Umv = Iz2u * uz as getDecisions.m l.28-30, with MV ScaleFactor 1 (nlmpc_getDefault.m l.53)'
+  slack:
+    decision: 'option (a), the slack is removed: 5 unknowns (supervisor decision 1 of 02/11/2026)'
+    facts: 'in nlmpc the slack is the last decision (getDecisions.m l.32), bounded below by 0 (getZBounds.m l.19-20), weighted by ECRWeight e^2 in the cost (objfun.m l.200) with ECR = 1e5 by default (nlmpc_getDefault.m l.108); its coefficient in the MV bound and MV rate rows is -ECR of the MV (getUBounds.m l.32-35), 0 by default (nlmpc_getDefault.m l.47, l.56-61); the outputs have no bounds in the spec (OV Min and Max -Inf and Inf by default, nlmpc_getDefault.m l.67-68; spec_E2 nmpc_interface has no output constraint, l.80-82; note v2 Q4)'
+    options: '(a) remove e: 5 unknowns; argument (reasoning on the code above): with MV ECR 0 and no OV bound, e enters only the cost term ECRWeight e^2 >= 0 and no constraint, so every optimum of nlmpc has e = 0 and the optimum in uz is unchanged by its removal; (b) keep e with lower bound 0 and ECR 1e5: 6 unknowns, the same decision count as the MV part of nlmpc, no effect on the optimum by the same argument'
+    record: 'draft 1 executor proposal (a), argument above; also the supervisor message of 01/11/2026 on the course penalties'
+
+prediction:
+  recursion: 'z_0 = init_fam(measured history at time k); z_(i) = f_fam(z_(i-1), [u_i; d_k]) for i = 1..Np, with u_i of unknowns.blocking; y_i = z_i(1:2) = [omega_r; omega_f] at time k+i (spec_E6 draft 1 model_interface.common_form); single shooting: the states are computed, never optimised'
+  function: 'f_fam and init_fam are the prediction functions of E5, in double precision, computed manually without predict() or dlarray (E6-4, E6-6); the recursion is the E5 evaluation scheme: window shifted inside f_fam with the predicted states for C1, C2 and C4 with L > 1, hidden state of C3 carried with the predicted states fed back after the warm-up on the L measured samples (spec_E5 framework_decisions.C3_LSTM l.40 and segments l.28; spec_E6 draft 1 model_interface.history_item option (a)); nz per family: spec_E6 draft 1 model_interface.state_dimension'
+  disturbance: 'd_k = RtVAvgxh at time k, held over the whole horizon (spec_E2 nmpc_interface.wind_assumption, l.83); nlmpc does the same when md has one row: md is expanded to p+1 rows by setRows (generateRuntimeData.m l.41-44), which repeats the last row (setDecisions.m l.19-21, comment on the same rule)'
+  index_match_with_nlmpc: 'nlmpc imposes X(:,i+1) = f(X(:,i), U(:,i)) for i = 1..p with X(:,1) the current state and U(:,i) = [MV of step i; md row i] (confun.m l.316-320 and l.337; getXUe.m l.30-44); the recursion above uses the same indices'
+  cp_fallback: 'B and the physical part of C5: lambda bounded to [2, 13] before the interpolant, with a counter (E6-8); requires the dated amendment of spec_E2 model.cp_interpolant.out_of_domain announced by the supervisor (not written; not authorised here)'
+  numerical_guard: 'lambda computed with V >= 0.1 m/s as in spec_E2 cp_interpolant.numerical_guard (l.70), unchanged'
+
+cost:
+  form: 'J(uz) = sum_{i=1..Np} sum_j (wy_j (y_i,j - r_j) / sy_j)^2 + sum_{i=1..Np} (wu (u_i - ut_i) / su)^2 + sum_{i=1..Np} (wdu du_i / su)^2 (no slack term, unknowns.slack), copied from the standard cost of nlmpc (objfun.m l.67-200, quadratic weights given as vectors, l.135-143, l.167-174, l.185-196)'
+  output_steps: 'outputs at i = 1..Np, i.e. times k+1 to k+Np: objfun.m l.95-97 (xk = X(:,i+1)), X(1,:) being the current state (getXUe.m l.5, l.32)'
+  mv_steps: 'MV term on u_1..u_Np, i.e. times k to k+Np-1 (objfun.m l.146, U(imv,i)); target ut = 0 when MVTarget is not given (l.154-156); weight 0 (E6-12), so the term is zero'
+  increment_steps: 'du_1 = u_1 - lastMV, the first increment taken with respect to the last applied MV (objfun.m l.147-148); du_i = u_i - u_(i-1) for i = 2..Np (l.150-151); with the blocking of unknowns.blocking du_i = 0 inside a block, so the term reduces to sum_{b=1..Nc} (wdu (uz_b - uz_(b-1)))^2 with uz_0 = lastMV (reasoning)'
+  reference: 'r_1 = omega_rated = 12.1 rpm x pi/30 = 1.2671090 rad/s (spec_E2 V1_equilibrium l.93; timing_E6_nlmpc.m l.25); r_2 has weight 0; the reference is held over the horizon (setRows rule as for md)'
+  weights: 'E6-12: wy = [1/(0.02 omega_rated), 0] = [39.459903 s/rad, 0] (reasoning: 0.02 x 1.2671090 = 0.0253422 rad/s), wu = 0, wdu = 1/0.4 deg^-1 = 2.5 deg^-1 (0.4 deg = 8 deg/s x 0.05 s, spec_E2 l.82); the same weights for every arm (E6-3, E6-12); timing_E6_nlmpc.m l.171-173 applied them as Weights with ScaleFactor 1'
+  weights_scalefactor_equivalence: 'in nlmpc the output error is divided by Yscale (objfun.m l.115-117) and then multiplied by the weight (l.136-138); the MVs and increments are divided by MVscale (l.146-151); a term is therefore (w (v - r) / sf)^2 and only w / sf matters (reasoning); Yscale = Xscale when ny = nx and no OutputFcn (nlmpc_getCoreData.m l.103-106), the OV ScaleFactor otherwise; all ScaleFactor are 1 by default (nlmpc_getDefault.m l.36, l.53, l.75); O8 has no ScaleFactor and applies wy, wdu directly, which equals nlmpc with every ScaleFactor 1 (reasoning)'
+  gradient_factor: 'nlmpc multiplies the accumulated gradient terms by 2 (objfun.m l.202-205); the gradient of O8 is the exact derivative of J (gradient block)'
+
+constraints:
+  form: 'linear inequalities A uz <= b, hard, no penalty and no slack coefficient (MV ECR 0, nlmpc_getDefault.m l.47): for i = 1..Np, -(u_i - u_(i-1)) <= -RateMin, (u_i - u_(i-1)) <= RateMax, -u_i <= -Min, u_i <= Max, with u_0 = lastMV, only finite rows kept, mapped to uz by Iz2u, as getUBounds.m l.15-51 and l.65'
+  values: 'Min = 0 deg, Max = 30 deg, RateMin = -0.4 deg, RateMax = 0.4 deg per control interval (8 deg/s x Ts, spec_E2 nmpc_interface.constraints l.82; make_nlobj.m l.9-12 comment per control interval; timing_E6_nlmpc.m l.169-170)'
+  rows:
+    decision: 'option (a), the 4 Np = 120 rows, identical to getUBounds (supervisor decision 2 of 02/11/2026)'
+    options_considered: '(a) the 4 Np = 120 rows of nlmpc, identical to getUBounds; (b) the 4 Nc = 20 rows of the block starts: inside a block the increment rows read 0 <= 0.4 and the bound rows repeat the bound of the block start, so the feasible set is the same (reasoning on unknowns.blocking)'
+  none_other: 'no state bound (States Min and Max -Inf and Inf by default, nlmpc_getDefault.m l.29-30), no output bound, no nonlinear constraint (fmincon nonlcon empty): the lambda constraint, option (c) of spec_E6 draft 1 cp_fallback, was not retained (E6-8)'
+  bounds_argument: 'hard linear constraints and no penalty: a soft penalty does not guarantee the exact respect of the limits (supervisor message of 01/11/2026, course E5.3 l.217, as argument only)'
+
+gradient:
+  method: 'direct (forward) sensitivities from the Jacobians A_i = df_fam/dz and Bmv_i = df_fam/dbeta at (z_(i-1), [u_i; d_k]) (E6-7: Jacobian.StateFcn form, A nz x nz and Bmv nz x nmv)'
+  formula: 'S_0 = 0 (nz x Nc); S_i = A_i S_(i-1) + Bmv_i E_i for i = 1..Np, with E_i = row i of Iz2u (1 x Nc, the unit row of block b(i)); with C = [I_2, 0] (2 x nz), Wy = diag(wy), dJ/duz = 2 sum_{i=1..Np} S_i^T C^T Wy^2 (C z_i - r) + 2 wdu^2 D^T (D uz - e_1 lastMV) [+ 2 wu^2 sum_i E_i^T (u_i - ut_i), zero with wu = 0], D the Nc x Nc matrix with 1 on the diagonal and -1 on the first subdiagonal, e_1 the first unit vector (reasoning, derivative of cost.form with the blocking of unknowns.blocking)'
+  work: 'per gradient: Np evaluations of (A_i, Bmv_i) and Np products of an nz x nz by an nz x Nc matrix, about Np nz^2 Nc multiply-adds: 600 at nz = 2, 1.7e5 at nz = 34, 2.7e6 at nz = 134, 4.0e7 at nz = 514 (reasoning, Np = 30, Nc = 5)'
+  structure: 'for the window models the shift part of A_i is identity blocks (spec_E6 draft 1 model_interface.jacobian_item option (b)); a product exploiting it is allowed only if it gives the same S_i in double precision as the dense product, checked once per family (reasoning)'
+  jacobians_per_arm:
+    supplied: 'C1, C2, C3, and C4 with L > 1: closed form from the manual computation, shift blocks written explicitly, each checked with the protocol of spec_E2 verification.V2_derivatives (E6-7)'
+    B_and_C5:
+      decision: 'option (a), forward differences with the rule of nlmpc; option (b) only by a dated decision after the O8 measurement (supervisor decision 3 of 02/11/2026)'
+      options_considered: '(a) forward differences with the rule of nlmpc: dv = 1e-6, step dv x max(|v|, 1) for each state and for the MV (computeJacobianState.m l.19-43), as in F2, V2 and the E6 timing (E6-7 for nlmpc); 3 evaluations of rom_step per step for nz = 2 (reasoning); (b) analytic Jacobian of rom_step (RK4 with 4 sub-steps, rom_step.m l.20-39): derivative of the makima interpolant and of the torque law with its region switches (spec_E2 model.generator_torque l.43-52), and dCp/dlambda = 0 beyond the clamp of E6-8 (spec_E6 draft 1 cp_fallback option (a)); new code, checked with V2_derivatives'
+      C5_residual: 'the residual network of C5 has a closed-form Jacobian from the manual computation (E6-6); A = A_rom + A_res, Bmv = Bmv_rom + Bmv_res (reasoning, arms.C5 of spec_E5 l.56)'
+    MLP_and_C6:
+      decision: 'option (c), decided after the O8 measurement, which measures both variants (supervisor decision 4 of 02/11/2026); until then: TO FIX'
+      facts: 'E6 timing in nlmpc (timing_E6_nlmpc.txt): MLP numerical median 2.242 s, supplied 0.608 s per call; C6 numerical 0.541 s, supplied 0.544 s; synthetic models; not a measurement of O8'
+      options: '(a) supplied for both; (b) supplied for the MLP, numerical for C6; (c) decided after the O8 measurement, which measures both'
+
+solver:
+  call: 'fmincon(fun, uz0, A, b, [], [], [], [], [], options) with fun returning J and dJ/duz; no bound vector, the bounds being rows of A as in nlmpc (getZBounds.m l.15-17: MV decisions unbounded, constraints in A)'
+  common: 'identical algorithm, tolerances and iteration limits for every arm, B included (E6-3)'
+  fixed_options: 'SpecifyObjectiveGradient true and Display none, as the nlmpc default (nlmpc_getDefault.m l.115-119); SpecifyConstraintGradient not used (no nonlinear constraint)'
+  algorithm:
+    decision: 'option (a), sqp (supervisor decision 5 of 02/11/2026)'
+    options_considered: '(a) sqp, the algorithm of the nlmpc default (nlmpc_getDefault.m l.116) and of P2 (P2-BYPASS l.117), with the BFGS Hessian of fmincon sqp (fmincon.m l.667-668); (b) interior-point, the fmincon default (fmincon.m l.132), BFGS Hessian (l.646-647); (c) another algorithm, declared'
+  tolerances_and_limits:
+    decision: 'option (a), the fmincon sqp defaults (OptimalityTolerance, ConstraintTolerance and StepTolerance 1e-6, MaxIterations 400, MaxFunctionEvaluations 100 x 5 = 500), for the equivalence test and for the measurement; a change based on a per-call budget only by a dated decision after the measurement, before any E6 run, the same for every arm (supervisor decision 6 of 02/11/2026)'
+    options_considered: '(a) the values of fmincon sqp when SolverOptions sets only the four fields of nlmpc_getDefault.m l.115-119: OptimalityTolerance 1e-6 (fmincon.m l.168, TolFun), ConstraintTolerance 1e-6 (l.166, TolCon), StepTolerance 1e-6, MaxIterations 400, MaxFunctionEvaluations 100 x number of variables, i.e. 500 for 5 unknowns (l.667-668); that the optimoptions object resolves to these values is reasoning on fmincon.m, not read in the options class; this is E6-13 (defaults of R2024a) transposed to O8; (b) the P2 values: sqp, ConstraintTolerance, OptimalityTolerance and StepTolerance 1e-4, MaxIterations 30, MaxFunctionEvaluations 300 (P2-BYPASS l.117-123, decision of 23/09/2026 in that file, l.124-130); (c) values fixed from a per-call budget after the O8 measurement, by a dated decision before any E6 run, the same for every arm'
+  per_call_cap: 'none in E6 runs unless fixed by fallback_criteria; the 300 s cap of the measurement is a measurement guard only (cost_measurement_protocol)'
+
+warm_start:
+  nlmpc_rule: 'nlmpcmove returns MV0 = U(2:p+1, imv), the optimal MV sequence shifted by one step with its last row repeated (computeInfo.m l.9; getXUe.m l.34), and the next call maps MV0 to decisions by Iu2z (setDecisions.m l.36), which takes the first step of each block (nlmpc_getCoreData.m l.208-215)'
+  O8_rule: 'uz0(next call) = [uz_2, ..., uz_Nc, uz_Nc] of the solution returned by the previous call (reasoning: with m = [1 1 1 1 26], the first steps of the blocks are steps 1 to 5, and MV0 rows 1 to 5 are the steps 2 to 6 of the previous sequence, step 6 lying in block 5)'
+  first_call: 'MV0 empty: every step initialised at lastMV (generateRuntimeData.m l.157-163), so uz0 = lastMV x ones(Nc, 1)'
+  first_lastMV:
+    decision: 'option (a), the measured BldPitch1 at t = 0 (supervisor decision 7 of 02/11/2026)'
+    options_considered: '(a) the initial pitch of the run read in the plant (measured BldPitch1 at t = 0); (b) the beta_eq of the mean speed used for the initial pitch (spec_E2 V3 initial_conditions l.112 for the E3 runs)'
+  after_failure:
+    facts: 'nlmpcmove updates the guesses after every call, whatever ExitFlag, from the iterate returned by fmincon (nlmpcmove.m l.188 and l.272-280)'
+    decision: 'option (a), as nlmpcmove: shift of the returned iterate, also after a failure (supervisor decision 8 of 02/11/2026)'
+    options_considered: '(a) as nlmpcmove: shift of the returned iterate, even after a failure; (b) restart from lastMV x ones(Nc, 1) after a failure'
+  E6_11: 'E6-11 (guesses of the previous call) is kept in substance and implemented by O8_rule'
+
+solver_failure:
+  rule: 'if ExitFlag <= 0, the applied MV is lastMV (hold), as nlmpcmove with UseSuboptimalSolution false (nlmpcmove.m l.216-218; default false, nlmpc_getDefault.m l.130); ExitFlag 0 with a constraint violation above ConstraintTolerance is recorded as -2 (nlmpcmove.m l.177-178); this is E6-9 option (a)'
+  counters: 'per run: count per ExitFlag value, number of held MVs, longest run of consecutive held MVs, number of lambda clamps (E6-8) per call'
+  non_finite:
+    facts: 'E6-8 keeps rom_step finite for B and C5 inside the table domain extension by the clamp; FunValCheck is off by default (fmincon.m l.143); the behaviour of fmincon sqp when J or its gradient is not finite at an iterate: not found (sqpInterface.p protected, note v2 sources); spec_E5 counts a non-finite prediction as a failed segment for every family (framework_decisions.selection l.48)'
+    decision: 'option (a): check at the initial guess (NONFINITE_INIT), FunValCheck on during the iterations, error caught with getReport(ME, extended), hold lastMV (NONFINITE_ITER) (supervisor decision 9 of 02/11/2026)'
+    options_considered: '(a) J and dJ/duz checked at the initial guess before fmincon: if non-finite, no solve, hold lastMV, counted NONFINITE_INIT; during the iterations FunValCheck on, so that fmincon raises an error, caught with getReport(ME, extended) recorded, hold lastMV, counted NONFINITE_ITER; (b) as (a) at the initial guess, FunValCheck off during the iterations, and the returned solution rejected (hold) if its prediction is not finite; (c) stop the run and count it as an integration failure (spec_E6 draft 1 nmpc_settings.solver_failure option (d))'
+  errors: 'any MATLAB error inside the O8 call is caught, its getReport(ME, extended) recorded, the MV held and the call counted ERROR'
+
+equivalence_test_B:
+  purpose: 'show on arm B (nz = 2) that O8 computes the cost of nlmpc and reaches the optimum of nlmpcmove, before any O8 run of another arm'
+  common_setting: 'same model function on both sides: rom_step of model v2 with the clamp of E6-8; same Np, Nc, Ts, bounds, rates and weights (E6-12); the nlmpc side is the object of the E6 timing case B (timing_E6_nlmpc.m build_nlobj l.152-173) with numerical Jacobians; the O8 side uses gradient.jacobians_per_arm.B_and_C5 option (a), the same difference rule as nlmpc; for part (b) both sides use the same fmincon options, those retained in solver (nlmpc side through Optimization.SolverOptions, passed to fmincon, nlmpcmove.m l.168 and l.174)'
+  points:
+    decision: 'option (c), specified (supervisor decision 10 of 02/11/2026): the X0 runs of the training seeds 34001, 34002 and 34003 of the E4 dataset (spec_E5 data.source l.65), at the seven mean speeds; in each run 10 points at the start of a Ts step, at t = 60, 120, ..., 600 s; 7 x 3 x 10 = 210 points, a project choice declared as such; at each point x measured, d = RtVAvgxh, lastMV = the pitch applied at k-1; seeds 34004 and 34005 are not used'
+    options_considered: '(a) the 601 calls of F2 (F2_logs); (b) the 15 E1 equilibria; (c) samples of arm X0 of the E4 dataset from the training seeds (draft 1)'
+  part_a_cost:
+    a1_cost_formula: 'J of cost.form evaluated on info.Xopt and info.MVopt of nlmpcmove (computeInfo.m l.27-34) compared with info.Cost: relative difference <= tol_J'
+    a2_prediction: 'single-shooting prediction of O8 from x with the MV sequence info.MVopt, compared with info.Xopt(2:p+1, :): absolute difference at step i and state j <= tol_x(i, j)'
+    a3_combined: 'J_O8(uz of info.MVopt) compared with info.Cost: reported, the difference being the sum of a1 and of the effect of a2 (reasoning)'
+    residual_report: 'at every point the equality residuals of the nlmpc solution, r_i = Xopt(i+1,:) - f(Xopt(i,:), [MVopt(i); d]), are computed with the same model function and their maximum per state is reported (reasoning: this is the quantity that nlmpc bounds by ConstraintTolerance, confun.m l.337)'
+    tol_J: '1e-9 relative, by analogy with TOL_OUT_D of docs/audit_double_2026-09-26.md l.41, declared as an analogy (supervisor decision 11 of 02/11/2026)'
+    tol_x:
+      decision: 'the executor proposal below is adopted, with residual_report (supervisor decision 21 of 03/11/2026)'
+      proposal: 'tol_x(i, j) = i x CT x max(1, |Xopt(i+1, j)|), i = 1..Np, with CT = ConstraintTolerance = 1e-6 (solver.tolerances_and_limits)'
+      reasoning: 'nlmpc meets each of the Np equality constraints of the dynamics only to CT (confun.m l.337; nlmpcmove.m l.177 compares Out.constrviolation with ConstraintTolerance); whether the constraint measure of sqp is absolute or relative to |x|: not found (sqpInterface.p protected), so the factor max(1, |x|) covers both readings; the single-shooting trajectory from the same MVs differs from Xopt by the residuals carried through the dynamics, which add up over at most i steps if the dynamics do not amplify them (assumption, not established for rom_step; the omega_f filter has the factor exp(-2 pi 0.25 x 0.05) = 0.924 < 1 per step, spec_E2 model.states, reasoning); the residual_report gives the actual residuals at each point'
+      values: 'for omega_r (about 1.27 rad/s) the bound is i x 1e-6 rad/s, at most 3.0e-5 rad/s at i = 30; for omega_f (about 122.9 rad/s = 97 x 1.267) it is i x 1.229e-4 rad/s, at most 3.7e-3 rad/s at i = 30 (reasoning)'
+    tol_u:
+      decision: '1e-3 deg on the first move, adopted (supervisor decision 22 of 03/11/2026)'
+      proposal: '|mv_O8 - mv_nlmpc| <= 1e-3 deg on the first move'
+      reasoning: 'both problems are solved by sqp with OptimalityTolerance and StepTolerance 1e-6 (solver.tolerances_and_limits); the increment term alone gives the cost a Hessian 2 wdu^2 D^T D in uz (gradient.formula), whose smallest eigenvalue is 12.5 x 4 sin^2(pi/22) = 12.5 x 0.0810 = 1.01 deg^-2 for Nc = 5 (D^T D tridiagonal, reasoning; the output term adds a positive semidefinite Gauss-Newton part), so a stationarity error of 1e-6 moves the optimum by about 1e-6 / 1.01 = 1e-6 deg, and a first move on an active rate or pitch bound is exact (reasoning, order of magnitude); the two transcriptions differ by the residuals of tol_x, whose effect on mv is not computed here; 1e-3 deg is therefore several orders of magnitude above the expected solver differences and 400 times below the rate bound of 0.4 deg per step, the size of a formulation error such as a shifted increment or a wrong block (reasoning); it also equals the pitch tolerance of spec_E3W W1 as cited in spec_E6 draft 1 W0_rewiring_check (verdict_E3W.txt l.4, not re-read)'
+    tol_Jopt:
+      decision: 'the executor proposal below is adopted (supervisor decision 23 of 03/11/2026)'
+      proposal: '|J_O8* - J_nlmpc*| <= 1e-6 x max(1, J_nlmpc*) + 2 sum_{i=1..Np} wy_1^2 |y_i,1 - r_1| tol_x(i, 1), the sum evaluated on info.Xopt at the point'
+      reasoning: 'first term: the OptimalityTolerance of both solves, taken relative with a floor at 1 because J* can be near 0 at points close to equilibrium (reasoning); second term: first-order change of the output term of J when omega_r moves by tol_x(i, 1) at each step (derivative of cost.form; omega_f has weight 0, so its residuals do not enter J); order of magnitude for a 2 % speed error at every step (wy_1 |y - r| = 1): 2 x 39.46 x 1 x sum_i i x 1e-6 = 2 x 39.46 x 4.65e-4 = 0.037 for J = 30, i.e. 1.2e-3 relative, a worst case with all residuals aligned (reasoning)'
+  part_b_optimum:
+    test: 'for each point, O8 and nlmpcmove solved from the same initial MV guess (lastMV x ones, generateRuntimeData.m l.157-163) without warm-start chain; compared: first MV |mv_O8 - mv_nlmpc| <= tol_u and optimal cost within tol_Jopt; ExitFlag of both sides recorded'
+    failed_points: 'a point where nlmpc returns ExitFlag <= 0 is excluded and counted; a point where O8 returns ExitFlag <= 0 while nlmpc returns ExitFlag > 0 makes the test fail (supervisor decision 13 of 02/11/2026, modified rule)'
+    cross_evaluation: 'diagnostic reported only, the pass rule unchanged (supervisor decision 24 of 03/11/2026): at every point that fails part (b), each solution is evaluated with the cost of the other side: on the O8 side J_O8(u_nlmpc) and J_O8(u_O8); on the nlmpc side the cost of u_nlmpc (info.Cost) and of u_O8, the nlmpc-side value of a sequence being cost.form evaluated on the states of the nlmpc transcription for u_nlmpc (info.Xopt) and on the single-shooting states for u_O8, which satisfy the equality constraints of nlmpc (reasoning); the internal objfun of nlmpc is not called, because it needs the coredata built by the private nlmpc_getCoreData.m (reasoning on the code); purpose: tell two different local minima (each solution lower on its own cost and the costs of the two optima close) from a formulation error (a solution lower on both costs but not found by one side), before the retest decision; scope (supervisor, 03/11/2026): the diagnostic is read only at points where part_a_cost.a1 passes, since the copied cost.form stands for the nlmpc cost only there; the nlmpc-side value of u_O8 equals J_O8(u_O8) by construction (reasoning), so the diagnostic compares J_O8(u_nlmpc), info.Cost and J_O8(u_O8)'
+  pass: 'option (a): parts (a) and (b) pass at every compared point (supervisor decision 14 of 02/11/2026)'
+  retest: 'option (a): one correction by dated amendment of the code and one new test, each under its own authorisation, the failed test kept on record (supervisor decision 15 of 02/11/2026)'
+  no_claim: 'a passed test shows the equivalence on arm B at the tested points only; the wording O8 is equivalent to nlmpc is not used beyond that scope'
+
+gradient_check:
+  protocol: 'spec_E2 verification.V2_derivatives (l.97-105) applied to dJ/duz: the gradient of gradient.formula against central differences of J in uz, relative step swept from 1e-2 to 1e-10, reference the plateau of the central differences; pass relative error <= 1e-5 where the model is smooth, points at torque-law region transitions, saturations and lambda clamps reported separately (reasoning: the V2 protocol was written for the Jacobian of the model, here applied to the gradient of J)'
+  points: 'the points of equivalence_test_B for B, and the 15 E1 equilibria of E6-15 for every arm, the augmented state built from a constant history at the equilibrium (E6-15)'
+  B_and_C5_numerical: 'with option (a) of gradient.jacobians_per_arm.B_and_C5 the gradient carries the forward-difference error of A and Bmv; the V2 threshold applies at the nlmpc default step, as in V2 (reasoning)'
+  order: 'the Jacobians supplied for C1 to C4 are checked first (E6-7), then the gradient of J'
+
+fallback_criteria:
+  rule: 'fixed in this spec before any O8 test; evaluated in the order F1, F2, F3, F4'
+  scope_note: 'F1 and F2 concern correctness: a failure triggers the fallback of the formulation O8 -> O9 for all arms, because E6-3 requires the same solver for every arm (under O9, B, the MLP, C5 and C6 return to nlmpc as configured and C1 to C4 use the frozen history, reasoning); F3 concerns cost: it is treated family by family, by the rule of F3_campaign_cost.exceeding_family (option (a), author decision recorded on 03/11/2026), and never by O9 for one family alone (corrected from draft 1, supervisor control of 02/11/2026); F4: F4_solver_failures.scope'
+  F1_equivalence: 'equivalence_test_B fails, after the one retest of equivalence_test_B.retest'
+  F2_gradient: 'gradient_check fails on arm B, or on an arm whose Jacobian cannot be corrected under its own authorisation'
+  F3_campaign_cost:
+    estimate: 'for each NMPC arm: T_arm = sum over its 7 runs of (T_plant(v) + 13200 x mean time per call at the speed v of the run), 13200 calls per run (660 s at Ts = 0.05 s, spec_E6 draft 1 runs.duration); T_plant(v) = mean wall_s of the 10 E4 runs at the speed v (sources.project.E4_completion): 741, 772, 862, 791, 409, 319 and 302 s at 12, 14, 16, 18, 20, 22 and 24 m/s, sum 4196 s = 1.17 h per arm (reasoning on the E4 records); the E4 runs carry DISCON and the wrapper, not the NMPC, so the NMPC time is added to T_plant, an additivity assumption declared; from measurement (i) the mean per call is one value (synthetic plant at 18 m/s), from measurement (ii) one value per speed; the campaign estimate is the sum over the eight NMPC arms, arm A not counted (supervisor, 03/11/2026)'
+    statistic: 'the mean per call, because the duration of a campaign is a sum of call times; P95 and maximum per call are reported (supervisor decision 16 of 02/11/2026); the durations per run of note v2 Q7 and of the supervisor message of 31/10/2026 are medians x 13200, an order of magnitude and not a criterion'
+    capped_calls: 'option (a): a case with a CAPPED call counts as exceeding the ceiling (supervisor decision 16 of 02/11/2026)'
+    ceiling: 'no ceiling set a priori (spec.author_decisions.E6_budget, author decision of 03/11/2026); the 72 h in total of 02/11/2026 (recorded on 03/11/2026) is replaced by the cap C_arm of budget_rule'
+    budget_rule: 'author decision of 03/11/2026, rule written by the supervisor on 03/11/2026: (1) after measurement (i) and before any E5 training, the author fixes by a dated decision taken on cost only an arm cap C_arm in hours, the same for every NMPC arm, and the resulting total; the decision records the estimates T_arm of measurement (i) on which it is taken; (2) a configuration whose T_arm from measurement (i) exceeds C_arm is removed from the E5 search space (exceeding_family option (a)(1)); (3) after E5 and before E6, T_arm is estimated from measurement (ii); a family whose T_arm exceeds C_arm leaves the closed loop, which is declared (exceeding_family option (a)(2)); (4) the interruption limit of each arm in E6 is 1.5 x its T_arm of measurement (ii), the margin 1.5 being a project choice, frozen before the first launch; an arm that reaches it is interrupted and kept as FAILED_KEPT (campaign_organisation.interruption); (5) no decision of this rule is taken after a closed-loop result of E6 is seen'
+    arithmetic: 'reference values for budget_rule step (1) (reasoning): with C_arm = 9 h (the 72 h of 02/11/2026 divided by 8), the NMPC share of an arm is 9 h - 1.17 h = 7.83 h, a mean of 0.305 s per call over 7 x 13200 = 92400 calls; for comparison B in nlmpc had a median of 0.480 s per call in the E6 timing (synthetic plant), a median and not a mean'
+    per_family_ceilings:
+      decision: 'one cap C_arm, the same for every NMPC arm (equal treatment of the families), fixed by budget_rule step (1), with no transfer of an unused share from one arm to another (supervisor decision 26 of 03/11/2026; its value of 9 h replaced by budget_rule on 03/11/2026)'
+      B_clause: 'B is never removed on cost: if measurement (i) shows that B exceeds a cap considered by the author, the cap or the solver settings are revised by the decision of budget_rule step (1), on cost only, before any training (supervisor decision 26 of 03/11/2026, adapted on 03/11/2026)'
+      options_considered: '(a) equal shares, 72 h / 8 = 9 h per arm, i.e. 0.351 s mean per call at 7 runs (reasoning); (b) shares fixed from measurement (ii) of cost_measurement_protocol, before the first launch, summing to the total; (c) another split, declared'
+    runs_per_arm: '7 (author decision of 03/11/2026, spec.author_decisions.E6_runs): spec_E6 draft 1 runs.speeds option (a) and runs.seeds option (a)'
+    exceeding_family:
+      decision: 'option (a) (author answer of 02/11/2026, recorded by the supervisor on 03/11/2026)'
+      options: '(a) supervisor recommendation of 02/11/2026: (1) before any E5 training, a configuration whose cost measured by O8 on a synthetic model (measurement (i)) exceeds its ceiling is removed from the E5 search space by a dated amendment of spec_E5; (2) after E5, the cost of the selected models is measured (measurement (ii)); a family still above its ceiling leaves the closed loop, which is declared; (3) never O9 for one family alone, which would mix two formulations in the comparison; (b) another rule given by the author'
+    caveat: 'synthetic untrained models: the per-call times of trained models can differ (number of iterations); a transfer is stated with this caveat, hence measurement (ii)'
+  F4_solver_failures:
+    measure: 'fraction of calls with ExitFlag <= 0'
+    where: 'options (a) and (b) both (supervisor decision 17 of 02/11/2026): (a) on arm B in the O8 measurement (real rom_step, synthetic plant), the exit codes of the synthetic learned models not being interpretable; (b) on the trained models at the integration of E6, in addition to Q2 and Q2b (E6-16)'
+    threshold: '1 % of the calls, a project choice (supervisor decision 17 of 02/11/2026), with reference verdict_F.txt l.12: B in nlmpc in F2, ExitFlag counts 1:599 2:2 over 601 calls, i.e. 0 calls with ExitFlag <= 0'
+    scope:
+      decision: 'supervisor decision 25 of 03/11/2026: a failure on B in the O8 measurement triggers the fallback of the formulation for all arms, as F1 and F2; a failure on a trained family at the integration of E6 makes that family follow exceeding_family option (a)(2): it leaves the closed loop, which is declared'
+      options_considered: '(a) as F1 and F2, a fallback of the formulation for all arms, at least when (a) fails on arm B; (b) as F3, family by family when (b) fails on one trained family only'
+  O9_to_O2:
+    criteria: 'F2 to F4 applied to O9 measured under its own authorisation (cost per call of O9 not measured, note v2 Q7); F1 has no counterpart since O9 runs nlmpc'
+    O9_specific: 'option (a): the declared approximation of O9 (frozen window against the recursive prediction of E5) is measured and reported only (supervisor decision 18 of 02/11/2026)'
+    C3_note: 'for C3 the O9 counterpart is not defined in the P2 V2 code (note v2, section P2); it is to be defined before O9 can apply to C3'
+
+cost_measurement_protocol:
+  status: 'described only; script, execution and outputs under their own authorisation'
+  measurements:
+    i_synthetic: 'on the synthetic models below, for the criteria F3 and F4 of O8 and for the possible removal of configurations from the E5 search space (F3_campaign_cost.exceeding_family option (a)(1)); if the largest configuration of a family exceeds its ceiling, intermediate configurations are measured'
+    i_intermediate:
+      decision: 'option (a), descend along the dimension that sets nz until the first configuration that fits (supervisor decision 28 of 03/11/2026)'
+      facts: 'search spaces of spec_E5: history L in {4, 8, 16, 34} for C1, C2 and C3 (l.37), L in {1, 4, 8, 16, 34} for C4 (l.41); dense parts 1 to 3 layers of 16 to 128 units (l.38); C2 kernel 2 or 3 and 16, 32 or 64 channels (l.39); C3 hidden size 16, 32, 64 or 128 and 1 or 2 layers (l.40); nz depends only on L for C1, C2 and C4 and on H and the layers for C3 (spec_E6 draft 1 model_interface.state_dimension)'
+      options_considered: '(a) descend along the dimension that sets nz, the other hyperparameters at their largest value: L = 16, 8, 4 for C1, C2 and C4, and (H, layers) = (64, 2), (128, 1), (32, 2), ... for C3, until one configuration fits; (b) the full grid of the dimensions that set nz, the others at their largest value; (c) every configuration of the space that can be drawn by the E5 random search (spec_E5 search l.35), the largest cost first'
+    ii_selected: 'on the models selected in E5, before E6, to apply F3_campaign_cost.budget_rule steps (3) and (4); by open-loop replay (supervisor, 03/11/2026): the O8 solver is called on recorded states of the E4 dataset without acting on any plant, as the offline replay of F (verdict_FR.txt l.7 and l.10, fidelity REPRODUCED); states: the X0 run of the training seed 34001 at each of the seven mean speeds; in each run three windows of 100 consecutive calls (5 s) starting at t = 60, 300 and 540 s, i.e. 300 calls per speed and 2100 per arm, a project choice; at each call x measured, d = RtVAvgxh, lastMV = the pitch applied at k-1, the history of C1 to C4 and the warm-up of C3 taken from the same run before the call, the warm start chained by warm_start.O8_rule inside a window; solver settings, Jacobians and recording as for measurement (i); mean, P95 and max per call reported per speed; limit declared: the recorded states come from trajectories driven by DISCON, so the per-call time in closed loop can differ (number of iterations); the estimate is an approximation and not a bound'
+  pilot_closed_loop:
+    status: 'optional, described only; script, execution and outputs under their own authorisation (supervisor, 03/11/2026)'
+    trigger: 'only if, for an arm, T_arm from measurement (ii) exceeds 80 % of C_arm (a project choice)'
+    protocol: 'that arm in the E6 loop (plant configuration O8, O8 solver), 120 s simulated at 12 and at 24 m/s, on one pilot seed reserved for the pilot and excluded from E6 and E7 (value TO FIX before the pilot authorisation); recorded: wall time of the run and time per call only; the trajectories are kept but not analysed, no statistic of control quality is computed, and no setting is tuned after the pilot; its result can only revise the interruption limit of budget_rule step (4), before the first launch'
+  cases: 'the nine cases of the E6 timing (timing_E6_nlmpc.m, sha256 3bb3d6bd...): B (rom_step), C5 (rom_step and residual MLP 3 x 128), MLP 3 x 128, C6 (GP, active set 1000), C1 SW-MLP L = 34, C2 TCN L = 34 kernel 3 64 channels, C4 32 local models L = 34, C3 LSTM 1 x 16, C3 LSTM 2 x 128; synthetic models with weights drawn once with rng(36000, twister) in the same order as that script (timing_E6_nlmpc.m l.49), so that the models are the same (reasoning)'
+  jacobians: 'as the E6 timing: numerical for B and C5 (decision 3), numerical and supplied for the MLP and C6 (decision 4), supplied for C1, C2, C3, C4, plus numerical for C1 for comparison'
+  settings: 'Np 30, Nc 5 (supervisor decision 20 of 02/11/2026; spec_E6 nmpc_settings.Nc stays TO FIX), Ts 0.05 s, bounds and rates of constraints.values, weights E6-12, sqp with the fmincon defaults (decisions 5 and 6), measured disturbance 18 m/s held, warm start of warm_start.O8_rule, the synthetic model as plant, 21 calls per case with the first excluded, maxNumCompThreads set to feature(numcores), recorded, then restored (as timing_E6_nlmpc.m l.37-41)'
+  time_limits: 'trial call before each case and remaining-budget rule as the E6 timing; cap of 300 s per call by an OutputFcn of fmincon, the capped call recorded CAPPED; 90 min in total (supervisor decision 19 of 02/11/2026)'
+  recorded_per_call: 'time (tic/toc), ExitFlag, output.iterations and output.funcCount of fmincon, number of Jacobian evaluations, lambda clamps; added because the E6 timing recorded only the time and info.Iterations (note v2 Q5)'
+  memory_guard: 'O8 stores per call A_i, Bmv_i and S_i: about 8 x Np x (nz^2 + nz + nz Nc) bytes, 0.3 MB at nz = 34, 4.3 MB at nz = 134, 61 MB at nz = 514 (reasoning); the guard compares this estimate with memory before each case; any nlmpc reference case in the same script uses the corrected formula of note v2 Q4, 8 x (3 Np nz + Nc + 4 Np + 2)^2 bytes'
+  outputs: 'in %TEMP% only (folder name fixed in the authorisation), text and .mat with SHA-256, a diary; every catch records getReport(ME, extended)'
+  reporting: 'per case: nz, Jacobian method, number of calls, mean, median, P95 and max per call (the mean for F3, decision 16), number of CAPPED calls, counts of exit codes without interpretation for the synthetic learned models, iterations and function counts; no timing presented as a capability (E6-1)'
+
+campaign_organisation:
+  source: 'author decision of 02/11/2026 as stated in the supervisor message of 02/11/2026 (the supplement family by family itself was not received by the executor)'
+  launches: 'one launch per arm, one after the other, on a machine doing nothing else; maxNumCompThreads recorded in meta; the launches are made by the author in his MATLAB session with a diary'
+  code_and_spec: 'one spec and one code commit for all arms; no commit in the code perimeter between two launches; every launch checks that HEAD and the SHA-256 of the code and specs equal those recorded for the first launch'
+  order: 'option (b): B first, then the MLP, then C1 to C6 in the order of their numbers (supervisor decision 27 of 03/11/2026); options considered: (a) increasing measured cost (measurement (ii)), the cheapest first; (b) B first (reference of the equivalence test), then the order of spec_E6 draft 1 arms (MLP, C1 to C6); (c) another order, declared'
+  ceilings: 'one cap C_arm, the same for every NMPC arm, and one interruption limit per arm (1.5 x its T_arm of measurement (ii)), both frozen before the first launch (F3_campaign_cost.budget_rule, author decision of 03/11/2026)'
+  structure:
+    decision: 'option (a): one campaign with one batch per arm and the closed list of the eight arm ids written at the first launch; the adapted copy of verifier_lot_campagne is made under its own authorisation (supervisor decision 27 of 03/11/2026)'
+    options_considered: '(a) one campaign Q1-E6-INTEG-<date>-a with one batch per arm: one line in campaign_register_Q1.csv (one line per campaign_id, header l.1); a closed list of the eight arm ids written at the first launch, and the assembled lot checked for the same code commit and the same spec in every arm, as the conditions 2 to 4 of verifier_lot_campagne.m (l.9-16); that function was written for the P2 lots and expects arm ids of the form <arch>_<mode>_r<k> (l.34-39), so its use for E6 needs an adapted copy under its own authorisation (reasoning); the campaign stays open until the last arm ends; (b) one campaign per arm, Q1-E6-INTEG-<arm>-<date>-a: eight lines in the register, each campaign complete by itself; the identity of code commit and specs between arms is not checked inside a lot and must be checked across the eight register lines (column code_commit and spec_sha256, header l.1) by a separate check (reasoning)'
+  interruption: 'an interrupted arm is kept as FAILED_KEPT and never relaunched; a batch -b, under its own authorisation, runs that arm only (as spec_E6 draft 1 interruption)'
+
+spec_E6_draft1_changes:
+  E6_3: 'kept; the identical settings now are the O8 solver options (solver block) for every arm, B included'
+  E6_9: 'kept in substance (hold lastMV, counted); implemented by the O8 wrapper (solver_failure), with the non-finite rule added'
+  E6_10: 'replaced: the O8 solver function is called from the MATLAB Function block (extrinsic, as discon_wrapper) instead of nlmpcmove; init_fam and the measured disturbance are built in the same call; the per-call time by tic/toc is unchanged'
+  E6_11: 'replaced by warm_start.O8_rule, which reproduces the shift of nlmpcmoveopt, also after a failure (supervisor decision 8 of 02/11/2026)'
+  E6_12: 'values kept; the equivalence of Weights and ScaleFactor is written in cost.weights_scalefactor_equivalence; O8 applies the weights without ScaleFactor'
+  E6_13: 'replaced: the defaults of R2024a were those of nlmpc; the O8 options are sqp with the fmincon sqp defaults (supervisor decisions 5 and 6 of 02/11/2026)'
+  related_items: 'E6-7 kept (A and Bmv supplied or numerical), used by the sensitivities instead of the equality-constraint Jacobians of nlmpc; E6-4 kept and satisfied by the recursion of prediction; E6-15 points reused by gradient_check; spec_E6 draft 1 model_interface.nlmpc_facts, cost_basis, history_item, jacobian_item, nmpc_settings.solver, warm_start, solver_failure and loop_architecture to be rewritten in spec_E6 draft 2 (not authorised here)'
+
+declared_deviation:
+  wording: 'the NMPC arms of E6 are solved by a single-shooting nonlinear MPC written on fmincon (O8), not by nlmpc; nlmpc R2024a is the reference of the equivalence test on arm B only'
+  justification_note_v2: 'Q1: in nlmpc with fmincon or a custom solver the predicted states are decision variables (getDecisions.m l.34; getXUe.m l.30) and the dynamics are p nx equality constraints (confun.m l.316-337); nlmpcMultistage with fmincon also has x[k] as decisions (getXUMVDMV.m l.9-13); the cgmres formulation is not found (protected code). Q2: the constraint Jacobians are dense (reformJacobian.m l.25) and fmincon sqp converts them to full (fmincon.m l.672). Q3: CustomSolverFcn receives the same decision vector with the states (nlmpcmove.m l.147-164). Measured on synthetic models (E6 timing): C1 L = 34 with supplied Jacobians 288.7 s per call (15 iterations), C3 2 x 128 not built (memory, 46387 x 46387 doubles)'
+  P2_reference: 'the reference of P2 is the campaign P2-BYPASS-2026-09-24-a: nlmpc, sqp, ConstraintTolerance, OptimalityTolerance and StepTolerance 1e-4, MaxIterations 30, MaxFunctionEvaluations 300, Ts 0.1 s, Np 15, Nc 4 (fiche l.115-133); code 200fe22, a descendant of db1f75e (git merge-base --is-ancestor, exit 0) where common/stage0_config.m l.306 reads mpc2.Nc = 4 (same line at 200fe22, blob 095ad2c9); P2 formulation: nx = 2 with the history window passed as a parameter and frozen over the horizon (common/sf_swmlp.m unchanged between 57d98a4 and 200fe22, blob b0b2270a; piste_B_nominal_correction/sf_swmlp_manual.m l.20-21, blob 74c7f132; run_bypass_2026_09_24.m l.363, l.370, l.377 and l.381, blob e38b44c1)'
+  correction_of_note_v2: 'note v2 cited Nc = 1 and the comments of stage3_design_controllers_v2.m l.41-42 from commit 57d98a4, which is not the version that produced the P2 results; the P2 reference is the fiche above (supervisor control of 02/11/2026); note v2 is not rewritten'
+  differences_with_P2: 'Ts 0.05 s against 0.1 s, Np 30 against 15 (spec_E2 l.78-79), Nc 5 (measurement value, TO FIX in spec_E6) against 4, recursive prediction of E5 (E6-4) against a frozen window, single shooting on fmincon against nlmpc; to be declared in the manuscript when a sentence needs it (rule b)'
+
+to_fix_summary:
+  author_decision_pending:
+    - 'fallback_criteria.F3_campaign_cost.budget_rule step (1): the cap C_arm, after measurement (i) and before any E5 training'
+  executor_proposals_for_review: []
+  to_fix:
+    - 'gradient.jacobians_per_arm.MLP_and_C6 (decided after the O8 measurement, supervisor decision 4 of 02/11/2026)'
+    - 'spec_E6 nmpc_settings.Nc (Nc = 5 for the measurement, supervisor decision 20 of 02/11/2026)'
+    - 'cost_measurement_protocol.pilot_closed_loop pilot seed (only if the pilot is triggered)'
+
+forbidden_wordings:
+  - 'validated (for any learned model, arm or for O8)'
+  - 'real time'
+  - 'the rotor-effective wind speed is measured'
+  - 'O8 is equivalent to nlmpc, beyond the points and tolerances of a passed equivalence_test_B'
+  - 'nlmpc for the solver of the O8 arms'
+  - 'any comparison of performance between arms in E6'
+  - 'any timing figure of E6 or of the O8 measurement presented as a capability or as representative of E8'
+  - 'a per-call time of a synthetic model transferred to a trained model without its caveat'
+  - 'infeasible without the formulation (nlmpc default, Ts 0.05 s, Np 30)'
