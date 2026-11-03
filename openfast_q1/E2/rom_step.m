@@ -13,6 +13,9 @@ function [x1, info] = rom_step(x0, beta_deg, V_hub, variant, p, Ts)
 %   info.n_domain number of evaluations outside the Cp table domain (spec l.67)
 %   info.n_guard  number of evaluations with the numerical guard active (spec l.68)
 %   info.n_sat    number of evaluations with VS_MaxTq saturation active
+%   NMPC mode of rom_rhs (p.cp_mode = 'nmpc', spec_E2 amendment 8): also
+%   info.n_domain_lambda and info.n_domain_beta, the evaluations with lambda or beta bounded;
+%   in the validation mode (default) info is unchanged
 
 if nargin < 6
     Ts = p.Ts;
@@ -22,6 +25,8 @@ x = x0(:);
 n = 4*p.n_sub;
 regions = zeros(1, n);
 n_domain = 0;  n_guard = 0;  n_sat = 0;
+nmpc_mode = isfield(p, 'cp_mode') && strcmp(p.cp_mode, 'nmpc');   % amendment 8
+n_domain_lambda = 0;  n_domain_beta = 0;
 e = 0;
 for s = 1:p.n_sub
     [k1, i1] = rom_rhs(x,            beta_deg, V_hub, variant, p);
@@ -35,8 +40,16 @@ for s = 1:p.n_sub
         n_domain = n_domain + I.domain;
         n_guard  = n_guard  + I.guard;
         n_sat    = n_sat    + I.sat;
+        if nmpc_mode
+            n_domain_lambda = n_domain_lambda + I.domain_lambda;
+            n_domain_beta   = n_domain_beta   + I.domain_beta;
+        end
     end
 end
 x1 = x;
 info = struct('regions', regions, 'n_domain', n_domain, 'n_guard', n_guard, 'n_sat', n_sat);
+if nmpc_mode
+    info.n_domain_lambda = n_domain_lambda;
+    info.n_domain_beta   = n_domain_beta;
+end
 end
