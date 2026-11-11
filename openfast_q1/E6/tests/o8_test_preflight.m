@@ -27,7 +27,7 @@ function [root, pre_lines] = o8_test_preflight(expected_head, out_dir)
 EXPECT = {'openfast_q1/E2/spec_E2.yaml',             'a3942e9c2f96dd31693a2f63963a57cf770e6a8392f80101f9f6728ec7650311';
           'openfast_q1/E6/spec_E6_solver_O8.yaml',   'a772cf2766699a41d2e6dc5f149ac4228033b6b42010b0d13224eaffb8b4721c';
           'openfast_q1/E2/rom_rhs.m',                'debc86ca1aa535aa6a0d913e78cce8e489fd296f8d1727b0ce6e6b6e03479480';
-          'openfast_q1/E2/rom_step.m',               '55dab4f91d99a1797cf485010dd2523f655b319ab840fec4f2bd6388d0cdbcd1';
+          'openfast_q1/E2/rom_step.m',               'fb1df96d44be04ea8fdc632092326394490869e1b3419ec6e696498f4309bf46';
           'openfast_q1/E2/rom_params.m',             '0b886331556bbb069238ec80709ac0d476824f81666813f6890e2444442f59b8';
           'openfast_q1/E2/rom_torque_law.m',         '4a769a46f09900013a7f02dbdb1fd6c418fc250871af788cf89eb1e4db1f6b5d';
           'results/Q1-E2-ROM-2026-10-16-b/verification/cp_table_E2.mat', ...

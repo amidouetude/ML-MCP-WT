@@ -25,7 +25,7 @@ x = x0(:);
 n = 4*p.n_sub;
 regions = zeros(1, n);
 n_domain = 0;  n_guard = 0;  n_sat = 0;
-nmpc_mode = isfield(p, 'cp_mode') && strcmp(p.cp_mode, 'nmpc');   % amendment 8
+nmpc_mode = isfield(p, 'cp_mode') && (ischar(p.cp_mode) || (isstring(p.cp_mode) && isscalar(p.cp_mode))) && strcmp(p.cp_mode, 'nmpc');   % amendment 8; correction of 11/11/2026: any invalid value goes to the check of rom_rhs
 n_domain_lambda = 0;  n_domain_beta = 0;
 e = 0;
 for s = 1:p.n_sub
