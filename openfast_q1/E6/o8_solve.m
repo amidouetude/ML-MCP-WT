@@ -32,6 +32,11 @@ function [u_apply, sol, rec] = o8_solve(model, z0, d, lastmv, uz0, cfg)
 %                        the MAIN count (supervisor decision P7 of 03/11/2026)
 %            n_clamp_lambda, n_clamp_beta             bounded evaluations of every rom_step call
 %                        during the call, Jacobian stencils included: diagnostic count (P7)
+%            n_out_region3_final  right-hand-side evaluations outside region 3 of the torque law
+%                        (info.regions ~= 3 of model.trace) along the prediction at the returned
+%                        iterate, computed after time_s (outside the timed part); NaN if fmincon
+%                        returned no iterate or the model has no trace field
+%                        (solver_failure.region3_counter.prediction_side, amendment 3 of 12/11/2026)
 %            n_nonfinite_eval  objective evaluations with a non-finite J or gradient
 %            held, u_applied, err (getReport(ME, 'extended') of a caught error)
 %
@@ -47,7 +52,8 @@ t_call = tic;
 rec = struct('status', '', 'exitflag', NaN, 'exitflag_raw', NaN, 'iterations', NaN, ...
              'funccount', NaN, 'constrviolation', NaN, 'time_s', NaN, 'n_model_eval', 0, ...
              'n_jac_eval', 0, 'n_clamp_lambda', 0, 'n_clamp_beta', 0, ...
-             'n_clamp_lambda_final', NaN, 'n_clamp_beta_final', NaN, 'n_nonfinite_eval', 0, ...
+             'n_clamp_lambda_final', NaN, 'n_clamp_beta_final', NaN, 'n_out_region3_final', NaN, ...
+             'n_nonfinite_eval', 0, ...
              'held', true, 'u_applied', lastmv, 'err', '');
 sol = struct('uz', [], 'fval', NaN, 'uz_next', []);
 u_apply = lastmv;
@@ -113,6 +119,14 @@ if ~isempty(sol.uz)                                                  % outside t
         [~, ~, pr_final] = o8_cost(sol.uz, z0, d, lastmv, model, cfg, false);
         rec.n_clamp_lambda_final = pr_final.n_clamp_lambda;
         rec.n_clamp_beta_final = pr_final.n_clamp_beta;
+        if isfield(model, 'trace')                                   % amendment 3, region3_counter
+            n_out = 0;
+            for istep = 1:numel(pr_final.u_seq)
+                [~, trace_info] = model.trace(pr_final.Z(:, istep), pr_final.u_seq(istep), d);
+                n_out = n_out + nnz(trace_info.regions ~= 3);
+            end
+            rec.n_out_region3_final = n_out;
+        end
     catch ME_final
         rec.err = [rec.err newline 'final prediction: ' getReport(ME_final, 'extended', 'hyperlinks', 'off')];
     end
