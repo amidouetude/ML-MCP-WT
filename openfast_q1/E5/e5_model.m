@@ -5,34 +5,40 @@ function model = e5_model(family, net, nrm, opts)
 %
 %   model = e5_model(family, net, nrm, opts)
 %
-%   family  'MLP', 'C1', 'C2', 'C3', 'C5' or 'C6' (C4 belongs to package P3)
-%   net     struct of the family, from a converter of P2 or from o8_synthetic_build:
+%   family  'MLP', 'C1', 'C2', 'C3', 'C4', 'C5' or 'C6' (C4 added by package P3)
+%   net     struct of the family, from a converter of P2 or P3 or from o8_synthetic_build:
 %           MLP, C1, C5  dense struct W{l}, b{l} (e5_convert_dense; C5: the residual network)
 %           C2           TCN struct dil, W{l}(out, in, tap), b{l}, Wo, bo (e5_convert_tcn)
 %           C3           LSTM struct H, nl, W{l}, R{l}, b{l}, Wo, bo (e5_convert_lstm)
+%           C4           LOLIMOT struct m, sidx, c, sig, Th (e5_convert_llm; e5_llm_core)
 %           C6           GP struct Xa, ell, alpha (alpha includes the kernel amplitude, e5_convert_gp)
 %   nrm     mu, sd (4 x 1, inputs), mux, sdx (2 x 1, Delta x) of e5_normalisation (D2_scaling)
-%   opts    struct: opts.L (C1, C2: window of L samples, L >= 2; C3: warm-up length),
+%   opts    struct: opts.L (C1, C2: window of L samples, L >= 2; C3: warm-up length; C4: regressor
+%           of the L samples k - L + 1 .. k, L >= 1, size(net.Th, 2) = 1 + 4L),
 %           opts.p (C5: rom_params with p.cp_mode = 'nmpc', D7)
 %
 %   model.name, family, nz, L
 %   model.init(x_k, hist)      z0 from the measured x_k (2 x 1) and hist, the S.l_max x 4 measured
 %                              [omega_r, omega_f, u, d] of k - S.l_max .. k - 1, oldest first (P1 R5):
-%                              MLP, C5, C6: x_k; C1, C2: [x_k; (x, u, d) at k-1, ..., k-L+1];
+%                              MLP, C5, C6, C4 with L = 1: x_k; C1, C2, C4 with L >= 2:
+%                              [x_k; (x, u, d) at k-1, ..., k-L+1];
 %                              C3: [x_k; h and c of every layer] after the warm-up from zero states on
 %                              the last L rows of hist (D3)
 %   [z1, aux] = model.step(z, u, d)   one step of Ts; aux = [1, n_lambda, n_beta] (bounded
 %                              evaluations of rom_step for C5, zeros for the others), as O8
-%   [A, Bmv, aux] = model.jac(z, u, d, z1)   closed form for MLP, C1, C2, C3, C6
+%   [A, Bmv, aux] = model.jac(z, u, d, z1)   closed form for MLP, C1, C2, C3, C4, C6
 %                              (gradient.jacobians_per_arm.supplied and MLP_and_C6 amendment_6);
 %                              forward differences with the rule of nlmpc for C5 (B_and_C5 option (a))
 %   y = model.out(z, u, d)     normalised network output (2 x 1) of the step (tests of P2)
 %   model.trace(z, u, d)       C5 only: rom_step(z, u, d, 'i', p) with its info
 %
-%   Outputs (D2_scaling): x_{k+1} = x_k + nrm.mux + nrm.sdx .* y for the MLP, C1, C2, C3 and C6;
+%   Outputs (D2_scaling): x_{k+1} = x_k + nrm.mux + nrm.sdx .* y for the MLP, C1, C2, C3, C4 and C6;
 %   x_{k+1} = rom_step(x_k, u, d) + nrm.sdx .* y for C5 (the residual is scaled, not centred). With
 %   nrm.mux = 0 every form equals bit for bit the form of o8_model_synthetic.m (the functions below
-%   are copied from its local functions, the window length 34 replaced by L).
+%   are copied from its local functions, the window length 34 replaced by L). C4 (package P3): the
+%   output is e5_llm_core, the function also used by the training (e5_lolimot); its Jacobian is
+%   llm_jac of o8_model_synthetic.m with the scheduling positions Lm.sidx in place of 1:4; with L =
+%   34 and Lm.sidx = 1:4 the form equals C4_sup of o8_model_synthetic bit for bit (test_e5_P3).
 
 if ~isfield(nrm, 'mux')
     error('e5_model:nrm', 'nrm must have the fields mu, sd, mux and sdx.');
@@ -92,8 +98,25 @@ switch family
         model.jac = @(z, u, d, z1) jac_forward(step_fn, z, u, d, z1);
         model.out = @(z, u, d) mlp_out(net, nin(z, [u; d], nrm));
         model.trace = @(z, u, d) rom_step(z, u, d, 'i', p);
+    case 'C4'
+        L = opts.L;
+        check_llm(net, L);
+        model.L = L;
+        if L == 1
+            model.nz = 2;
+            model.init = @(x_k, hist) init_state(x_k);
+            model.step = @(z, u, d) step_learned(@(zz, ud) f_cur(@(r) llm_out(net, r), zz, ud, nrm), z, u, d);
+            model.jac = @(z, u, d, z1) jac_supplied(@(zz, ud) j_cur(@(r) llm_jac(net, r), zz, ud, nrm), z, u, d);
+            model.out = @(z, u, d) llm_out(net, nin(z, [u; d], nrm));
+        else
+            model.nz = 2 + 4*(L - 1);
+            model.init = @(x_k, hist) init_window(x_k, hist, L);
+            model.step = @(z, u, d) step_learned(@(zz, ud) f_win_L(@(r) llm_out(net, r), zz, ud, nrm, L), z, u, d);
+            model.jac = @(z, u, d, z1) jac_supplied(@(zz, ud) j_win_L(@(r) llm_jac(net, r), zz, ud, nrm, L), z, u, d);
+            model.out = @(z, u, d) llm_out(net, win_regressor(z, [u; d], nrm, L));
+        end
     otherwise
-        error('e5_model:family', 'Unknown family %s (MLP, C1, C2, C3, C5 or C6; C4 is in P3).', family);
+        error('e5_model:family', 'Unknown family %s (MLP, C1, C2, C3, C4, C5 or C6).', family);
 end
 end
 
@@ -352,4 +375,42 @@ for j = 1:L
     z(3:end) = z1(3:end);
 end
 z(1:2) = x_k(:);
+end
+
+% ================================ C4, local linear neuro-fuzzy model (package P3) =============
+% output: e5_llm_core, the prediction function shared with the training (e5_lolimot)
+function check_llm(Lm, L)
+if ~(isscalar(L) && isnumeric(L) && L >= 1 && L == round(L))
+    error('e5_model:L', 'C4 needs a positive integer opts.L.');
+end
+if ~isstruct(Lm) || ~all(isfield(Lm, {'m', 'sidx', 'c', 'sig', 'Th'})) || size(Lm.Th, 2) ~= 1 + 4*L || ...
+        size(Lm.Th, 1) ~= 2*Lm.m || ~isequal(size(Lm.c), [Lm.m, numel(Lm.sidx)]) || ~isequal(size(Lm.sig), size(Lm.c))
+    error('e5_model:C4', 'The C4 struct does not match opts.L = %d (Th 2m x (1 + 4L), c and sig m x ns).', L);
+end
+end
+
+function y = llm_out(Lm, r)
+y = e5_llm_core(Lm, r);
+end
+
+function [y, Jr] = llm_jac(Lm, r)
+% llm_jac of o8_model_synthetic.m, scheduling positions Lm.sidx in place of 1:4
+[y, Phi, Lc, mu, D] = e5_llm_core(Lm, r);
+Th = reshape(Lm.Th(:, 2:end), 2, Lm.m, []);
+Jr = reshape(sum(Th.*Phi', 2), 2, []);         % sum_i Phi_i dTheta_i r / dr
+dmu = -mu.*D./Lm.sig;                          % m x ns
+dPhi = (dmu - Phi*sum(dmu, 1))/sum(mu);        % m x ns
+Jr(:, Lm.sidx) = Jr(:, Lm.sidx) + Lc*dPhi;
+end
+
+function z1 = f_cur(net, z, u, nrm)
+% current-sample model (C4 with L = 1): the form of f_mlp with the output function net
+z1 = z + nrm.mux + nrm.sdx.*net(nin(z, u, nrm));
+end
+
+function [A, B] = j_cur(netj, z, u, nrm)
+% Jacobian of f_cur: the form of j_mlp with the output Jacobian netj
+[~, Js] = netj(nin(z, u, nrm));
+Js = nrm.sdx.*Js./nrm.sd';
+A = eye(2) + Js(:, 1:2);  B = Js(:, 3);
 end
