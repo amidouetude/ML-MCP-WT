@@ -8,9 +8,23 @@ function Ls = e5_convert_lstm(net)
 %   Bias (4H x 1) of 'lstm<l>', gates in the order input, forget, cell candidate, output (lstmLayer),
 %   the order of lstm_cell of e5_model; Ls.Wo, Ls.bo of 'out'.
 %   Refuses (error) if a layer has another state or gate activation than tanh and sigmoid, or if the
-%   hidden sizes differ between layers.
+%   hidden sizes differ between layers, or if a value of net.State (HiddenState, CellState) is not
+%   zero: the manual form starts the warm-up from zero states (amendment_3.D3), predict() would start
+%   from the stored state (correction of 18/11/2026; P4 keeps the state of the trained network at
+%   zero).
 
 lstm_layers = net.Layers(arrayfun(@(lay) isa(lay, 'nnet.cnn.layer.LSTMLayer'), net.Layers));
+state_tbl = net.State;
+for i_state = 1:height(state_tbl)
+    v = state_tbl.Value{i_state};
+    if isa(v, 'dlarray')
+        v = extractdata(v);
+    end
+    if any(gather(v(:)) ~= 0)
+        error('e5_convert_lstm:state', 'State %s/%s of the network is not zero.', ...
+              char(string(state_tbl.Layer(i_state))), char(string(state_tbl.Parameter(i_state))));
+    end
+end
 Ls.nl = numel(lstm_layers);
 Ls.H = lstm_layers(1).NumHiddenUnits;
 Ls.W = cell(1, Ls.nl);

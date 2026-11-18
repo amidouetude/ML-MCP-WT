@@ -17,7 +17,8 @@ function verdict = test_e5_P2(out_dir)
 %       predict(); several configurations per family.
 %   (b) TCN tap order: an impulse at each position of the sequence, manual against predict(); LSTM:
 %       one-step sequence from zero states computed by hand (gates i, f, g, o, sigmoid and tanh)
-%       against predict(), and the activations of the layers.
+%       against predict(), and the activations of the layers; refusal by e5_convert_lstm of a network
+%       with a non-zero net.State.
 %   (c) C6: two fitrgp (fic, ARD squared exponential, BasisFunction none, shared active set) fitted
 %       to synthetic data; manual mean against predict(); refusal of a GP with a constant basis.
 %   (d) with nrm.mux = 0, init, step and jac of e5_model equal bit for bit to o8_model_synthetic for
@@ -25,6 +26,17 @@ function verdict = test_e5_P2(out_dir)
 %   (e) one call of e5_eval_segments per family on a synthetic run: 5 segments, finite, not failed,
 %       e_max of the first segment equal bit for bit to a manual loop of model.step.
 %   Every catch records getReport(ME, 'extended').
+%   Correction of 18/11/2026: the first launch (results/work_Q1/2026-11-18_E5_P2_run, commit b30d7c7)
+%   was FAIL, 33 of 40 checks: the 7 checks of the LSTM against predict() (relative errors 1.07e-7 to
+%   4.73e-7); only the learnables were cast to double, not net.State (HiddenState, CellState).
+%   Diagnostic diag_e5_P2_lstm_state (outside Git), run results/work_Q1/2026-11-18_E5_P2_diag_run,
+%   report diag_e5_P2_lstm_state.txt sha256
+%   d91df30fcd262adeef65f4ba14b6dbe8f66fbe29a9bb29d880c612c35cb7c3bc, verdict HYPOTHESIS SUPPORTED:
+%   net.State of every lstmLayer was single (zero values); with net.State in double the recomputed
+%   errors are 0 to 2.8e-13, with net.State as built they reproduce the FAIL run. Changes: net.State
+%   cast to double (local function state_to_double) wherever predict() is the reference; one check
+%   in (b) that a network with a non-zero net.State makes e5_convert_lstm raise e5_convert_lstm:state
+%   (supervisor review of 18/11/2026, reading F2); nothing else changed, the tolerance included.
 
 TOL = 1e-10;                                       % reading T1 of P2 (supervisor: not looser than 1e-10)
 stamp = char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
@@ -78,6 +90,7 @@ for c = 1:size(cfgs, 1)
         end
         net = dlnetwork(layers);
         net = dlupdate(@(v) dlarray(0.3*randn(size(v))), net);
+        net = state_to_double(net);                % correction of 18/11/2026
         switch fam
             case {'MLP', 'C1', 'C5'}, st = e5_convert_dense(net);
             case 'C2', st = e5_convert_tcn(net);
@@ -126,6 +139,7 @@ try
     rng(2001, 'twister');
     L = 4;
     net = dlupdate(@(v) dlarray(0.3*randn(size(v))), dlnetwork(e5_net_c2(L, 3, 16)));
+    net = state_to_double(net);                    % correction of 18/11/2026 (no state: unchanged)
     model = e5_model('C2', e5_convert_tcn(net), nrm, struct('L', L));
     base_row = nrm.mu';
     y_man = zeros(2, L);
@@ -144,6 +158,7 @@ try
                   rel_err(y_man, y_dlt) <= TOL);
     rng(2002, 'twister');
     net = dlupdate(@(v) dlarray(0.3*randn(size(v))), dlnetwork(e5_net_c3(16, 1)));
+    net = state_to_double(net);                    % correction of 18/11/2026
     Ls = e5_convert_lstm(net);
     lay = net.Layers(arrayfun(@(q) isa(q, 'nnet.cnn.layer.LSTMLayer'), net.Layers));
     s1 = randn(4, 8);
@@ -159,6 +174,12 @@ try
     results = add(results, 'b', sprintf('LSTM one step from zero states, gates i f g o, by hand = predict (%.2e)', ...
                   rel_err(y_hand, y_dlt)), rel_err(y_hand, y_dlt) <= TOL && strcmp(lay.StateActivationFunction, 'tanh') && ...
                   strcmp(lay.GateActivationFunction, 'sigmoid'));
+    net_nz = net;                                  % correction of 18/11/2026 (reading F2)
+    state_nz = net_nz.State;
+    state_nz.Value{1} = state_nz.Value{1} + 1;
+    net_nz.State = state_nz;
+    results = add(results, 'b', 'LSTM network with a non-zero net.State refused by e5_convert_lstm', ...
+                  expect_error(@() e5_convert_lstm(net_nz), 'e5_convert_lstm:state'));
 catch ME
     err_lines{end+1} = sprintf('(b)\n%s', getReport(ME, 'extended', 'hyperlinks', 'off'));
     results = add(results, 'b', 'part (b) completed without error', false);
@@ -341,6 +362,24 @@ end
 end
 
 % ================================================================ helpers
+function net = state_to_double(net)
+% correction of 18/11/2026: every value of net.State (HiddenState and CellState of the LSTM layers)
+% cast to double, so that predict() computes in double; the values (zero initial states) unchanged
+state_tbl = net.State;
+if ~isempty(state_tbl)
+    state_tbl.Value = cellfun(@to_double_value, state_tbl.Value, 'UniformOutput', false);
+    net.State = state_tbl;
+end
+end
+
+function v = to_double_value(v)
+if isa(v, 'dlarray')
+    v = dlarray(double(extractdata(v)));
+else
+    v = double(v);
+end
+end
+
 function e = rel_err(Y, Y_ref)
 % relative error of reading T1: max |Y - Y_ref| over max |Y_ref|
 e = max(abs(Y(:) - Y_ref(:)))/max(abs(Y_ref(:)));
