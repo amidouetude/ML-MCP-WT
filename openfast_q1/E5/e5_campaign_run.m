@@ -11,12 +11,14 @@ function res = e5_campaign_run(ctx)
 %                  meta.txt (with the gpuDevice name and the threads, A7), trials.csv, models/,
 %                  records/, errors/, selection_<family>.mat, selection.csv, stop.txt (on a stop),
 %                  log.txt; no file outside ctx.dir
-%   ctx.mode       'a' (new campaign) or 'b' (resume of ctx.prev_dir)
+%   ctx.mode       'a' (new campaign), 'b' (resume of ctx.prev_dir) or 'session' (amendment 5)
+%   ctx.session    session number 1 to 5 (mode 'session' only)
 %   ctx.prev_dir   campaign -a folder for mode 'b' (else '')
 %   ctx.runs, ctx.part (e5_partition masks: train_filtered, selection, validation), ctx.nrm,
 %   ctx.p (rom_params, cp_mode nmpc), ctx.S (e5_settings), ctx.C, ctx.plan (e5_campaign_plan or a
 %   plan of the same form), ctx.head, ctx.facts (A7 facts, recorded), ctx.data_info (recorded),
 %   ctx.t0 (tic of the first line of the launch: the elapsed time of A3 and A5)
+%   Version 3 (package P4c, spec_E5 amendment 5): the mode 'session' below; stop.txt appended.
 %   Version 2 (supervisor review of 20/11/2026, K1 to K5): one try around everything after the
 %   creation of ctx.dir (K1); a record that triggers e5_stop_rule is never reused (K2); the C5
 %   targets when the loop reaches the first pending C5 trial (K3); the fields of l.150 in every
@@ -41,34 +43,78 @@ function res = e5_campaign_run(ctx)
 %   record and model files unchanged) and its record does not trigger e5_stop_rule (K2); its files
 %   are copied to ctx.dir, checked again, and the line
 %   appended with reused = 1; every other trial of the plan runs.
-%   res.status ('COMPLETE' or 'INTERRUPTED'), res.reason ('', 'CEILING', 'A4', 'ERROR'),
-%   res.trial_id (where of the stop), res.n_run, res.n_reused, res.elapsed_s, res.error_id (ERROR)
+%   Mode 'session' (spec_E5 amendment 5, package P4c): ctx.session = k, 1 to 5, the families of
+%   session k fixed by e5_sessions (S1); only the trials of these families run, in the plan order.
+%   k = 1 creates ctx.dir as in mode 'a' (meta.mat, meta.txt, trials.csv written once). k >= 2:
+%   before anything is written, e5_session_check (S2, S4) on ctx.dir, the folder of session 1; a
+%   refusal raises e5_campaign_run:sessionStart and writes nothing; the elapsed time of A3 is the
+%   sum of the elapsed times of the earlier sessions (their meta_session files) plus toc(ctx.t0)
+%   (S5); files of earlier sessions are never rewritten, trials.csv, selection.csv, log.txt and
+%   stop.txt only appended to (S3). At any end of session k: meta_session<k>.mat and .txt (S3,
+%   S6), written once. Normal end: res.status SESSION_COMPLETE (k < 5) or COMPLETE (k = 5), also in
+%   log.txt (S6); the stops of A3, A4 and A20 are interruptions as in mode 'a'.
+%   res.status ('COMPLETE', 'SESSION_COMPLETE' or 'INTERRUPTED'), res.reason ('', 'CEILING', 'A4',
+%   'ERROR'), res.trial_id (where of the stop), res.n_run, res.n_reused, res.elapsed_s (cumulative
+%   in mode 'session'), res.error_id (ERROR), res.session (k, or 0 in the modes 'a' and 'b')
 
 C = ctx.C;
-if exist(ctx.dir, 'dir')
-    error('e5_campaign_run:exists', 'Campaign folder already exists: %s', ctx.dir);
-end
-mkdir(ctx.dir);
-log_file = fullfile(ctx.dir, 'log.txt');
-res = struct('status', 'RUNNING', 'reason', '', 'trial_id', '', 'n_run', 0, 'n_reused', 0, 'elapsed_s', 0, 'error_id', '');
+% ---------------------------------------------------------------- session mode (amendment 5, S1 to S6)
+SS = e5_sessions();
+session_k = 0;
+session_fams = {};
 elapsed_prior = 0;
+if strcmp(ctx.mode, 'session')
+    session_k = ctx.session;
+    if ~(isnumeric(session_k) && isscalar(session_k) && any(session_k == 1:numel(SS)))
+        error('e5_campaign_run:session', 'ctx.session must be 1 to %d in the mode session.', numel(SS));
+    end
+    session_fams = SS(session_k).families;     % S1: fixed in e5_sessions, never passed by hand
+elseif ~any(strcmp(ctx.mode, {'a', 'b'}))
+    error('e5_campaign_run:mode', 'ctx.mode must be a, b or session.');
+end
+session_start = char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss'));
+if session_k >= 2
+    % S2, S4: start checks of the session; a refusal writes nothing in the campaign folder
+    [fails, prior] = e5_session_check(ctx.dir, session_k, ctx.plan, ctx.head, C.spec_sha);
+    if ~isempty(fails)
+        error('e5_campaign_run:sessionStart', 'Session %d refused (amendment 5, S2 and S4): %s.', session_k, strjoin(fails, '; '));
+    end
+    elapsed_prior = prior.elapsed_s;            % S5: elapsed times of the earlier sessions
+else
+    if exist(ctx.dir, 'dir')
+        error('e5_campaign_run:exists', 'Campaign folder already exists: %s', ctx.dir);
+    end
+    mkdir(ctx.dir);
+end
+log_file = fullfile(ctx.dir, 'log.txt');
+res = struct('status', 'RUNNING', 'reason', '', 'trial_id', '', 'n_run', 0, 'n_reused', 0, 'elapsed_s', 0, 'error_id', '', ...
+             'session', session_k);
 where = 'init';
 try
-    e5_records('init', ctx.dir);
     plan = ctx.plan;
     plan_ids = {plan.trial_id};
-    where = 'meta';
-    meta = struct('mode', ctx.mode, 'prev_dir', ctx.prev_dir, 'head', ctx.head, 'spec_sha', C.spec_sha, ...
-                  'settings', C, 'plan_ids', {plan_ids}, 'plan', {plan}, 'draws', {e5_search_space(C)}, ...
-                  'facts', ctx.facts, 'data_info', ctx.data_info, 'start', char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss')));
-    meta.gpu_name = '';                            % A7: name of the GPU of the trainings
-    if canUseGPU
-        gpu_info = gpuDevice;
-        meta.gpu_name = gpu_info.Name;
+    in_scope = true(1, numel(plan));
+    if session_k >= 1
+        in_scope = ismember({plan.family}, session_fams);
+        log_line(log_file, sprintf('session %d start: families %s, %d trials, elapsed of the earlier sessions %.1f s (S5)', ...
+                 session_k, strjoin(session_fams, ' '), nnz(in_scope), elapsed_prior));
     end
-    meta.threads = maxNumCompThreads;
-    save(fullfile(ctx.dir, 'meta.mat'), 'meta', '-v7');
-    write_meta_txt(fullfile(ctx.dir, 'meta.txt'), meta);
+    if session_k <= 1                           % S3: meta.mat and trials.csv written once, by session 1
+        e5_records('init', ctx.dir);
+        where = 'meta';
+        meta = struct('mode', ctx.mode, 'prev_dir', ctx.prev_dir, 'head', ctx.head, 'spec_sha', C.spec_sha, ...
+                      'settings', C, 'plan_ids', {plan_ids}, 'plan', {plan}, 'draws', {e5_search_space(C)}, ...
+                      'facts', ctx.facts, 'data_info', ctx.data_info, 'start', char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss')));
+        meta.gpu_name = '';                            % A7: name of the GPU of the trainings
+        if canUseGPU
+            gpu_info = gpuDevice;
+            meta.gpu_name = gpu_info.Name;
+        end
+        meta.threads = maxNumCompThreads;
+        meta.sessions = SS;
+        save(fullfile(ctx.dir, 'meta.mat'), 'meta', '-v7');
+        write_meta_txt(fullfile(ctx.dir, 'meta.txt'), meta);
+    end
     completed = false(1, numel(plan));
     % ------------------------------------------------------------ resume (-b), l.154
     if strcmp(ctx.mode, 'b')
@@ -108,6 +154,9 @@ try
     cache = containers.Map();
     cache_family = '';
     for i = 1:numel(plan)
+        if ~in_scope(i)                         % S1: only the families of the session
+            continue
+        end
         tr_def = plan(i);
         if ~strcmp(tr_def.family, cache_family)          % K5 (A18): data reused only inside a family
             cache = containers.Map();
@@ -127,6 +176,7 @@ try
                 res = stop_campaign(res, ctx.dir, log_file, 'CEILING', tr_def.trial_id, sprintf(['elapsed %.1f s + scaled time %.1f s ' ...
                            '> ceiling %.1f s (margin %.1f s)'], elapsed, T.total, C.ceiling_s, margin));
                 res.elapsed_s = elapsed;
+                res = end_session(res, ctx, session_k, session_fams, session_start, elapsed_prior, log_file);
                 return
             end
             [payload, rec, cache] = run_trial(tr_def, ctx, c5, cache, T);
@@ -139,6 +189,7 @@ try
                 res = stop_campaign(res, ctx.dir, log_file, 'A4', tr_def.trial_id, sprintf('identity %s, identity_max %s', ...
                                     rec.identity, rec.identity_max));
                 res.elapsed_s = elapsed_prior + toc(ctx.t0);
+                res = end_session(res, ctx, session_k, session_fams, session_start, elapsed_prior, log_file);
                 return
             end
             completed(i) = true;
@@ -148,6 +199,11 @@ try
             where = ['selection_' tr_def.family];
             select_family(tr_def.family, ctx, plan(fam_idx), log_file);
         end
+    end
+    if session_k >= 1 && ~all(completed(in_scope))
+        where = 'session_end';
+        error('e5_campaign_run:sessionEnd', 'Session %d: %d of its %d trials are not complete.', session_k, ...
+              nnz(in_scope & ~completed), nnz(in_scope));
     end
 catch ME
     % K1 (A20): every error raised once the campaign folder exists is an interruption with its report
@@ -163,11 +219,83 @@ catch ME
     end
     res = stop_campaign(res, ctx.dir, log_file, 'ERROR', where, report);
     res.elapsed_s = elapsed_prior + toc(ctx.t0);
+    res = end_session(res, ctx, session_k, session_fams, session_start, elapsed_prior, log_file);
     return
 end
-res.status = 'COMPLETE';
 res.elapsed_s = elapsed_prior + toc(ctx.t0);
-log_line(log_file, sprintf('campaign COMPLETE: %d trials run, %d reused, elapsed %.1f s', res.n_run, res.n_reused, res.elapsed_s));
+if session_k == 0
+    res.status = 'COMPLETE';
+    log_line(log_file, sprintf('campaign COMPLETE: %d trials run, %d reused, elapsed %.1f s', res.n_run, res.n_reused, res.elapsed_s));
+else
+    if session_k == numel(SS)
+        res.status = 'COMPLETE';                % S6: the campaign is COMPLETE at the end of session 5
+    else
+        res.status = 'SESSION_COMPLETE';        % S6: normal end of a session, not an interruption
+    end
+    log_line(log_file, sprintf('session %d %s: %d trials run, elapsed of the session %.1f s, cumulative elapsed %.1f s (S5)', ...
+             session_k, res.status, res.n_run, res.elapsed_s - elapsed_prior, res.elapsed_s));
+    res = end_session(res, ctx, session_k, session_fams, session_start, elapsed_prior, log_file);
+end
+end
+
+% ================================================================ end of a session (S3, S5, S6)
+function res = end_session(res, ctx, session_k, session_fams, session_start, elapsed_prior, log_file)
+% meta_session<k>.mat and .txt, written once at the end of session k (any end: SESSION_COMPLETE,
+% COMPLETE or INTERRUPTED); never raises: a failure is an interruption with its error record
+if session_k == 0
+    return
+end
+try
+    ms.session = session_k;
+    ms.families = session_fams;
+    ms.start = session_start;
+    ms.end = char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss'));
+    ms.elapsed_session_s = toc(ctx.t0);         % S5: from the first line of the launch (ctx.t0) to its end
+    ms.elapsed_prior_s = elapsed_prior;
+    ms.elapsed_cumulative_s = elapsed_prior + ms.elapsed_session_s;
+    ms.status = res.status;
+    ms.reason = res.reason;
+    ms.where = res.trial_id;
+    ms.error_id = res.error_id;
+    ms.n_run = res.n_run;
+    ms.threads = maxNumCompThreads;
+    ms.gpu_name = '';
+    if canUseGPU
+        gpu_info = gpuDevice;
+        ms.gpu_name = gpu_info.Name;
+    end
+    ms.head = ctx.head;
+    ms.spec_sha = ctx.C.spec_sha;
+    SS = e5_sessions();
+    ms.planned_h = SS(session_k).planned_h;
+    ms_mat = fullfile(ctx.dir, sprintf('meta_session%d.mat', session_k));
+    ms_txt = fullfile(ctx.dir, sprintf('meta_session%d.txt', session_k));
+    if isfile(ms_mat) || isfile(ms_txt)
+        error('e5_campaign_run:metaSession', 'meta_session%d exists and is never rewritten (S3).', session_k);
+    end
+    save(ms_mat, 'ms', '-v7');
+    fid = fopen(ms_txt, 'w');
+    fprintf(fid, 'session %d\nfamilies %s\nstart %s\nend %s\n', ms.session, strjoin(ms.families, ' '), ms.start, ms.end);
+    fprintf(fid, 'elapsed of the session %.1f s, of the earlier sessions %.1f s, cumulative %.1f s (S5); planned %.2f h (S1)\n', ...
+            ms.elapsed_session_s, ms.elapsed_prior_s, ms.elapsed_cumulative_s, ms.planned_h);
+    fprintf(fid, 'status %s\nreason %s\nwhere %s\nerror_id %s\ntrials run %d\n', ms.status, ms.reason, ms.where, ms.error_id, ms.n_run);
+    fprintf(fid, 'maxNumCompThreads %d\ngpu %s\nhead %s\nspec_sha %s\n', ms.threads, ms.gpu_name, ms.head, ms.spec_sha);
+    fclose(fid);
+    log_line(log_file, sprintf('meta_session%d written: status %s', session_k, ms.status));
+catch ME
+    report = getReport(ME, 'extended', 'hyperlinks', 'off');
+    try
+        e5_records('error', ctx.dir, sprintf('meta_session%d', session_k), 'ERROR', report);
+    catch ME_record
+        report = sprintf('%s\n(the error record could not be written: %s)', report, ME_record.message);
+    end
+    if ~strcmp(res.status, 'INTERRUPTED')
+        res.error_id = ME.identifier;
+        res = stop_campaign(res, ctx.dir, log_file, 'ERROR', sprintf('meta_session%d', session_k), report);
+    else
+        log_line(log_file, sprintf('meta_session%d not written: %s', session_k, ME.message));
+    end
+end
 end
 
 % ================================================================ C5 targets (A11)
@@ -350,7 +478,7 @@ function res = stop_campaign(res, camp_dir, log_file, reason, where, text)
 res.status = 'INTERRUPTED';
 res.reason = reason;
 res.trial_id = where;
-fid = fopen(fullfile(camp_dir, 'stop.txt'), 'w');
+fid = fopen(fullfile(camp_dir, 'stop.txt'), 'a');          % appended, never rewritten (S3)
 fprintf(fid, 'status FAILED_KEPT\nreason %s\nwhere %s\n%s\n', reason, where, text);
 fclose(fid);
 log_line(log_file, sprintf('campaign INTERRUPTED (%s) at %s', reason, where));
