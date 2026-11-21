@@ -7,6 +7,8 @@ function res = e5_campaign(expected_head, mode, third)
 %   res = e5_campaign(expected_head, 'b', prev_dir)      campaign -b, resume of prev_dir (l.154)
 %   res = e5_campaign(expected_head, 'session', k)       session k = 1 to 5 of the campaign in
 %                                                        sessions (spec_E5 amendment 5, package P4c)
+%   res = e5_campaign(expected_head, 'resume', k)        resume of the interrupted session k
+%                                                        (spec_E5 amendment 6, package P4d)
 %
 %   Mode 'session' (S1 to S6): the families of session k are those of e5_sessions; the folder and
 %   the console log name are those of e5_session_paths (k = 1: results/Q1-E5-TRAIN-<today>-a, new;
@@ -14,6 +16,9 @@ function res = e5_campaign(expected_head, mode, third)
 %   S4) run after the A7 prerequisites and before the loading of the E4 data, and a refusal raises
 %   e5_campaign:session before any loading; the same checks are repeated by e5_campaign_run.
 %   The modes 'a' and 'b' are refused after the A7 prerequisites (e5_campaign:amendment5, S1).
+%   Mode 'resume' (amendment 6): after A7, e5_session_paths(..., 'resume') (the chain, the
+%   interrupted folder, the new folder) and e5_resume_check (R1, R7, R8), a refusal raising
+%   e5_campaign:resume before any loading; the same checks are repeated by e5_campaign_run.
 %
 %   First line: t0 = tic (the elapsed time of A3 counts from here, A3). Then maxNumCompThreads set
 %   to feature('numcores') and the facts of A7 gathered (MATLAB version, COMPUTERNAME, threads,
@@ -35,12 +40,14 @@ prev_dir = '';
 session_k = 0;
 if strcmp(mode, 'b')
     prev_dir = third;
-elseif strcmp(mode, 'session')
+elseif any(strcmp(mode, {'session', 'resume'}))
     session_k = third;
 end
-if ~any(strcmp(mode, {'a', 'b', 'session'})) || (strcmp(mode, 'b') && ~isfolder(prev_dir)) || ...
-        (strcmp(mode, 'session') && ~(isnumeric(session_k) && isscalar(session_k) && any(session_k == 1:numel(e5_sessions()))))
-    error('e5_campaign:mode', 'mode must be ''a'', ''b'' with an existing prev_dir, or ''session'' with a session number 1 to 5.');
+if ~any(strcmp(mode, {'a', 'b', 'session', 'resume'})) || (strcmp(mode, 'b') && ~isfolder(prev_dir)) || ...
+        (any(strcmp(mode, {'session', 'resume'})) && ~(isnumeric(session_k) && isscalar(session_k) && ...
+        any(session_k == 1:numel(e5_sessions()))))
+    error('e5_campaign:mode', ['mode must be ''a'', ''b'' with an existing prev_dir, or ''session'' or ''resume'' with a ' ...
+          'session number 1 to 5.']);
 end
 root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 C = e5_campaign_settings();
@@ -76,11 +83,19 @@ if session_k == 0
     % 'b' of e5_campaign_run stay for the synthetic tests of P4b
     error('e5_campaign:amendment5', 'Mode %s refused on the E4 data: the campaign runs in sessions (spec_E5 amendment 5, S1).', mode);
 end
-paths = e5_session_paths(fullfile(root, 'results'), session_k);
-if session_k >= 2
-    fails = e5_session_check(paths.dir, session_k, e5_campaign_plan(C), facts.head, C.spec_sha);
+if strcmp(mode, 'resume')
+    paths = e5_session_paths(fullfile(root, 'results'), session_k, 'resume');
+    fails = e5_resume_check(paths.chain, session_k, e5_campaign_plan(C), facts.head, C, paths.dir);
     if ~isempty(fails)
-        error('e5_campaign:session', 'Session %d refused (amendment 5, S2 and S4): %s.', session_k, strjoin(fails, '; '));
+        error('e5_campaign:resume', 'Resume of session %d refused (amendment 6, R1, R7, R8): %s.', session_k, strjoin(fails, '; '));
+    end
+else
+    paths = e5_session_paths(fullfile(root, 'results'), session_k);
+    if session_k >= 2
+        fails = e5_session_check(paths.chain, session_k, e5_campaign_plan(C), facts.head, C.spec_sha);
+        if ~isempty(fails)
+            error('e5_campaign:session', 'Session %d refused (amendment 5, S2 and S4): %s.', session_k, strjoin(fails, '; '));
+        end
     end
 end
 idx = e5_load_index(root, S);
@@ -92,7 +107,8 @@ p.cp_mode = 'nmpc';
 ctx.dir = paths.dir;
 ctx.mode = mode;
 ctx.session = session_k;
-ctx.prev_dir = prev_dir;
+ctx.prev_dir = paths.prev_dir;
+ctx.chain = paths.chain;
 ctx.runs = runs;
 ctx.part = part;
 ctx.nrm = nrm;

@@ -1,12 +1,12 @@
 function C = e5_campaign_settings()
 %E5_CAMPAIGN_SETTINGS  Fixed values of the E5 campaign driver (package P4b), each with its source in
 %openfast_q1/E5/spec_E5.yaml at amendment 4, quoted "E5 l.n" and "An" (framework_decisions.
-%amendment_4). The campaign and the test use these values unchanged. Package P4c: spec_sha is the
-%SHA-256 of the spec at amendment 5 (67f945d9...), which leaves every value below unchanged.
+%amendment_4). The campaign and the test use these values unchanged. Packages P4c and P4d: spec_sha
+%is the SHA-256 of the spec at amendment 6 (25a14361...), which leaves every value below unchanged.
 %
 %   C = e5_campaign_settings()
 
-C.spec_sha = '67f945d9249ba2864b3ef6564ca0f7e25b547a906d742b9222af409c3d0a635e';   % amendment 5 (P4c)
+C.spec_sha = '25a14361db9ec821172383d91207f64964269ab0b0fa5f212e590d8451107ed5';   % amendment 6 (P4d)
 C.ceiling_s = 48*3600;                          % framework_decisions.ceiling (E5 l.38), A3
 C.allowance = 1.5;                              % A1
 C.p3_record_rel = 'results/work_Q1/2026-11-18_E5_P3_run/bounds_E5_P3_20261118_173625/bounds_E5_P3.txt';

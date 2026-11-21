@@ -1,4 +1,4 @@
-function out = e5_records(action, camp_dir, varargin)
+function [out, n_dropped] = e5_records(action, camp_dir, varargin)
 %E5_RECORDS  Records of a campaign (outputs.trial_record_fields, E5 l.150; interruption, l.154;
 %amendment_4.A15, A20): model files, trial records, trials.csv, error and stop records.
 %
@@ -11,6 +11,12 @@ function out = e5_records(action, camp_dir, varargin)
 %       and one line appended to trials.csv; row is the struct of that line
 %   e5_records('append', camp_dir, row)              appends a row (used for a reused record, -b)
 %   rows = e5_records('read', camp_dir)              struct array of the lines of trials.csv
+%   [rows, n_dropped] = e5_records('read', camp_dir, 'lenient_last')
+%                                                    the same, except that a LAST line with fewer
+%                                                    fields than the header (truncated by a power
+%                                                    cut) is dropped and counted (amendment_6.R9,
+%                                                    resume only); any other malformed line is an
+%                                                    error as in the strict reading
 %   ok = e5_records('verify', camp_dir, row)         the model and record files of row exist and have
 %                                                    the SHA-256 of the row
 %   file = e5_records('error', camp_dir, where, reason, text)
@@ -25,6 +31,7 @@ COLS = {'trial_id', 's'; 'family', 's'; 'cfg_index', 'd'; 'seed', 'd'; 'status',
         'identity', 's'; 'identity_max', 's'; 'model_file', 's'; 'model_sha', 's'; 'record_file', 's'; ...
         'record_sha', 's'; 'reused', 'd'};
 csv_file = fullfile(camp_dir, 'trials.csv');
+n_dropped = 0;
 switch action
     case 'init'
         if isfile(csv_file)
@@ -63,9 +70,14 @@ switch action
         if ~isequal(header, COLS(:, 1)')
             error('e5_records:header', 'The header of %s is not the expected one.', csv_file);
         end
+        lenient = ~isempty(varargin) && strcmp(varargin{1}, 'lenient_last');
         out = struct([]);
         for i_line = 2:numel(lines)
             parts = strsplit(lines{i_line}, ';', 'CollapseDelimiters', false);
+            if lenient && i_line == numel(lines) && numel(parts) < size(COLS, 1)
+                n_dropped = 1;                  % R9: truncated last line, dropped
+                break
+            end
             if numel(parts) ~= size(COLS, 1)
                 error('e5_records:line', 'Line %d of %s has %d fields.', i_line, csv_file, numel(parts));
             end

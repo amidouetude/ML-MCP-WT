@@ -12,12 +12,21 @@ function res = e5_campaign_run(ctx)
 %                  records/, errors/, selection_<family>.mat, selection.csv, stop.txt (on a stop),
 %                  log.txt; no file outside ctx.dir
 %   ctx.mode       'a' (new campaign), 'b' (resume of ctx.prev_dir) or 'session' (amendment 5)
-%   ctx.session    session number 1 to 5 (mode 'session' only)
+%   ctx.mode       ... or 'resume' (amendment 6)
+%   ctx.session    session number 1 to 5 (modes 'session' and 'resume')
+%   ctx.chain      folders of the campaign, oldest first (modes 'session' k >= 2 and 'resume';
+%                  {ctx.dir} if absent)
 %   ctx.prev_dir   campaign -a folder for mode 'b' (else '')
 %   ctx.runs, ctx.part (e5_partition masks: train_filtered, selection, validation), ctx.nrm,
 %   ctx.p (rom_params, cp_mode nmpc), ctx.S (e5_settings), ctx.C, ctx.plan (e5_campaign_plan or a
 %   plan of the same form), ctx.head, ctx.facts (A7 facts, recorded), ctx.data_info (recorded),
 %   ctx.t0 (tic of the first line of the launch: the elapsed time of A3 and A5)
+%   Version 4 (package P4d, spec_E5 amendment 6): the mode 'resume' below; the chain of folders
+%   ctx.chain (R2) for the start checks; in the modes 'session' and 'resume' every line of log.txt
+%   ends with "| elapsed_s <toc(ctx.t0)>" and a line "trial start <id> scaled <s> s" is written
+%   before each trial (R5); meta_session<k> records the SHA-256 and the line of selection.csv of
+%   each family of the session (R4); the elapsed time before session k is the cumulative time of
+%   meta_session<k-1> (S5).
 %   Version 3 (package P4c, spec_E5 amendment 5): the mode 'session' below; stop.txt appended.
 %   Version 2 (supervisor review of 20/11/2026, K1 to K5): one try around everything after the
 %   creation of ctx.dir (K1); a record that triggers e5_stop_rule is never reused (K2); the C5
@@ -53,6 +62,17 @@ function res = e5_campaign_run(ctx)
 %   stop.txt only appended to (S3). At any end of session k: meta_session<k>.mat and .txt (S3,
 %   S6), written once. Normal end: res.status SESSION_COMPLETE (k < 5) or COMPLETE (k = 5), also in
 %   log.txt (S6); the stops of A3, A4 and A20 are interruptions as in mode 'a'.
+%   Mode 'resume' (amendment 6, R1 to R11): ctx.session = k, ctx.chain (folders oldest first),
+%   ctx.prev_dir = the last folder of the chain (interrupted), ctx.dir = the new folder of
+%   e5_session_paths(..., 'resume'). Before anything is written, e5_resume_check (R1, R7, R8); a
+%   refusal raises e5_campaign_run:resumeStart and writes nothing. Then ctx.dir is created with its
+%   own meta.mat (mode resume, R11) and trials.csv; the reused lines (R3) and the selections of the
+%   earlier families (R4) are copied and their SHA-256 checked on the copies; the missing trials
+%   of the families of session k run, then their selections; the C5 targets are compared with the
+%   counts of the interrupted log (R10, e5_campaign_run:c5Count); the elapsed time starts from
+%   the cumulative time before session k plus the elapsed time of the interrupted part (R5). Ends
+%   as a session (SESSION_COMPLETE, COMPLETE for k = 5, or INTERRUPTED) with meta_session<k> in
+%   ctx.dir.
 %   res.status ('COMPLETE', 'SESSION_COMPLETE' or 'INTERRUPTED'), res.reason ('', 'CEILING', 'A4',
 %   'ERROR'), res.trial_id (where of the stop), res.n_run, res.n_reused, res.elapsed_s (cumulative
 %   in mode 'session'), res.error_id (ERROR), res.session (k, or 0 in the modes 'a' and 'b')
@@ -63,30 +83,49 @@ SS = e5_sessions();
 session_k = 0;
 session_fams = {};
 elapsed_prior = 0;
-if strcmp(ctx.mode, 'session')
+is_resume = strcmp(ctx.mode, 'resume');
+if strcmp(ctx.mode, 'session') || is_resume
     session_k = ctx.session;
     if ~(isnumeric(session_k) && isscalar(session_k) && any(session_k == 1:numel(SS)))
-        error('e5_campaign_run:session', 'ctx.session must be 1 to %d in the mode session.', numel(SS));
+        error('e5_campaign_run:session', 'ctx.session must be 1 to %d in the modes session and resume.', numel(SS));
     end
     session_fams = SS(session_k).families;     % S1: fixed in e5_sessions, never passed by hand
 elseif ~any(strcmp(ctx.mode, {'a', 'b'}))
-    error('e5_campaign_run:mode', 'ctx.mode must be a, b or session.');
+    error('e5_campaign_run:mode', 'ctx.mode must be a, b, session or resume.');
+end
+chain = {ctx.dir};                              % amendment 6, R2: the chain of folders
+if isfield(ctx, 'chain') && ~isempty(ctx.chain)
+    chain = ctx.chain;
 end
 session_start = char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss'));
-if session_k >= 2
+rinfo = struct([]);
+if is_resume
+    % amendment 6, R8: start checks of the resume; a refusal writes nothing in any folder
+    if ~strcmp(ctx.prev_dir, chain{end})
+        error('e5_campaign_run:resumeStart', 'ctx.prev_dir must be the last folder of the chain.');
+    end
+    [fails, rinfo] = e5_resume_check(chain, session_k, ctx.plan, ctx.head, C, ctx.dir);
+    if ~isempty(fails)
+        error('e5_campaign_run:resumeStart', 'Resume of session %d refused (amendment 6, R1, R7, R8): %s.', session_k, ...
+              strjoin(fails, '; '));
+    end
+    ctx.resume_info = rinfo;
+    elapsed_prior = rinfo.elapsed_prior_s;      % R5, S5: earlier sessions and the interrupted part
+    mkdir(ctx.dir);
+elseif session_k >= 2
     % S2, S4: start checks of the session; a refusal writes nothing in the campaign folder
-    [fails, prior] = e5_session_check(ctx.dir, session_k, ctx.plan, ctx.head, C.spec_sha);
+    [fails, prior] = e5_session_check(chain, session_k, ctx.plan, ctx.head, C.spec_sha);
     if ~isempty(fails)
         error('e5_campaign_run:sessionStart', 'Session %d refused (amendment 5, S2 and S4): %s.', session_k, strjoin(fails, '; '));
     end
-    elapsed_prior = prior.elapsed_s;            % S5: elapsed times of the earlier sessions
+    elapsed_prior = prior.elapsed_s;            % S5: cumulative time recorded by session k - 1
 else
     if exist(ctx.dir, 'dir')
         error('e5_campaign_run:exists', 'Campaign folder already exists: %s', ctx.dir);
     end
     mkdir(ctx.dir);
 end
-log_file = fullfile(ctx.dir, 'log.txt');
+log_file = struct('file', fullfile(ctx.dir, 'log.txt'), 't0', ctx.t0, 'elapsed', session_k >= 1);   % R5
 res = struct('status', 'RUNNING', 'reason', '', 'trial_id', '', 'n_run', 0, 'n_reused', 0, 'elapsed_s', 0, 'error_id', '', ...
              'session', session_k);
 where = 'init';
@@ -94,12 +133,17 @@ try
     plan = ctx.plan;
     plan_ids = {plan.trial_id};
     in_scope = true(1, numel(plan));
-    if session_k >= 1
+    if is_resume
+        in_scope = ismember({plan.family}, session_fams);
+        log_line(log_file, sprintf(['resume of session %d start: families %s, %d trials, case %s, interrupted folder %s, ' ...
+                 'elapsed of the interrupted session %.1f s, cumulative before the resume %.1f s (R5)'], session_k, ...
+                 strjoin(session_fams, ' '), nnz(in_scope), rinfo.case, ctx.prev_dir, rinfo.elapsed_interrupted_s, elapsed_prior));
+    elseif session_k >= 1
         in_scope = ismember({plan.family}, session_fams);
         log_line(log_file, sprintf('session %d start: families %s, %d trials, elapsed of the earlier sessions %.1f s (S5)', ...
                  session_k, strjoin(session_fams, ' '), nnz(in_scope), elapsed_prior));
     end
-    if session_k <= 1                           % S3: meta.mat and trials.csv written once, by session 1
+    if session_k <= 1 || is_resume              % S3: meta.mat and trials.csv written once per folder
         e5_records('init', ctx.dir);
         where = 'meta';
         meta = struct('mode', ctx.mode, 'prev_dir', ctx.prev_dir, 'head', ctx.head, 'spec_sha', C.spec_sha, ...
@@ -112,10 +156,55 @@ try
         end
         meta.threads = maxNumCompThreads;
         meta.sessions = SS;
+        if is_resume                            % amendment 6, R11
+            meta.resume_session = session_k;
+            meta.resume_case = rinfo.case;
+            meta.elapsed_interrupted_s = rinfo.elapsed_interrupted_s;
+            meta.elapsed_prior_s = rinfo.elapsed_prior_s;
+            meta.chain = chain;
+            meta.reused = struct('trial_id', {}, 'record_sha', {}, 'model_sha', {});
+            if ~isempty(rinfo.rows)
+                meta.reused = struct('trial_id', {rinfo.rows.trial_id}, 'record_sha', {rinfo.rows.record_sha}, ...
+                                     'model_sha', {rinfo.rows.model_sha});
+            end
+            meta.selections_copied = rinfo.selections;
+            meta.not_reused = rinfo.not_reused;
+            meta.n_dropped = rinfo.n_dropped;
+            meta.log_truncated = rinfo.log_truncated;
+        end
         save(fullfile(ctx.dir, 'meta.mat'), 'meta', '-v7');
         write_meta_txt(fullfile(ctx.dir, 'meta.txt'), meta);
     end
     completed = false(1, numel(plan));
+    % ------------------------------------------------------------ resume of a session (amendment 6, R2 to R4)
+    if is_resume
+        where = 'resume_copy';
+        for i_row = 1:numel(rinfo.rows)
+            row = rinfo.rows(i_row);
+            copy_checked(ctx.prev_dir, ctx.dir, row.record_file, row.record_sha);
+            if ~isempty(row.model_file)
+                copy_checked(ctx.prev_dir, ctx.dir, row.model_file, row.model_sha);
+            end
+            row.reused = 1;
+            e5_records('append', ctx.dir, row);
+            idx = find(strcmp(plan_ids, row.trial_id), 1);
+            completed(idx) = true;
+            res.n_reused = res.n_reused + 1;
+        end
+        for i_sel = 1:numel(rinfo.selections)
+            sel = rinfo.selections(i_sel);
+            copy_checked(ctx.prev_dir, ctx.dir, sel.file, sel.sha);
+            append_selection_line(ctx.dir, sel.csv_line);
+        end
+        for i_msg = 1:numel(rinfo.not_reused)
+            log_line(log_file, sprintf('resume: %s', rinfo.not_reused{i_msg}));
+        end
+        if rinfo.n_dropped > 0
+            log_line(log_file, 'resume: truncated last line of trials.csv of the interrupted folder ignored, its trial runs again (R9)');
+        end
+        log_line(log_file, sprintf('resume: %d lines reused, %d selections copied, SHA-256 checked on the copies (R2 to R4)', ...
+                 numel(rinfo.rows), numel(rinfo.selections)));
+    end
     % ------------------------------------------------------------ resume (-b), l.154
     if strcmp(ctx.mode, 'b')
         where = 'resume';
@@ -178,6 +267,9 @@ try
                 res.elapsed_s = elapsed;
                 res = end_session(res, ctx, session_k, session_fams, session_start, elapsed_prior, log_file);
                 return
+            end
+            if session_k >= 1
+                log_line(log_file, sprintf('trial start %s scaled %.1f s', tr_def.trial_id, T.total));   % R5
             end
             [payload, rec, cache] = run_trial(tr_def, ctx, c5, cache, T);
             e5_records('write', ctx.dir, payload, rec);
@@ -268,6 +360,23 @@ try
     ms.spec_sha = ctx.C.spec_sha;
     SS = e5_sessions();
     ms.planned_h = SS(session_k).planned_h;
+    ms.mode = ctx.mode;
+    [~, ms.folder] = fileparts(ctx.dir);
+    % amendment 6, R4: SHA-256 and line of selection.csv of each family of the session that has one
+    ms.selections = struct('family', {}, 'file', {}, 'sha', {}, 'csv_line', {});
+    sel_lines = {};
+    if isfile(fullfile(ctx.dir, 'selection.csv'))
+        sel_lines = splitlines(strtrim(fileread(fullfile(ctx.dir, 'selection.csv'))));
+        sel_lines = sel_lines(2:end);
+    end
+    for f = 1:numel(session_fams)
+        sel_rel = ['selection_' session_fams{f} '.mat'];
+        i_line = find(strcmp(cellfun(@(x) strtok(x, ';'), sel_lines, 'UniformOutput', false), session_fams{f}));
+        if isfile(fullfile(ctx.dir, sel_rel)) && isscalar(i_line)
+            ms.selections(end+1) = struct('family', session_fams{f}, 'file', sel_rel, ...
+                                          'sha', e5_sha256(fullfile(ctx.dir, sel_rel)), 'csv_line', sel_lines{i_line});
+        end
+    end
     ms_mat = fullfile(ctx.dir, sprintf('meta_session%d.mat', session_k));
     ms_txt = fullfile(ctx.dir, sprintf('meta_session%d.txt', session_k));
     if isfile(ms_mat) || isfile(ms_txt)
@@ -306,6 +415,12 @@ rows_tr = e5_rows(ctx.runs, ctx.part.train_filtered, 'current', 1);
 rows_sel = e5_rows(ctx.runs, ctx.part.selection, 'current', 1);
 [y_tr, keep_tr] = e5_c5_targets(ctx.runs, rows_tr, ctx.nrm, ctx.p);
 [y_sel, keep_sel] = e5_c5_targets(ctx.runs, rows_sel, ctx.nrm, ctx.p);
+counts = [nnz(~keep_tr), numel(keep_tr), nnz(~keep_sel), numel(keep_sel)];
+if isfield(ctx, 'resume_info') && ~isempty(ctx.resume_info) && ~isempty(ctx.resume_info.c5_counts) && ...
+        ~isequal(counts, ctx.resume_info.c5_counts)
+    error('e5_campaign_run:c5Count', ['C5 targets of the resume: exclusion counts %s differ from %s in the log of the ' ...
+          'interrupted session (amendment 6, R10).'], mat2str(counts), mat2str(ctx.resume_info.c5_counts));
+end
 c5.tr = struct('rows', rows_tr, 'Y', y_tr, 'keep', keep_tr);
 c5.sel = struct('rows', rows_sel, 'Y', y_sel, 'keep', keep_sel);
 log_line(log_file, sprintf('C5 targets: training rows excluded %d of %d, selection rows excluded %d of %d, %.1f s', ...
@@ -460,16 +575,8 @@ if strcmp(win.status, 'COMPLETE') && ~isempty(win.model_file)
     out.plausibility = e5_plausibility(ctx.runs, ctx.part.validation, model, S);    % D14
 end
 save(fullfile(ctx.dir, ['selection_' fam '.mat']), 'out', '-v7');
-sel_csv = fullfile(ctx.dir, 'selection.csv');
-if ~isfile(sel_csv)
-    fid = fopen(sel_csv, 'w');
-    fprintf(fid, 'family;retained_trial;cfg_index;seed;n_failed;criterion;cost;n_tie\n');
-    fclose(fid);
-end
-fid = fopen(sel_csv, 'a');
-fprintf(fid, '%s;%s;%d;%d;%d;%.17g;%.17g;%d\n', fam, win.trial_id, sel.retained_cfg, sel.retained_seed, ...
-        win.n_failed_a, win.criterion_a, win.cost_median, nnz(sel.configs.in_tie));
-fclose(fid);
+append_selection_line(ctx.dir, sprintf('%s;%s;%d;%d;%d;%.17g;%.17g;%d', fam, win.trial_id, sel.retained_cfg, ...
+                      sel.retained_seed, win.n_failed_a, win.criterion_a, win.cost_median, nnz(sel.configs.in_tie)));
 log_line(log_file, sprintf('selection %s: retained %s (%d configurations in the tie)', fam, win.trial_id, nnz(sel.configs.in_tie)));
 end
 
@@ -492,9 +599,27 @@ end
 end
 
 function log_line(log_file, text)
+% log_file: struct file, t0, elapsed; in the modes session and resume each line ends with the
+% elapsed time of A3 since the first line of the launch (amendment 6, R5)
+if log_file.elapsed
+    text = sprintf('%s | elapsed_s %.1f', text, toc(log_file.t0));
+end
 fprintf('%s\n', text);
-fid = fopen(log_file, 'a');
+fid = fopen(log_file.file, 'a');
 fprintf(fid, '%s %s\n', char(datetime('now', 'Format', 'yyyy-MM-dd HH:mm:ss')), text);
+fclose(fid);
+end
+
+function append_selection_line(camp_dir, csv_line)
+% one line of selection.csv, the header written first if the file does not exist (S3: appended)
+sel_csv = fullfile(camp_dir, 'selection.csv');
+if ~isfile(sel_csv)
+    fid = fopen(sel_csv, 'w');
+    fprintf(fid, 'family;retained_trial;cfg_index;seed;n_failed;criterion;cost;n_tie\n');
+    fclose(fid);
+end
+fid = fopen(sel_csv, 'a');
+fprintf(fid, '%s\n', csv_line);
 fclose(fid);
 end
 
@@ -511,5 +636,12 @@ for f = 1:numel(SP)
             mat2str(SP(f).drawn));
 end
 fprintf(fid, 'plan %d trials: %s\n', numel(meta.plan_ids), strjoin(meta.plan_ids, ' '));
+if strcmp(meta.mode, 'resume')
+    fprintf(fid, 'resume of session %d, case %s, elapsed of the interrupted session %.1f s, cumulative before the resume %.1f s\n', ...
+            meta.resume_session, meta.resume_case, meta.elapsed_interrupted_s, meta.elapsed_prior_s);
+    fprintf(fid, 'reused lines %d: %s\n', numel(meta.reused), strjoin({meta.reused.trial_id}, ' '));
+    fprintf(fid, 'selections copied %d: %s\n', numel(meta.selections_copied), strjoin({meta.selections_copied.family}, ' '));
+    fprintf(fid, 'not reused %d: %s\n', numel(meta.not_reused), strjoin(meta.not_reused, ' | '));
+end
 fclose(fid);
 end
